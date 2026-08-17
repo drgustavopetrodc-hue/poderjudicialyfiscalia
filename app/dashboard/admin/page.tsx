@@ -2,6 +2,8 @@ import { prisma } from "@/lib/prisma";
 import DashboardShell from "@/components/DashboardShell";
 import Link from "next/link";
 
+
+export const dynamic = "force-dynamic";
 export default async function AdminDashboard() {
   const [totalCausas, totalUsuarios, certPendientes] = await Promise.all([
     prisma.causa.count(),

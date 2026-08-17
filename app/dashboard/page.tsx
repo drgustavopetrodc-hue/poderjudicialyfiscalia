@@ -2,6 +2,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 
+
+export const dynamic = "force-dynamic";
 const destinoPorRol: Record<string, string> = {
   ADMIN: "/dashboard/admin",
   JUEZ: "/dashboard/juez",

@@ -5,6 +5,8 @@ import { notFound } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { format } from "date-fns";
 
+
+export const dynamic = "force-dynamic";
 async function presentarEscrito(causaId: string, formData: FormData) {
   "use server";
   const session = await getServerSession(authOptions);

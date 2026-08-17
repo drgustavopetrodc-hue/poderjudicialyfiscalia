@@ -2,6 +2,8 @@ import { prisma } from "@/lib/prisma";
 import DashboardShell from "@/components/DashboardShell";
 import { revalidatePath } from "next/cache";
 
+
+export const dynamic = "force-dynamic";
 const ROLES = ["ADMIN", "JUEZ", "FISCAL", "ABOGADO", "FUNCIONARIO", "CIUDADANO"];
 
 async function cambiarRol(formData: FormData) {

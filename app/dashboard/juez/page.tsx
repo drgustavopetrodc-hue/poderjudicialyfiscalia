@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import DashboardShell from "@/components/DashboardShell";
 import Link from "next/link";
 
+
+export const dynamic = "force-dynamic";
 export default async function JuezDashboard() {
   const session = await getServerSession(authOptions);
   const userId = (session?.user as any)?.id as string;

@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import DashboardShell from "@/components/DashboardShell";
 import { revalidatePath } from "next/cache";
 
+
+export const dynamic = "force-dynamic";
 async function solicitarCertificacion(formData: FormData) {
   "use server";
   const session = await getServerSession(authOptions);

@@ -1,0 +1,240 @@
+// Esquema de base de datos — Sistema Judicial RP
+// Ejecutar: npx prisma db push (tras configurar DATABASE_URL)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------- Roles ----------
+enum Rol {
+  ADMIN
+  JUEZ
+  FISCAL
+  ABOGADO
+  FUNCIONARIO
+  CIUDADANO // rol por defecto, puede ser parte/imputado en una causa
+}
+
+enum EstadoCertificacion {
+  PENDIENTE
+  APROBADA
+  RECHAZADA
+  SUSPENDIDA
+}
+
+enum EstadoCausa {
+  EN_INVESTIGACION
+  FORMALIZADA
+  EN_JUICIO
+  SENTENCIADA
+  ARCHIVADA
+  SOBRESEIDA
+}
+
+enum TipoAudiencia {
+  FORMALIZACION
+  PREPARACION_JUICIO
+  JUICIO_ORAL
+  LECTURA_SENTENCIA
+  OTRA
+}
+
+enum EstadoAudiencia {
+  PROGRAMADA
+  REALIZADA
+  SUSPENDIDA
+  CANCELADA
+}
+
+// ---------- Auth (NextAuth) ----------
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ---------- Usuario ----------
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  discordTag    String? // ej: usuario#0000 o nuevo @usuario
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  rol           Rol       @default(CIUDADANO)
+  activo        Boolean   @default(true)
+  creadoEn      DateTime  @default(now())
+
+  accounts Account[]
+  sessions Session[]
+
+  certificacion      CertificacionAbogado?
+  causasComoFiscal   Causa[]                @relation("FiscalACargo")
+  causasComoJuez     Causa[]                @relation("JuezACargo")
+  defensas           Defensa[]
+  escritosPresentados Escrito[]
+  audienciasCreadas  Audiencia[]            @relation("AudienciaCreador")
+  sentenciasDictadas Sentencia[]            @relation("SentenciaJuez")
+  partesEnCausas     ParteCausa[]
+}
+
+// ---------- Certificación de abogados ----------
+model CertificacionAbogado {
+  id             String              @id @default(cuid())
+  userId         String              @unique
+  user           User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  numeroMatricula String             @unique
+  estado         EstadoCertificacion @default(PENDIENTE)
+  solicitadoEn   DateTime            @default(now())
+  revisadoEn     DateTime?
+  observaciones  String?             @db.Text
+}
+
+// ---------- Causa (expediente) ----------
+model Causa {
+  id            String      @id @default(cuid())
+  rit           String      @unique // Rol Interno del Tribunal, ej: 001-2026
+  caratulado    String // ej: "Fisco vs. Juan Pérez"
+  descripcion   String      @db.Text
+  estado        EstadoCausa @default(EN_INVESTIGACION)
+  delito        String
+  creadaEn      DateTime    @default(now())
+  actualizadaEn DateTime    @updatedAt
+
+  fiscalId String
+  fiscal   User   @relation("FiscalACargo", fields: [fiscalId], references: [id])
+
+  juezId String?
+  juez   User?   @relation("JuezACargo", fields: [juezId], references: [id])
+
+  partes     ParteCausa[]
+  defensas   Defensa[]
+  escritos   Escrito[]
+  audiencias Audiencia[]
+  sentencia  Sentencia?
+}
+
+// Relación entre una causa y las personas involucradas (imputado, víctima, querellante)
+enum RolParte {
+  IMPUTADO
+  VICTIMA
+  QUERELLANTE
+  TESTIGO
+}
+
+model ParteCausa {
+  id       String   @id @default(cuid())
+  causaId  String
+  causa    Causa    @relation(fields: [causaId], references: [id], onDelete: Cascade)
+  userId   String
+  user     User     @relation(fields: [userId], references: [id])
+  rol      RolParte
+  agregadoEn DateTime @default(now())
+
+  @@unique([causaId, userId, rol])
+}
+
+// ---------- Defensa técnica ----------
+model Defensa {
+  id           String   @id @default(cuid())
+  causaId      String
+  causa        Causa    @relation(fields: [causaId], references: [id], onDelete: Cascade)
+  abogadoId    String
+  abogado      User     @relation(fields: [abogadoId], references: [id])
+  asumidaEn    DateTime @default(now())
+  renunciadaEn DateTime?
+  activa       Boolean  @default(true)
+
+  @@unique([causaId, abogadoId, activa])
+}
+
+// ---------- Escritos (documentos presentados) ----------
+enum TipoEscrito {
+  QUERELLA
+  FORMALIZACION
+  ACUSACION
+  CONTESTACION
+  PRUEBA
+  RECURSO
+  OTRO
+}
+
+model Escrito {
+  id            String      @id @default(cuid())
+  causaId       String
+  causa         Causa       @relation(fields: [causaId], references: [id], onDelete: Cascade)
+  autorId       String
+  autor         User        @relation(fields: [autorId], references: [id])
+  tipo          TipoEscrito
+  titulo        String
+  contenido     String      @db.Text
+  archivoUrl    String? // link a Vercel Blob u otro storage
+  presentadoEn  DateTime    @default(now())
+}
+
+// ---------- Audiencias ----------
+model Audiencia {
+  id           String          @id @default(cuid())
+  causaId      String
+  causa        Causa           @relation(fields: [causaId], references: [id], onDelete: Cascade)
+  tipo         TipoAudiencia
+  estado       EstadoAudiencia @default(PROGRAMADA)
+  fechaHora    DateTime
+  sala         String?
+  notas        String?         @db.Text
+  creadorId    String
+  creador      User            @relation("AudienciaCreador", fields: [creadorId], references: [id])
+  creadaEn     DateTime        @default(now())
+}
+
+// ---------- Sentencia ----------
+enum ResultadoSentencia {
+  CONDENATORIA
+  ABSOLUTORIA
+}
+
+model Sentencia {
+  id           String             @id @default(cuid())
+  causaId      String             @unique
+  causa        Causa              @relation(fields: [causaId], references: [id], onDelete: Cascade)
+  juezId       String
+  juez         User               @relation("SentenciaJuez", fields: [juezId], references: [id])
+  resultado    ResultadoSentencia
+  fundamento   String             @db.Text
+  pena         String?
+  dictadaEn    DateTime           @default(now())
+}

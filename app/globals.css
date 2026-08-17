@@ -1,0 +1,14 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap");
+
+body {
+  background-color: #f4f1ea;
+  color: #2a2a28;
+}
+
+.sello {
+  background-image: radial-gradient(circle at 50% 50%, rgba(184, 146, 63, 0.12), transparent 70%);
+}

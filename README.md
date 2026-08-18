@@ -33,13 +33,46 @@ npx prisma db push   # crea las tablas en tu base de datos
 npm run dev
 ```
 
-## 5. Primer usuario administrador
-Al iniciar sesión por primera vez con Discord, tu usuario se crea automáticamente
-con el rol `CIUDADANO`. Para volverte `ADMIN` la primera vez, edita directamente
-la base de datos (con `npx prisma studio`) y cambia tu `rol` a `ADMIN`. Desde ahí
-podrás asignar roles a los demás usuarios desde `/dashboard/admin/usuarios`.
+## 5. Sincronización automática de roles con Discord
+El sistema puede leer los roles reales del servidor de Discord y asignar el rol
+correspondiente dentro de la app automáticamente, cada vez que alguien inicia sesión.
 
-## 6. Desplegar en Vercel
+**Configurar el bot:**
+1. En https://discord.com/developers/applications, entra a tu misma app (la del login).
+2. Ve a la pestaña **"Bot"** → "Add Bot" (o "Reset Token" si ya existe uno) → copia el token.
+3. Pégalo en `DISCORD_BOT_TOKEN` en tu `.env` (y en las variables de entorno de Vercel).
+4. Ve a **"OAuth2 → URL Generator"**, marca el scope `bot`, y en permisos no necesitas
+   marcar nada especial (con que el bot esté en el servidor alcanza). Copia la URL
+   generada, ábrela, y agrega el bot a tu servidor de rol.
+5. `DISCORD_GUILD_ID` ya viene configurado con el ID de tu servidor: `1470515579407302778`.
+
+**Mapeo de roles configurado** (en `lib/discordRoles.ts`):
+
+| Rol de Discord | Rol en el sistema |
+|---|---|
+| `1470515579764084740` | ADMIN |
+| `1535147294222188624` | JUEZ |
+| `1535147633335603241` | FISCAL |
+| `1535148462033870948`, `1535148605999153192` | ABOGADO |
+| `1535147888676700160` (Carabineros), `1535148252205289542` (PDI) | FUNCIONARIO |
+| `1535148366256668702` | CIUDADANO |
+
+Si alguien tiene varios de estos roles en Discord a la vez, gana el que aparece
+primero en la tabla de arriba (ej. JUEZ le gana a CIUDADANO).
+
+**Importante:** mientras el bot esté bien configurado, el rol se sincroniza en
+cada login y **sobrescribe** cualquier cambio manual que hagas desde
+`/dashboard/admin/usuarios`. Ese panel manual sigue sirviendo como respaldo
+para cuando el bot no puede determinar un rol (ej. el usuario salió del server).
+
+## 6. Primer usuario administrador
+Antes de tener el bot configurado, o si prefieres hacerlo a mano la primera vez:
+inicia sesión con Discord (tu usuario se crea con rol `CIUDADANO`), luego edita
+directamente la base de datos (con `npx prisma studio`) y cambia tu `rol` a
+`ADMIN`. Si ya tienes el bot configurado y el rol de Discord `ADMIN` asignado a
+tu usuario, esto ya no es necesario — se sincroniza solo.
+
+## 7. Desplegar en Vercel
 1. Sube este proyecto a un repositorio de GitHub
 2. Impórtalo en https://vercel.com/new
 3. Agrega las mismas variables de entorno del `.env` en la configuración del proyecto en Vercel

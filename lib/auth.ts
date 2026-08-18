@@ -2,6 +2,7 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import { type NextAuthOptions } from "next-auth";
 import DiscordProvider from "next-auth/providers/discord";
 import { prisma } from "./prisma";
+import { obtenerRolDesdeDiscord } from "./discordRoles";
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
@@ -9,7 +10,6 @@ export const authOptions: NextAuthOptions = {
     DiscordProvider({
       clientId: process.env.DISCORD_CLIENT_ID as string,
       clientSecret: process.env.DISCORD_CLIENT_SECRET as string,
-      // Pide el guild.members.read si más adelante quieres sincronizar roles del servidor de Discord
       authorization: { params: { scope: "identify email" } },
     }),
   ],
@@ -20,15 +20,43 @@ export const authOptions: NextAuthOptions = {
     signIn: "/login",
   },
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, account }) {
       if (user) {
         token.id = user.id;
         token.rol = (user as any).rol;
-      } else if (token?.id) {
-        // Refresca el rol en cada login/renovación de token por si un admin lo cambió
-        const dbUser = await prisma.user.findUnique({ where: { id: token.id as string } });
-        if (dbUser) token.rol = dbUser.rol;
       }
+
+      // account solo viene presente justo en el login inicial (no en refresh)
+      if (account?.provider === "discord" && account.providerAccountId) {
+        token.discordId = account.providerAccountId;
+        // Guardamos el discordId en la BD para poder re-sincronizar más adelante
+        // (ej. desde un cron job) sin depender de que el usuario tenga sesión activa.
+        await prisma.user.update({
+          where: { id: token.id as string },
+          data: { discordId: account.providerAccountId },
+        });
+      } else if (!token.discordId && token?.id) {
+        const dbUser = await prisma.user.findUnique({ where: { id: token.id as string } });
+        if (dbUser?.discordId) token.discordId = dbUser.discordId;
+      }
+
+      // Sincroniza el rol real desde los roles del servidor de Discord.
+      if (token.discordId) {
+        const rolDesdeDiscord = await obtenerRolDesdeDiscord(token.discordId as string);
+        if (rolDesdeDiscord) {
+          token.rol = rolDesdeDiscord;
+          await prisma.user.update({
+            where: { id: token.id as string },
+            data: { rol: rolDesdeDiscord },
+          });
+        } else if (!user && token?.id) {
+          // No se pudo determinar por Discord (bot no configurado, usuario
+          // salió del server, etc.) — usa el rol que ya tenga guardado en la BD.
+          const dbUser = await prisma.user.findUnique({ where: { id: token.id as string } });
+          if (dbUser) token.rol = dbUser.rol;
+        }
+      }
+
       return token;
     },
     async session({ session, token }) {

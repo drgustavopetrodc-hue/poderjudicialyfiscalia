@@ -91,6 +91,7 @@ model VerificationToken {
 model User {
   id            String    @id @default(cuid())
   name          String?
+  discordId     String?   @unique // ID numérico de Discord (snowflake), usado para sincronizar roles
   discordTag    String? // ej: usuario#0000 o nuevo @usuario
   email         String?   @unique
   emailVerified DateTime?

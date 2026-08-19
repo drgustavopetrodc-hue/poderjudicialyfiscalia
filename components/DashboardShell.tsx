@@ -4,27 +4,34 @@ const NAV_POR_ROL: Record<string, { href: string; label: string }[]> = {
   ADMIN: [
     { href: "/dashboard/admin", label: "Panel general" },
     { href: "/causas", label: "Todas las causas" },
+    { href: "/abogados", label: "Abogados certificados" },
+    { href: "/escritos", label: "Escritos" },
     { href: "/dashboard/admin/certificaciones", label: "Certificar abogados" },
     { href: "/dashboard/admin/usuarios", label: "Usuarios y roles" },
   ],
   JUEZ: [
     { href: "/dashboard/juez", label: "Mis causas" },
-    { href: "/audiencias", label: "Audiencias" },
-    { href: "/dashboard/juez/sentencias", label: "Sentencias" },
+    { href: "/causas", label: "Todas las causas" },
+    { href: "/escritos", label: "Escritos" },
+    { href: "/abogados", label: "Abogados certificados" },
   ],
   FISCAL: [
     { href: "/dashboard/fiscal", label: "Mis causas" },
+    { href: "/causas", label: "Todas las causas" },
     { href: "/causas/nueva", label: "Registrar causa" },
-    { href: "/audiencias", label: "Audiencias" },
+    { href: "/escritos", label: "Escritos" },
+    { href: "/abogados", label: "Abogados certificados" },
   ],
   ABOGADO: [
     { href: "/dashboard/abogado", label: "Mis defensas" },
+    { href: "/causas", label: "Causas disponibles" },
+    { href: "/escritos", label: "Escritos" },
     { href: "/dashboard/abogado/certificacion", label: "Mi certificación" },
-    { href: "/causas", label: "Causas públicas" },
+    { href: "/abogados", label: "Abogados certificados" },
   ],
   CIUDADANO: [
     { href: "/dashboard/parte", label: "Mis causas" },
-    { href: "/causas", label: "Causas públicas" },
+    { href: "/abogados", label: "Abogados certificados" },
   ],
 };
 

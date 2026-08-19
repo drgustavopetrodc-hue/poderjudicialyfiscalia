@@ -39,6 +39,42 @@ async function asumirDefensa(causaId: string) {
   revalidatePath(`/causas/${causaId}`);
 }
 
+async function tomarCausaComoJuez(causaId: string) {
+  "use server";
+  const session = await getServerSession(authOptions);
+  const juezId = (session?.user as any)?.id as string;
+  const rol = (session?.user as any)?.rol;
+  if (!juezId || rol !== "JUEZ") return;
+
+  await prisma.causa.update({ where: { id: causaId }, data: { juezId } });
+  revalidatePath(`/causas/${causaId}`);
+}
+
+async function programarAudiencia(causaId: string, formData: FormData) {
+  "use server";
+  const session = await getServerSession(authOptions);
+  const creadorId = (session?.user as any)?.id as string;
+  const rol = (session?.user as any)?.rol;
+  if (!creadorId || (rol !== "JUEZ" && rol !== "FISCAL" && rol !== "ADMIN")) return;
+
+  const fecha = String(formData.get("fecha"));
+  const hora = String(formData.get("hora"));
+  const fechaHora = new Date(`${fecha}T${hora}`);
+  if (isNaN(fechaHora.getTime())) return;
+
+  await prisma.audiencia.create({
+    data: {
+      causaId,
+      creadorId,
+      tipo: String(formData.get("tipo")) as any,
+      fechaHora,
+      sala: String(formData.get("sala") ?? "") || null,
+      notas: String(formData.get("notas") ?? "") || null,
+    },
+  });
+  revalidatePath(`/causas/${causaId}`);
+}
+
 async function dictarSentencia(causaId: string, juezId: string, formData: FormData) {
   "use server";
   await prisma.sentencia.create({
@@ -75,8 +111,11 @@ export default async function CausaDetallePage({ params }: { params: { id: strin
   if (!causa) notFound();
 
   const esJuezDeLaCausa = causa.juezId === userId;
+  const esFiscalDeLaCausa = causa.fiscalId === userId;
   const puedeDictarSentencia = esJuezDeLaCausa && causa.estado === "EN_JUICIO" && !causa.sentencia;
   const puedeAsumirDefensa = rol === "ABOGADO" && !causa.defensas.some((d) => d.abogadoId === userId);
+  const puedeTomarCausa = rol === "JUEZ" && !esJuezDeLaCausa;
+  const puedeProgramarAudiencia = esJuezDeLaCausa || esFiscalDeLaCausa || rol === "ADMIN";
 
   return (
     <main className="min-h-screen bg-hueso px-8 py-12 max-w-3xl mx-auto">
@@ -96,6 +135,13 @@ export default async function CausaDetallePage({ params }: { params: { id: strin
         <p className="text-sm text-grafito/50">
           Fiscal: {causa.fiscal.name} · Juez: {causa.juez?.name ?? "Sin asignar"}
         </p>
+        {puedeTomarCausa && (
+          <form action={tomarCausaComoJuez.bind(null, causa.id)} className="mt-4">
+            <button className="bg-marino-950 text-hueso px-4 py-2 rounded-sm text-sm hover:bg-marino-900">
+              Tomar esta causa
+            </button>
+          </form>
+        )}
       </section>
 
       {/* Defensa técnica */}
@@ -161,17 +207,41 @@ export default async function CausaDetallePage({ params }: { params: { id: strin
       <section className="bg-white border border-grafito/10 rounded-sm p-6 mb-6">
         <h2 className="font-display text-xl mb-3">Audiencias</h2>
         {causa.audiencias.length === 0 ? (
-          <p className="text-grafito/50 text-sm">Sin audiencias programadas.</p>
+          <p className="text-grafito/50 text-sm mb-4">Sin audiencias programadas.</p>
         ) : (
-          <ul className="text-sm grid gap-2">
+          <ul className="text-sm grid gap-2 mb-4">
             {causa.audiencias.map((a) => (
               <li key={a.id} className="flex justify-between border-t border-grafito/10 pt-2 first:border-t-0 first:pt-0">
                 <span>{a.tipo.replace(/_/g, " ")}</span>
                 <span className="text-grafito/50">{format(a.fechaHora, "dd/MM/yyyy HH:mm")}</span>
+                <span className="text-grafito/50">{a.sala ?? ""}</span>
                 <span className="font-mono text-xs uppercase">{a.estado}</span>
               </li>
             ))}
           </ul>
+        )}
+
+        {puedeProgramarAudiencia && (
+          <form action={programarAudiencia.bind(null, causa.id)} className="grid gap-3 border-t border-grafito/10 pt-4">
+            <div className="flex gap-3">
+              <select name="tipo" className="border border-grafito/20 rounded-sm px-3 py-2 text-sm">
+                <option value="FORMALIZACION">Formalización</option>
+                <option value="PREPARACION_JUICIO">Preparación de juicio</option>
+                <option value="JUICIO_ORAL">Juicio oral</option>
+                <option value="LECTURA_SENTENCIA">Lectura de sentencia</option>
+                <option value="OTRA">Otra</option>
+              </select>
+              <input name="sala" placeholder="Sala (opcional)" className="flex-1 border border-grafito/20 rounded-sm px-3 py-2 text-sm" />
+            </div>
+            <div className="flex gap-3">
+              <input type="date" name="fecha" required className="border border-grafito/20 rounded-sm px-3 py-2 text-sm" />
+              <input type="time" name="hora" required className="border border-grafito/20 rounded-sm px-3 py-2 text-sm" />
+            </div>
+            <input name="notas" placeholder="Notas (opcional)" className="border border-grafito/20 rounded-sm px-3 py-2 text-sm" />
+            <button className="bg-marino-950 text-hueso px-4 py-2 rounded-sm text-sm hover:bg-marino-900 justify-self-start">
+              Programar audiencia
+            </button>
+          </form>
         )}
       </section>
 

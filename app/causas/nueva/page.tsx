@@ -4,11 +4,14 @@ import { prisma } from "@/lib/prisma";
 import DashboardShell from "@/components/DashboardShell";
 import { redirect } from "next/navigation";
 
+const ROLES_CON_ACCESO = ["FISCAL", "ADMIN"];
+
 async function crearCausa(formData: FormData) {
   "use server";
   const session = await getServerSession(authOptions);
   const fiscalId = (session?.user as any)?.id as string;
-  if (!fiscalId) return;
+  const rol = (session?.user as any)?.rol;
+  if (!fiscalId || !ROLES_CON_ACCESO.includes(rol)) return;
 
   const rit = String(formData.get("rit"));
   const caratulado = String(formData.get("caratulado"));
@@ -23,9 +26,21 @@ async function crearCausa(formData: FormData) {
 }
 
 export default async function NuevaCausaPage() {
+  const session = await getServerSession(authOptions);
+  const rol = (session?.user as any)?.rol as string | undefined;
+
+  if (!rol || !ROLES_CON_ACCESO.includes(rol)) {
+    redirect("/dashboard?error=sin-permiso");
+  }
+
   return (
-    <DashboardShell rol="FISCAL" titulo="Registrar nueva causa">
+    <DashboardShell rol={rol} titulo="Registrar nueva causa">
       <form action={crearCausa} className="max-w-lg bg-white border border-grafito/10 rounded-sm p-6 grid gap-4">
+        {rol === "ADMIN" && (
+          <p className="text-xs text-dorado-500 bg-dorado-400/10 border border-dorado-500/30 rounded-sm px-3 py-2">
+            Estás registrando esta causa como Corte Suprema, actuando en calidad de fiscal para fines de prueba.
+          </p>
+        )}
         <div>
           <label className="block text-sm text-grafito/60 mb-1">RIT (rol interno del tribunal)</label>
           <input name="rit" required placeholder="001-2026" className="w-full border border-grafito/20 rounded-sm px-3 py-2" />

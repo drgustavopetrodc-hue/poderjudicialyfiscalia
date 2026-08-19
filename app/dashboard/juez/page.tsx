@@ -9,6 +9,7 @@ export const dynamic = "force-dynamic";
 export default async function JuezDashboard() {
   const session = await getServerSession(authOptions);
   const userId = (session?.user as any)?.id as string;
+  const rol = (session?.user as any)?.rol as string;
 
   const causas = await prisma.causa.findMany({
     where: { juezId: userId },
@@ -17,7 +18,7 @@ export default async function JuezDashboard() {
   });
 
   return (
-    <DashboardShell rol="JUEZ" titulo="Causas asignadas a mi tribunal">
+    <DashboardShell rol={rol} titulo="Causas asignadas a mi tribunal">
       {causas.length === 0 ? (
         <p className="text-grafito/50">
           Aún no tienes causas asignadas. El fiscal a cargo o un administrador

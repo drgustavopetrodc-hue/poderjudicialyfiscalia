@@ -9,6 +9,7 @@ export const dynamic = "force-dynamic";
 export default async function FiscalDashboard() {
   const session = await getServerSession(authOptions);
   const userId = (session?.user as any)?.id as string;
+  const rol = (session?.user as any)?.rol as string;
 
   const causas = await prisma.causa.findMany({
     where: { fiscalId: userId },
@@ -17,7 +18,7 @@ export default async function FiscalDashboard() {
   });
 
   return (
-    <DashboardShell rol="FISCAL" titulo="Causas de mi fiscalía">
+    <DashboardShell rol={rol} titulo="Causas de mi fiscalía">
       <Link
         href="/causas/nueva"
         className="inline-block bg-marino-950 text-hueso px-5 py-2.5 rounded-sm text-sm mb-6 hover:bg-marino-900"

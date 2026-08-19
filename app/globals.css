@@ -9,6 +9,33 @@ body {
   color: #2a2a28;
 }
 
+.eyebrow {
+  color: rgba(42, 42, 40, 0.45);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: .16em;
+  line-height: 1.4;
+  text-transform: uppercase;
+}
+
+.button-primary, .button-secondary, .button-outline {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 10px;
+  padding: .6rem .85rem;
+  font-size: .75rem;
+  font-weight: 600;
+  transition: all .2s ease;
+}
+.button-primary { background: #0b1526; color: #f4f1ea; }
+.button-primary:hover { background: #1f3a63; transform: translateY(-1px); }
+.button-secondary { border: 1px solid rgba(184,146,63,.35); color: #8f6e26; background: rgba(201,164,92,.08); }
+.button-secondary:hover { background: rgba(201,164,92,.18); }
+.button-outline { border: 1px solid rgba(42,42,40,.15); color: rgba(42,42,40,.65); }
+.button-outline:hover { border-color: rgba(184,146,63,.55); color: #0b1526; }
+.stat-card { border: 1px solid rgba(42,42,40,.1); border-radius: 16px; background: white; padding: 1.15rem 1.25rem; box-shadow: 0 12px 30px rgba(11,21,38,.04); }
+
 .sello {
   background-image: radial-gradient(circle at 50% 50%, rgba(184, 146, 63, 0.12), transparent 70%);
 }

@@ -30,10 +30,12 @@ async function asumirDefensa(causaId: string) {
   const session = await getServerSession(authOptions);
   const abogadoId = (session?.user as any)?.id as string;
   const rol = (session?.user as any)?.rol;
-  if (!abogadoId || rol !== "ABOGADO") return;
+  if (!abogadoId || (rol !== "ABOGADO" && rol !== "ADMIN")) return;
 
-  const cert = await prisma.certificacionAbogado.findUnique({ where: { userId: abogadoId } });
-  if (!cert || cert.estado !== "APROBADA") return;
+  if (rol !== "ADMIN") {
+    const cert = await prisma.certificacionAbogado.findUnique({ where: { userId: abogadoId } });
+    if (!cert || cert.estado !== "APROBADA") return;
+  }
 
   await prisma.defensa.create({ data: { causaId, abogadoId } });
   revalidatePath(`/causas/${causaId}`);
@@ -44,7 +46,7 @@ async function tomarCausaComoJuez(causaId: string) {
   const session = await getServerSession(authOptions);
   const juezId = (session?.user as any)?.id as string;
   const rol = (session?.user as any)?.rol;
-  if (!juezId || rol !== "JUEZ") return;
+  if (!juezId || (rol !== "JUEZ" && rol !== "ADMIN")) return;
 
   await prisma.causa.update({ where: { id: causaId }, data: { juezId } });
   revalidatePath(`/causas/${causaId}`);
@@ -77,6 +79,11 @@ async function programarAudiencia(causaId: string, formData: FormData) {
 
 async function dictarSentencia(causaId: string, juezId: string, formData: FormData) {
   "use server";
+  const session = await getServerSession(authOptions);
+  const rol = (session?.user as any)?.rol;
+  const sessionUserId = (session?.user as any)?.id;
+  if (sessionUserId !== juezId || (rol !== "JUEZ" && rol !== "ADMIN")) return;
+
   await prisma.sentencia.create({
     data: {
       causaId,
@@ -112,10 +119,12 @@ export default async function CausaDetallePage({ params }: { params: { id: strin
 
   const esJuezDeLaCausa = causa.juezId === userId;
   const esFiscalDeLaCausa = causa.fiscalId === userId;
-  const puedeDictarSentencia = esJuezDeLaCausa && causa.estado === "EN_JUICIO" && !causa.sentencia;
-  const puedeAsumirDefensa = rol === "ABOGADO" && !causa.defensas.some((d) => d.abogadoId === userId);
-  const puedeTomarCausa = rol === "JUEZ" && !esJuezDeLaCausa;
-  const puedeProgramarAudiencia = esJuezDeLaCausa || esFiscalDeLaCausa || rol === "ADMIN";
+  // Los ADMIN representan a la Corte Suprema: tienen todas las facultades de un juez sobre cualquier causa.
+  const actuaComoJuez = esJuezDeLaCausa || rol === "ADMIN";
+  const puedeDictarSentencia = actuaComoJuez && causa.estado === "EN_JUICIO" && !causa.sentencia;
+  const puedeAsumirDefensa = (rol === "ABOGADO" || rol === "ADMIN") && !causa.defensas.some((d) => d.abogadoId === userId);
+  const puedeTomarCausa = (rol === "JUEZ" || rol === "ADMIN") && !esJuezDeLaCausa;
+  const puedeProgramarAudiencia = actuaComoJuez || esFiscalDeLaCausa;
 
   return (
     <main className="min-h-screen bg-hueso px-8 py-12 max-w-3xl mx-auto">

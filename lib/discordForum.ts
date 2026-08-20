@@ -15,6 +15,8 @@ async function cargarCausa(causaId: string) {
       escritos: { include: { autor: true }, orderBy: { presentadoEn: "asc" } },
       audiencias: { orderBy: { fechaHora: "asc" } },
       ordenesCaptura: true,
+      adjuntosFiscales: { orderBy: { creadoEn: "asc" } },
+      testimonios: { orderBy: { creadoEn: "asc" } },
       sentencia: true,
     },
   });
@@ -60,6 +62,12 @@ async function crearPdf(causa: NonNullable<CausaConDatos>) {
   y -= 8;
   add(`ÓRDENES DE CAPTURA (${causa.ordenesCaptura.length})`, 10, bold, blue);
   for (const orden of causa.ordenesCaptura) add(`${orden.nombrePersona} — ${orden.estado} — ${orden.motivo}`);
+  y -= 8;
+  add(`ANTECEDENTES ADJUNTOS (${causa.adjuntosFiscales.length})`, 10, bold, blue);
+  for (const adjunto of causa.adjuntosFiscales) add(`${adjunto.tipo} — ${adjunto.nombre}`);
+  y -= 8;
+  add(`TESTIMONIOS (${causa.testimonios.length})`, 10, bold, blue);
+  for (const testimonio of causa.testimonios) add(`${testimonio.declarante}: ${testimonio.contenido}`);
   y -= 8;
   add(`ESCRITOS (${causa.escritos.length})`, 10, bold, blue);
   for (const escrito of causa.escritos) add(`${escrito.tipo} — ${escrito.titulo} — ${escrito.autor.name ?? "Sin autor"}`);

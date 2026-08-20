@@ -12,7 +12,7 @@ export async function GET(_request: Request, { params }: { params: { id: string 
 
   const causa = await prisma.causa.findUnique({
     where: { id: params.id },
-    include: { fiscal: true, juez: true, escritos: { include: { autor: true }, orderBy: { presentadoEn: "asc" } }, ordenesCaptura: true, sentencia: true },
+    include: { fiscal: true, juez: true, escritos: { include: { autor: true }, orderBy: { presentadoEn: "asc" } }, ordenesCaptura: true, adjuntosFiscales: true, testimonios: true, sentencia: true },
   });
   if (!causa) return NextResponse.json({ error: "Causa no encontrada" }, { status: 404 });
 
@@ -51,6 +51,10 @@ export async function GET(_request: Request, { params }: { params: { id: string 
   y -= 8;
   line(`ÓRDENES DE CAPTURA (${causa.ordenesCaptura.length})`, 10, bold, blue);
   for (const orden of causa.ordenesCaptura) line(`${orden.nombrePersona} — ${orden.estado} — ${orden.motivo}`);
+  line(`ANTECEDENTES ADJUNTOS (${causa.adjuntosFiscales.length})`, 10, bold, blue);
+  for (const adjunto of causa.adjuntosFiscales) line(`${adjunto.tipo} — ${adjunto.nombre}`);
+  line(`TESTIMONIOS (${causa.testimonios.length})`, 10, bold, blue);
+  for (const testimonio of causa.testimonios) line(`${testimonio.declarante}: ${testimonio.contenido}`);
   if (causa.sentencia) {
     y -= 8;
     line("SENTENCIA", 10, bold, blue);

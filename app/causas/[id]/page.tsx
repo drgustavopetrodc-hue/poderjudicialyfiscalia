@@ -172,6 +172,8 @@ export default async function CausaDetallePage({ params }: { params: { id: strin
       escritos: { include: { autor: true }, orderBy: { presentadoEn: "desc" } },
       audiencias: { orderBy: { fechaHora: "asc" } },
       sentencia: true,
+      adjuntosFiscales: { orderBy: { creadoEn: "desc" } },
+      testimonios: { orderBy: { creadoEn: "desc" } },
     },
   });
 
@@ -254,6 +256,29 @@ export default async function CausaDetallePage({ params }: { params: { id: strin
             </button>
           </form>
         )}
+      </section>
+
+      <section className="bg-white border border-grafito/10 rounded-sm p-6 mb-6">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div><h2 className="font-display text-xl">Antecedentes de fiscalía</h2><p className="mt-1 text-sm text-grafito/50">Pruebas visuales, oficios y testimonios incorporados al expediente.</p></div>
+          <span className="rounded-full bg-blue-50 px-3 py-1 font-mono text-xs text-blue-700">{causa.adjuntosFiscales.length} archivos · {causa.testimonios.length} testimonios</span>
+        </div>
+        <div className="mt-4 grid gap-5 md:grid-cols-2">
+          <div>
+            <p className="eyebrow text-blue-700">Archivos</p>
+            <div className="mt-2 space-y-2">
+              {causa.adjuntosFiscales.map((adjunto) => <a key={adjunto.id} href={`/api/fiscal/adjuntos/${adjunto.id}`} target="_blank" className="block rounded-lg border border-blue-100 bg-blue-50/40 px-3 py-2 text-sm text-blue-700 hover:underline">↗ {adjunto.nombre} <span className="text-xs text-grafito/40">({adjunto.tipo === "OFICIO" ? "oficio PDF" : "evidencia visual"})</span></a>)}
+              {!causa.adjuntosFiscales.length && <p className="text-sm text-grafito/40">Sin archivos adjuntos.</p>}
+            </div>
+          </div>
+          <div>
+            <p className="eyebrow text-blue-700">Testimonios</p>
+            <div className="mt-2 space-y-2">
+              {causa.testimonios.map((testimonio) => <div key={testimonio.id} className="rounded-lg border border-blue-100 bg-blue-50/40 px-3 py-2"><p className="text-sm font-medium text-marino-950">{testimonio.declarante}</p><p className="mt-1 whitespace-pre-wrap text-xs leading-5 text-grafito/60">{testimonio.contenido}</p></div>)}
+              {!causa.testimonios.length && <p className="text-sm text-grafito/40">Sin testimonios registrados.</p>}
+            </div>
+          </div>
+        </div>
       </section>
 
       <section className="bg-white border border-grafito/10 rounded-sm p-6 mb-6">

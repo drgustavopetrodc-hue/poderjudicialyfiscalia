@@ -45,6 +45,11 @@ enum EstadoOrdenCaptura {
   LEVANTADA
 }
 
+enum TipoAdjuntoFiscal {
+  EVIDENCIA_VISUAL
+  OFICIO
+}
+
 enum TipoAudiencia {
   FORMALIZACION
   PREPARACION_JUICIO
@@ -122,6 +127,8 @@ model User {
   partesEnCausas     ParteCausa[]
   ordenesCapturaSolicitadas OrdenCaptura[]  @relation("OrdenCapturaSolicitante")
   ordenesCapturaRecibidas OrdenCaptura[]    @relation("OrdenCapturaPersona")
+  adjuntosFiscales AdjuntoFiscal[]         @relation("AdjuntosFiscalesUsuario")
+  testimoniosRegistrados Testimonio[]       @relation("TestimoniosUsuario")
 }
 
 // ---------- Certificación de abogados ----------
@@ -160,6 +167,8 @@ model Causa {
   audiencias Audiencia[]
   sentencia  Sentencia?
   ordenesCaptura OrdenCaptura[]
+  adjuntosFiscales AdjuntoFiscal[]
+  testimonios Testimonio[]
 }
 
 model OrdenCaptura {
@@ -175,6 +184,31 @@ model OrdenCaptura {
   estado      EstadoOrdenCaptura  @default(VIGENTE)
   emitidaEn   DateTime            @default(now())
   levantadaEn DateTime?
+}
+
+model AdjuntoFiscal {
+  id          String           @id @default(cuid())
+  causaId     String
+  causa       Causa            @relation(fields: [causaId], references: [id], onDelete: Cascade)
+  subidoPorId String
+  subidoPor   User             @relation("AdjuntosFiscalesUsuario", fields: [subidoPorId], references: [id])
+  tipo        TipoAdjuntoFiscal
+  nombre      String
+  mimeType    String
+  tamano      Int
+  datos       Bytes
+  creadoEn    DateTime         @default(now())
+}
+
+model Testimonio {
+  id          String   @id @default(cuid())
+  causaId     String
+  causa       Causa   @relation(fields: [causaId], references: [id], onDelete: Cascade)
+  registradoPorId String
+  registradoPor User  @relation("TestimoniosUsuario", fields: [registradoPorId], references: [id])
+  declarante   String
+  contenido   String   @db.Text
+  creadoEn    DateTime @default(now())
 }
 
 // Relación entre una causa y las personas involucradas (imputado, víctima, querellante)

@@ -45,6 +45,10 @@ El bot debe tener permisos de **View Channel**, **Create Posts**, **Send Message
 `DISCORD_BOT_TOKEN` y ejecuta `npx prisma db push` para agregar el vínculo del
 post de Discord a cada causa.
 
+La fiscalía permite adjuntar imágenes de evidencia y oficios PDF de hasta 10 MB,
+además de registrar testimonios escritos. Estos antecedentes se guardan en Postgres,
+aparecen en el expediente y se incluyen en el PDF actualizado.
+
 ## 5. Sincronización automática de roles con Discord
 El sistema puede leer los roles reales del servidor de Discord y asignar el rol
 correspondiente dentro de la app automáticamente, cada vez que alguien inicia sesión.

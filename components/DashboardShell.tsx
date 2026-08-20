@@ -20,7 +20,7 @@ const NAV_POR_ROL: Record<string, { href: string; label: string }[]> = {
     { href: "/abogados", label: "Abogados certificados" },
   ],
   FISCAL: [
-    { href: "/dashboard/fiscal", label: "Mis causas" },
+    { href: "/dashboard/fiscal", label: "Mi fiscalía" },
     { href: "/causas", label: "Todas las causas" },
     { href: "/causas/nueva", label: "Registrar causa" },
     { href: "/escritos", label: "Escritos" },

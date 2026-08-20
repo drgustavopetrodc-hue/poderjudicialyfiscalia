@@ -1,65 +1,51 @@
 import Link from "next/link";
-import {
-  LayoutDashboard,
-  Scale,
-  FilePlus2,
-  Users,
-  Gavel,
-  ScrollText,
-  Award,
-  BadgeCheck,
-  ShieldCheck,
-  UserCog,
-  LogOut,
-} from "lucide-react";
-import NavLinks, { type NavItem } from "./NavLinks";
 
-const NAV_POR_ROL: Record<string, NavItem[]> = {
+const NAV_POR_ROL: Record<string, { href: string; label: string }[]> = {
   ADMIN: [
-    { href: "/dashboard/admin", label: "Panel general", icon: LayoutDashboard },
-    { href: "/causas", label: "Todas las causas", icon: Scale },
-    { href: "/causas/nueva", label: "Registrar causa (fiscal)", icon: FilePlus2 },
-    { href: "/dashboard/fiscal", label: "Ver como fiscal", icon: Users },
-    { href: "/dashboard/juez", label: "Ver como juez", icon: Gavel },
-    { href: "/dashboard/abogado", label: "Ver como abogado", icon: ShieldCheck },
-    { href: "/abogados", label: "Abogados certificados", icon: Award },
-    { href: "/escritos", label: "Escritos", icon: ScrollText },
-    { href: "/dashboard/admin/certificaciones", label: "Certificar abogados", icon: BadgeCheck },
-    { href: "/dashboard/admin/usuarios", label: "Usuarios y roles", icon: UserCog },
+    { href: "/dashboard/admin", label: "Panel general" },
+    { href: "/causas", label: "Todas las causas" },
+    { href: "/causas/nueva", label: "Registrar causa (como fiscal)" },
+    { href: "/dashboard/fiscal", label: "Ver como fiscal" },
+    { href: "/dashboard/juez", label: "Ver como juez" },
+    { href: "/dashboard/abogado", label: "Ver como abogado" },
+    { href: "/abogados", label: "Abogados certificados" },
+    { href: "/escritos", label: "Escritos" },
+    { href: "/dashboard/admin/certificaciones", label: "Certificar abogados" },
+    { href: "/dashboard/admin/usuarios", label: "Usuarios y roles" },
   ],
   JUEZ: [
-    { href: "/dashboard/juez", label: "Mis causas", icon: Gavel },
-    { href: "/causas", label: "Todas las causas", icon: Scale },
-    { href: "/escritos", label: "Escritos", icon: ScrollText },
-    { href: "/abogados", label: "Abogados certificados", icon: Award },
+    { href: "/dashboard/juez", label: "Mis causas" },
+    { href: "/causas", label: "Todas las causas" },
+    { href: "/escritos", label: "Escritos" },
+    { href: "/abogados", label: "Abogados certificados" },
   ],
   FISCAL: [
-    { href: "/dashboard/fiscal", label: "Mi fiscalía", icon: Users },
-    { href: "/causas", label: "Todas las causas", icon: Scale },
-    { href: "/causas/nueva", label: "Registrar causa", icon: FilePlus2 },
-    { href: "/escritos", label: "Escritos", icon: ScrollText },
-    { href: "/abogados", label: "Abogados certificados", icon: Award },
+    { href: "/dashboard/fiscal", label: "Mi fiscalía" },
+    { href: "/causas", label: "Todas las causas" },
+    { href: "/causas/nueva", label: "Registrar causa" },
+    { href: "/escritos", label: "Escritos" },
+    { href: "/abogados", label: "Abogados certificados" },
   ],
   ABOGADO: [
-    { href: "/dashboard/abogado", label: "Mis defensas", icon: ShieldCheck },
-    { href: "/causas", label: "Causas disponibles", icon: Scale },
-    { href: "/escritos", label: "Escritos", icon: ScrollText },
-    { href: "/dashboard/abogado/certificacion", label: "Mi certificación", icon: BadgeCheck },
-    { href: "/abogados", label: "Abogados certificados", icon: Award },
+    { href: "/dashboard/abogado", label: "Mis defensas" },
+    { href: "/causas", label: "Causas disponibles" },
+    { href: "/escritos", label: "Escritos" },
+    { href: "/dashboard/abogado/certificacion", label: "Mi certificación" },
+    { href: "/abogados", label: "Abogados certificados" },
   ],
   CIUDADANO: [
-    { href: "/dashboard/parte", label: "Mis causas", icon: Scale },
-    { href: "/abogados", label: "Abogados certificados", icon: Award },
+    { href: "/dashboard/parte", label: "Mis causas" },
+    { href: "/abogados", label: "Abogados certificados" },
   ],
 };
 
 const NOMBRE_VISUAL_ROL: Record<string, string> = {
-  ADMIN: "Corte Suprema",
-  JUEZ: "Juez",
-  FISCAL: "Fiscal",
-  ABOGADO: "Abogado",
-  FUNCIONARIO: "Funcionario",
-  CIUDADANO: "Ciudadano",
+  ADMIN: "CORTE SUPREMA",
+  JUEZ: "JUEZ",
+  FISCAL: "FISCAL",
+  ABOGADO: "ABOGADO",
+  FUNCIONARIO: "FUNCIONARIO",
+  CIUDADANO: "CIUDADANO",
 };
 
 export default function DashboardShell({
@@ -76,46 +62,38 @@ export default function DashboardShell({
 
   return (
     <div className="min-h-screen bg-hueso flex">
-      <aside className="w-72 bg-marino-950 text-hueso shrink-0 p-6 hidden md:flex flex-col relative overflow-hidden">
-        <div className="sello absolute inset-0 pointer-events-none" />
-        <div className="grid-ornamento absolute inset-0 pointer-events-none opacity-40" />
-
-        <Link href="/dashboard" className="relative flex items-center gap-3 mb-8 px-1 group">
-          <div className="w-9 h-9 rounded-full border border-dorado-400/40 flex items-center justify-center shrink-0 bg-hueso/[0.04] group-hover:border-dorado-400/70 transition-colors">
-            <Scale size={16} className="text-dorado-400" strokeWidth={1.75} />
-          </div>
-          <div>
-            <p className="font-display text-base leading-none">Poder Judicial</p>
-            <p className="font-mono text-dorado-400/70 text-[10px] tracking-[0.22em] uppercase mt-1">Sistema RP</p>
-          </div>
-        </Link>
-
-        <div className="relative">
-          <NavLinks items={items} />
+      <aside className="w-72 bg-marino-950 text-hueso flex-shrink-0 p-7 hidden md:flex flex-col">
+        <p className="font-mono text-dorado-400 text-xs tracking-[0.2em] uppercase mb-8">
+          Poder Judicial
+        </p>
+        <div className="mb-8 border-b border-hueso/10 pb-6">
+          <p className="font-display text-2xl leading-none">Tribunal</p>
+          <p className="mt-2 text-xs text-hueso/40">Sistema de justicia · RP</p>
         </div>
-
-        <div className="relative pt-4 mt-4 border-t border-hueso/10">
-          <div className="flex items-center gap-2.5 px-3 py-2 rounded-lg bg-hueso/[0.04] mb-1">
-            <div className="w-7 h-7 rounded-full bg-dorado-400/15 border border-dorado-400/30 flex items-center justify-center shrink-0">
-              <span className="font-mono text-dorado-400 text-[10px] font-bold">{nombreRol.charAt(0)}</span>
-            </div>
-            <p className="font-mono text-[10px] text-hueso/60 uppercase tracking-widest">{nombreRol}</p>
-          </div>
-          <Link
-            href="/api/auth/signout"
-            className="flex items-center gap-2 text-hueso/40 text-xs hover:text-hueso/75 px-3 py-2 rounded-lg hover:bg-hueso/[0.04] transition-colors"
-          >
-            <LogOut size={13} /> Cerrar sesión
+        <nav className="flex flex-col gap-1">
+          {items.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="rounded-lg px-3 py-2.5 text-sm text-hueso/65 transition-colors hover:bg-hueso/10 hover:text-hueso"
+            >
+              {item.label}
+            </Link>
+          ))}
+        </nav>
+        <div className="mt-auto">
+          <Link href="/api/auth/signout" className="text-hueso/40 text-xs hover:text-hueso/70">
+            Cerrar sesión
           </Link>
         </div>
       </aside>
 
-      <div className="flex-1 min-w-0">
-        <header className="border-b border-grafito/8 bg-white/85 backdrop-blur-md px-6 md:px-10 py-6 sticky top-0 z-10 shadow-[0_1px_0_rgba(11,21,38,.04)]">
-          <p className="eyebrow text-blue-700/80 mb-1">{nombreRol}</p>
-          <h1 className="font-display text-2xl md:text-[28px] text-grafito tracking-tight">{titulo}</h1>
+      <div className="flex-1">
+        <header className="border-b border-grafito/10 bg-white px-8 py-7 shadow-[0_4px_18px_rgba(11,21,38,0.02)]">
+          <p className="font-mono text-xs text-grafito/40 uppercase tracking-widest">{nombreRol}</p>
+          <h1 className="font-display text-2xl text-grafito">{titulo}</h1>
         </header>
-        <main className="p-6 md:p-10 fade-up">{children}</main>
+        <main className="p-6 lg:p-9">{children}</main>
       </div>
     </div>
   );

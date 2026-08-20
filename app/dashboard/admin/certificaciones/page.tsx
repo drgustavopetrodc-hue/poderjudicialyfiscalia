@@ -53,7 +53,7 @@ export default async function CertificacionesAdminPage() {
       ) : (
         <div className="grid gap-4">
           {certificaciones.map((c) => (
-            <div key={c.id} className="panel-card p-5">
+            <div key={c.id} className="bg-white border border-grafito/10 rounded-sm p-5">
             <form action={resolverCertificacion}>
               <input type="hidden" name="id" value={c.id} />
               <p className="font-display text-lg">{c.user.name}</p>
@@ -63,20 +63,20 @@ export default async function CertificacionesAdminPage() {
               <input
                 name="observaciones"
                 placeholder="Observaciones (opcional)"
-                className="w-full border border-grafito/15 rounded-lg px-3 py-2 mb-3 text-sm"
+                className="w-full border border-grafito/20 rounded-sm px-3 py-2 mb-3 text-sm"
               />
               <div className="flex gap-2">
                 <button
                   name="estado"
                   value="APROBADA"
-                  className="button-primary"
+                  className="bg-marino-950 text-hueso px-4 py-2 rounded-sm text-sm hover:bg-marino-900"
                 >
                   Aprobar
                 </button>
                 <button
                   name="estado"
                   value="RECHAZADA"
-                  className="button-outline"
+                  className="border border-grafito/20 px-4 py-2 rounded-sm text-sm hover:border-grafito/40"
                 >
                   Rechazar
                 </button>

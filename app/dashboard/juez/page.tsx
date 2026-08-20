@@ -30,7 +30,7 @@ export default async function JuezDashboard() {
             <Link
               key={c.id}
               href={`/causas/${c.id}`}
-              className="block panel-card p-5 hover:border-dorado-500/40 transition-colors"
+              className="block bg-white border border-grafito/10 rounded-sm p-5 hover:border-dorado-500/40 transition-colors"
             >
               <div className="flex justify-between items-start">
                 <div>
@@ -41,7 +41,7 @@ export default async function JuezDashboard() {
                     {c._count.escritos} escrito(s)
                   </p>
                 </div>
-                <span className="badge bg-marino-950 text-hueso">
+                <span className="text-xs font-mono uppercase bg-marino-950 text-hueso px-2 py-1 rounded-sm">
                   {c.estado.replace(/_/g, " ")}
                 </span>
               </div>

@@ -5,7 +5,6 @@ import Link from "next/link";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { BadgeCheck } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -33,9 +32,9 @@ export default async function AbogadosPage() {
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           {certificados.map((c) => (
-            <div key={c.id} className="panel-card flex items-center justify-between gap-4 p-5">
+            <div key={c.id} className="flex items-center justify-between gap-4 rounded-2xl border border-grafito/10 bg-white p-5 shadow-[0_15px_35px_rgba(11,21,38,0.05)]">
               <div>
-                <p className="eyebrow text-blue-700 flex items-center gap-1.5"><BadgeCheck size={12} /> Defensa técnica habilitada</p>
+                <p className="eyebrow text-blue-700">Defensa técnica habilitada</p>
                 <h3 className="mt-2 font-display text-xl text-marino-950">{c.user.name}</h3>
                 <p className="mt-1 text-sm text-grafito/50">Matrícula <span className="font-mono">{c.numeroMatricula}</span></p>
                 {c.revisadoEn && <p className="mt-1 text-xs text-grafito/40">Certificado el {format(c.revisadoEn, "dd/MM/yyyy")}</p>}

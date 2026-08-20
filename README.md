@@ -1,4 +1,4 @@
-# Poder Judicial RP
+# Poder Judicial
 
 Sistema judicial para servidor de Discord de rol: registro de causas, certificación
 de abogados, presentación de escritos, defensa técnica, audiencias y sentencias.
@@ -32,6 +32,9 @@ npm install
 npx prisma db push   # crea las tablas en tu base de datos
 npm run dev
 ```
+
+Si actualizas desde una versión anterior, vuelve a ejecutar `npx prisma db push`
+después de copiar el proyecto: esta versión agrega la tabla `OrdenCaptura`.
 
 ## 5. Sincronización automática de roles con Discord
 El sistema puede leer los roles reales del servidor de Discord y asignar el rol

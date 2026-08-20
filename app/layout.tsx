@@ -3,7 +3,7 @@ import "./globals.css";
 import Providers from "@/components/Providers";
 
 export const metadata: Metadata = {
-  title: "Poder Judicial RP",
+  title: "Poder Judicial",
   description: "Sistema judicial para el servidor de rol",
 };
 

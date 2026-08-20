@@ -34,7 +34,7 @@ export async function GET(_request: Request, { params }: { params: { id: string 
   };
   page.drawRectangle({ x: 0, y: 0, width: 595, height: 842, color: rgb(0.97, 0.985, 1) });
   page.drawRectangle({ x: 0, y: 790, width: 595, height: 52, color: navy });
-  page.drawText("PODER JUDICIAL RP", { x: 48, y: 811, size: 16, font: bold, color: rgb(1, 1, 1) });
+  page.drawText("PODER JUDICIAL", { x: 48, y: 811, size: 16, font: bold, color: rgb(1, 1, 1) });
   page.drawText("EXPEDIENTE JUDICIAL", { x: 420, y: 813, size: 8, font: regular, color: rgb(0.72, 0.84, 1) });
   y = 755;
   line(`RIT ${causa.rit} · ${causa.estado.replace(/_/g, " ")}`, 11, bold, blue);

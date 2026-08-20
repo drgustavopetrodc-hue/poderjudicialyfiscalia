@@ -64,7 +64,7 @@ export default function DashboardShell({
     <div className="min-h-screen bg-hueso flex">
       <aside className="w-72 bg-marino-950 text-hueso flex-shrink-0 p-7 hidden md:flex flex-col">
         <p className="font-mono text-dorado-400 text-xs tracking-[0.2em] uppercase mb-8">
-          Poder Judicial RP
+          Poder Judicial
         </p>
         <div className="mb-8 border-b border-hueso/10 pb-6">
           <p className="font-display text-2xl leading-none">Tribunal</p>

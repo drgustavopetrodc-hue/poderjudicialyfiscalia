@@ -155,11 +155,22 @@ export default async function CausaDetallePage({ params }: { params: { id: strin
       escritos: { include: { autor: true }, orderBy: { presentadoEn: "desc" } },
       audiencias: { orderBy: { fechaHora: "asc" } },
       sentencia: true,
-      ordenesCaptura: { orderBy: { emitidaEn: "desc" }, include: { solicitadoPor: true } },
     },
   });
 
   if (!causa) notFound();
+  // Permite seguir abriendo expedientes mientras una instalación existente
+  // termina de aplicar la tabla nueva de órdenes de captura.
+  let ordenesCaptura: any[] = [];
+  try {
+    ordenesCaptura = await prisma.ordenCaptura.findMany({
+      where: { causaId: causa.id },
+      orderBy: { emitidaEn: "desc" },
+      include: { solicitadoPor: true },
+    });
+  } catch (error) {
+    console.warn("Órdenes de captura no disponibles todavía:", error);
+  }
 
   const esJuezDeLaCausa = causa.juezId === userId;
   const esFiscalDeLaCausa = causa.fiscalId === userId;
@@ -205,18 +216,21 @@ export default async function CausaDetallePage({ params }: { params: { id: strin
       <section className="bg-white border border-grafito/10 rounded-sm p-6 mb-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div><h2 className="font-display text-xl">Órdenes de captura</h2><p className="mt-1 text-sm text-grafito/50">Medidas emitidas por el tribunal dentro de esta causa.</p></div>
-          <span className="rounded-full bg-blue-50 px-3 py-1 font-mono text-xs text-blue-800">{causa.ordenesCaptura.filter((o) => o.estado === "VIGENTE").length} vigentes</span>
+          <span className="rounded-full bg-blue-50 px-3 py-1 font-mono text-xs text-blue-800">{ordenesCaptura.filter((o) => o.estado === "VIGENTE").length} vigentes</span>
         </div>
         <div className="mt-4 grid gap-3">
-          {causa.ordenesCaptura.map((orden) => (
+          {ordenesCaptura.map((orden) => (
             <div key={orden.id} className="rounded-xl border border-blue-100 bg-blue-50/40 p-4">
               <div className="flex flex-wrap justify-between gap-2"><p className="font-medium text-marino-950">{orden.nombrePersona}</p><span className="font-mono text-[10px] uppercase text-blue-700">{orden.estado}</span></div>
               <p className="mt-2 text-sm text-grafito/65">{orden.motivo}</p>
               <p className="mt-2 text-xs text-grafito/40">Emitida el {format(orden.emitidaEn, "dd/MM/yyyy HH:mm")} por {orden.solicitadoPor.name}</p>
-              {orden.estado === "VIGENTE" && (rol === "JUEZ" || rol === "ADMIN") && <form action={levantarOrdenCaptura.bind(null, orden.id, causa.id)} className="mt-3"><button className="button-outline">Levantar orden</button></form>}
+              <div className="mt-3 flex flex-wrap gap-2">
+                <a href={`/api/ordenes-captura/${orden.id}/pdf`} className="button-primary">Descargar PDF</a>
+                {orden.estado === "VIGENTE" && (rol === "JUEZ" || rol === "ADMIN") && <form action={levantarOrdenCaptura.bind(null, orden.id, causa.id)}><button className="button-outline">Levantar orden</button></form>}
+              </div>
             </div>
           ))}
-          {!causa.ordenesCaptura.length && <p className="text-sm text-grafito/45">No hay órdenes emitidas.</p>}
+          {!ordenesCaptura.length && <p className="text-sm text-grafito/45">No hay órdenes emitidas.</p>}
         </div>
         {(rol === "JUEZ" || rol === "ADMIN") && <form action={crearOrdenCaptura.bind(null, causa.id)} className="mt-5 grid gap-3 border-t border-grafito/10 pt-5 sm:grid-cols-2">
           <input name="nombrePersona" required placeholder="Nombre de la persona" className="border border-grafito/15 rounded-lg px-3 py-2 text-sm" />

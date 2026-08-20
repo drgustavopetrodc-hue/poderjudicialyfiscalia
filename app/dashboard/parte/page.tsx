@@ -26,7 +26,7 @@ export default async function ParteDashboard() {
             <Link
               key={pc.id}
               href={`/causas/${pc.causaId}`}
-              className="block bg-white border border-grafito/10 rounded-sm p-5 hover:border-dorado-500/40 transition-colors"
+              className="block panel-card p-5 hover:border-dorado-500/40 transition-colors"
             >
               <p className="font-mono text-xs text-grafito/40">RIT {pc.causa.rit}</p>
               <h3 className="font-display text-lg">{pc.causa.caratulado}</h3>

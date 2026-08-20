@@ -25,7 +25,7 @@ export default async function AbogadoDashboard() {
   return (
     <DashboardShell rol={rol} titulo={esAdmin ? "Todas las defensas activas" : "Mis defensas activas"}>
       {!esAdmin && (!certificacion || certificacion.estado !== "APROBADA") ? (
-        <div className="bg-dorado-400/10 border border-dorado-500/30 text-marino-900 rounded-sm p-5 mb-6">
+        <div className="bg-blue-50 border border-blue-200/60 text-marino-900 rounded-xl p-5 mb-6">
           <p className="font-semibold mb-1">
             {certificacion ? `Certificación: ${certificacion.estado}` : "Aún no solicitas certificación"}
           </p>
@@ -43,11 +43,11 @@ export default async function AbogadoDashboard() {
         <div className="flex gap-3 mb-6">
           <Link
             href="/dashboard/admin/certificaciones"
-            className="text-sm bg-marino-950 text-hueso px-4 py-2 rounded-sm hover:bg-marino-900"
+            className="button-primary text-sm"
           >
             Revisar certificaciones pendientes
           </Link>
-          <Link href="/abogados" className="text-sm border border-grafito/20 px-4 py-2 rounded-sm hover:border-grafito/40">
+          <Link href="/abogados" className="button-outline text-sm">
             Ver directorio de abogados
           </Link>
         </div>
@@ -63,7 +63,7 @@ export default async function AbogadoDashboard() {
             <Link
               key={d.id}
               href={`/causas/${d.causaId}`}
-              className="block bg-white border border-grafito/10 rounded-sm p-5 hover:border-dorado-500/40 transition-colors"
+              className="block panel-card p-5 hover:border-dorado-500/40 transition-colors"
             >
               <p className="font-mono text-xs text-grafito/40">RIT {d.causa.rit}</p>
               <h3 className="font-display text-lg">{d.causa.caratulado}</h3>

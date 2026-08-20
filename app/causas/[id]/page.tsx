@@ -8,6 +8,7 @@ import { format } from "date-fns";
 import DashboardShell from "@/components/DashboardShell";
 import Link from "next/link";
 import { publicarCausaEnDiscord } from "@/lib/discordForum";
+import { ESTILO_ESTADO_CAUSA, ESTILO_ESTADO_ORDEN, etiquetaEstado } from "@/lib/estilos";
 
 
 export const dynamic = "force-dynamic";
@@ -233,15 +234,20 @@ export default async function CausaDetallePage({ params }: { params: { id: strin
           </div>
         </section>
       )}
-      <p className="font-mono text-xs text-grafito/40 uppercase tracking-widest mb-2">RIT {causa.rit}</p>
-      <div className="flex justify-between items-start mb-8">
-        <h1 className="font-display text-3xl">{causa.caratulado}</h1>
-        <span className="text-xs font-mono uppercase bg-marino-950 text-hueso px-3 py-1.5 rounded-sm shrink-0">
-          {causa.estado.replace(/_/g, " ")}
-        </span>
+      <div className="bg-marino-950 text-hueso rounded-xl p-6 mb-6 relative overflow-hidden">
+        <div className="sello absolute inset-0 pointer-events-none" />
+        <div className="relative">
+          <p className="font-mono text-xs text-dorado-300 uppercase tracking-widest mb-2">RIT {causa.rit}</p>
+          <div className="flex flex-wrap justify-between items-start gap-3">
+            <h1 className="font-display text-3xl leading-tight">{causa.caratulado}</h1>
+            <span className={`badge ${ESTILO_ESTADO_CAUSA[causa.estado] ?? "bg-hueso/10"}`}>
+              {etiquetaEstado(causa.estado)}
+            </span>
+          </div>
+        </div>
       </div>
 
-      <section className="bg-white border border-grafito/10 rounded-sm p-6 mb-6">
+      <section className="panel-card p-6 mb-6">
         <p className="text-sm text-grafito/50 mb-1">Delito</p>
         <p className="mb-4">{causa.delito}</p>
         <p className="text-sm text-grafito/50 mb-1">Descripción</p>
@@ -251,14 +257,14 @@ export default async function CausaDetallePage({ params }: { params: { id: strin
         </p>
         {puedeTomarCausa && (
           <form action={tomarCausaComoJuez.bind(null, causa.id)} className="mt-4">
-            <button className="bg-marino-950 text-hueso px-4 py-2 rounded-sm text-sm hover:bg-marino-900">
+            <button className="button-primary">
               Tomar esta causa
             </button>
           </form>
         )}
       </section>
 
-      <section className="bg-white border border-grafito/10 rounded-sm p-6 mb-6">
+      <section className="panel-card p-6 mb-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div><h2 className="font-display text-xl">Antecedentes de fiscalía</h2><p className="mt-1 text-sm text-grafito/50">Pruebas visuales, oficios y testimonios incorporados al expediente.</p></div>
           <span className="rounded-full bg-blue-50 px-3 py-1 font-mono text-xs text-blue-700">{causa.adjuntosFiscales.length} archivos · {causa.testimonios.length} testimonios</span>
@@ -281,7 +287,7 @@ export default async function CausaDetallePage({ params }: { params: { id: strin
         </div>
       </section>
 
-      <section className="bg-white border border-grafito/10 rounded-sm p-6 mb-6">
+      <section className="panel-card p-6 mb-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div><h2 className="font-display text-xl">Órdenes de captura</h2><p className="mt-1 text-sm text-grafito/50">Medidas emitidas por el tribunal dentro de esta causa.</p></div>
           <span className="rounded-full bg-blue-50 px-3 py-1 font-mono text-xs text-blue-800">{ordenesCaptura.filter((o) => o.estado === "VIGENTE").length} vigentes</span>
@@ -289,7 +295,7 @@ export default async function CausaDetallePage({ params }: { params: { id: strin
         <div className="mt-4 grid gap-3">
           {ordenesCaptura.map((orden) => (
             <div key={orden.id} className="rounded-xl border border-blue-100 bg-blue-50/40 p-4">
-              <div className="flex flex-wrap justify-between gap-2"><p className="font-medium text-marino-950">{orden.nombrePersona}</p><span className="font-mono text-[10px] uppercase text-blue-700">{orden.estado}</span></div>
+              <div className="flex flex-wrap justify-between gap-2"><p className="font-medium text-marino-950">{orden.nombrePersona}</p><span className={`badge ${ESTILO_ESTADO_ORDEN[orden.estado] ?? "bg-grafito/10"}`}>{orden.estado}</span></div>
               <p className="mt-2 text-sm text-grafito/65">{orden.motivo}</p>
               <p className="mt-2 text-xs text-grafito/40">Emitida el {format(orden.emitidaEn, "dd/MM/yyyy HH:mm")} por {orden.solicitadoPor.name}</p>
               <div className="mt-3 flex flex-wrap gap-2">
@@ -308,7 +314,7 @@ export default async function CausaDetallePage({ params }: { params: { id: strin
       </section>
 
       {/* Defensa técnica */}
-      <section className="bg-white border border-grafito/10 rounded-sm p-6 mb-6">
+      <section className="panel-card p-6 mb-6">
         <h2 className="font-display text-xl mb-3">Defensa técnica</h2>
         {causa.defensas.length === 0 ? (
           <p className="text-grafito/50 text-sm mb-3">Aún no hay abogado defensor asignado.</p>
@@ -321,7 +327,7 @@ export default async function CausaDetallePage({ params }: { params: { id: strin
         )}
         {puedeAsumirDefensa && (
           <form action={asumirDefensa.bind(null, causa.id)}>
-            <button className="bg-marino-950 text-hueso px-4 py-2 rounded-sm text-sm hover:bg-marino-900">
+            <button className="button-primary">
               Asumir defensa
             </button>
           </form>
@@ -329,7 +335,7 @@ export default async function CausaDetallePage({ params }: { params: { id: strin
       </section>
 
       {/* Escritos */}
-      <section className="bg-white border border-grafito/10 rounded-sm p-6 mb-6">
+      <section className="panel-card p-6 mb-6">
         <h2 className="font-display text-xl mb-3">Escritos presentados</h2>
         <div className="grid gap-3 mb-5">
           {causa.escritos.map((e) => (
@@ -347,7 +353,7 @@ export default async function CausaDetallePage({ params }: { params: { id: strin
         {session && (
           <form action={presentarEscrito.bind(null, causa.id)} className="grid gap-3 border-t border-grafito/10 pt-4">
             <div className="flex gap-3">
-              <select name="tipo" className="border border-grafito/20 rounded-sm px-3 py-2 text-sm">
+              <select name="tipo" className="border border-grafito/15 rounded-lg px-3 py-2 text-sm">
                 <option value="QUERELLA">Querella</option>
                 <option value="FORMALIZACION">Formalización</option>
                 <option value="ACUSACION">Acusación</option>
@@ -356,10 +362,10 @@ export default async function CausaDetallePage({ params }: { params: { id: strin
                 <option value="RECURSO">Recurso</option>
                 <option value="OTRO">Otro</option>
               </select>
-              <input name="titulo" required placeholder="Título del escrito" className="flex-1 border border-grafito/20 rounded-sm px-3 py-2 text-sm" />
+              <input name="titulo" required placeholder="Título del escrito" className="flex-1 border border-grafito/15 rounded-lg px-3 py-2 text-sm" />
             </div>
-            <textarea name="contenido" required rows={4} placeholder="Contenido..." className="border border-grafito/20 rounded-sm px-3 py-2 text-sm" />
-            <button className="bg-marino-950 text-hueso px-4 py-2 rounded-sm text-sm hover:bg-marino-900 justify-self-start">
+            <textarea name="contenido" required rows={4} placeholder="Contenido..." className="border border-grafito/15 rounded-lg px-3 py-2 text-sm" />
+            <button className="button-primary justify-self-start">
               Presentar escrito
             </button>
           </form>
@@ -367,7 +373,7 @@ export default async function CausaDetallePage({ params }: { params: { id: strin
       </section>
 
       {/* Audiencias */}
-      <section className="bg-white border border-grafito/10 rounded-sm p-6 mb-6">
+      <section className="panel-card p-6 mb-6">
         <h2 className="font-display text-xl mb-3">Audiencias</h2>
         {causa.audiencias.length === 0 ? (
           <p className="text-grafito/50 text-sm mb-4">Sin audiencias programadas.</p>
@@ -387,21 +393,21 @@ export default async function CausaDetallePage({ params }: { params: { id: strin
         {puedeProgramarAudiencia && (
           <form action={programarAudiencia.bind(null, causa.id)} className="grid gap-3 border-t border-grafito/10 pt-4">
             <div className="flex gap-3">
-              <select name="tipo" className="border border-grafito/20 rounded-sm px-3 py-2 text-sm">
+              <select name="tipo" className="border border-grafito/15 rounded-lg px-3 py-2 text-sm">
                 <option value="FORMALIZACION">Formalización</option>
                 <option value="PREPARACION_JUICIO">Preparación de juicio</option>
                 <option value="JUICIO_ORAL">Juicio oral</option>
                 <option value="LECTURA_SENTENCIA">Lectura de sentencia</option>
                 <option value="OTRA">Otra</option>
               </select>
-              <input name="sala" placeholder="Sala (opcional)" className="flex-1 border border-grafito/20 rounded-sm px-3 py-2 text-sm" />
+              <input name="sala" placeholder="Sala (opcional)" className="flex-1 border border-grafito/15 rounded-lg px-3 py-2 text-sm" />
             </div>
             <div className="flex gap-3">
-              <input type="date" name="fecha" required className="border border-grafito/20 rounded-sm px-3 py-2 text-sm" />
-              <input type="time" name="hora" required className="border border-grafito/20 rounded-sm px-3 py-2 text-sm" />
+              <input type="date" name="fecha" required className="border border-grafito/15 rounded-lg px-3 py-2 text-sm" />
+              <input type="time" name="hora" required className="border border-grafito/15 rounded-lg px-3 py-2 text-sm" />
             </div>
-            <input name="notas" placeholder="Notas (opcional)" className="border border-grafito/20 rounded-sm px-3 py-2 text-sm" />
-            <button className="bg-marino-950 text-hueso px-4 py-2 rounded-sm text-sm hover:bg-marino-900 justify-self-start">
+            <input name="notas" placeholder="Notas (opcional)" className="border border-grafito/15 rounded-lg px-3 py-2 text-sm" />
+            <button className="button-primary justify-self-start">
               Programar audiencia
             </button>
           </form>
@@ -409,7 +415,7 @@ export default async function CausaDetallePage({ params }: { params: { id: strin
       </section>
 
       {/* Sentencia */}
-      <section className="bg-white border border-grafito/10 rounded-sm p-6">
+      <section className="panel-card p-6">
         <h2 className="font-display text-xl mb-3">Sentencia</h2>
         {causa.sentencia ? (
           <div>
@@ -419,13 +425,13 @@ export default async function CausaDetallePage({ params }: { params: { id: strin
           </div>
         ) : puedeDictarSentencia ? (
           <form action={dictarSentencia.bind(null, causa.id, userId)} className="grid gap-3">
-            <select name="resultado" className="border border-grafito/20 rounded-sm px-3 py-2 text-sm">
+            <select name="resultado" className="border border-grafito/15 rounded-lg px-3 py-2 text-sm">
               <option value="CONDENATORIA">Condenatoria</option>
               <option value="ABSOLUTORIA">Absolutoria</option>
             </select>
-            <textarea name="fundamento" required rows={4} placeholder="Fundamento de la sentencia..." className="border border-grafito/20 rounded-sm px-3 py-2 text-sm" />
-            <input name="pena" placeholder="Pena (si corresponde)" className="border border-grafito/20 rounded-sm px-3 py-2 text-sm" />
-            <button className="bg-marino-950 text-hueso px-4 py-2 rounded-sm text-sm hover:bg-marino-900 justify-self-start">
+            <textarea name="fundamento" required rows={4} placeholder="Fundamento de la sentencia..." className="border border-grafito/15 rounded-lg px-3 py-2 text-sm" />
+            <input name="pena" placeholder="Pena (si corresponde)" className="border border-grafito/15 rounded-lg px-3 py-2 text-sm" />
+            <button className="button-primary justify-self-start">
               Dictar sentencia
             </button>
           </form>

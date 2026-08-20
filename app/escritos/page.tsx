@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import DashboardShell from "@/components/DashboardShell";
 import Link from "next/link";
 import { format } from "date-fns";
+import { ScrollText, FileText } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -68,60 +69,74 @@ export default async function EscritosPage() {
 
   return (
     <DashboardShell rol={rol} titulo="Escritos presentados al tribunal">
-      {puedePresentar && (
-        <form
-          action={presentarEscrito}
-          className="bg-white border border-grafito/10 rounded-sm p-6 mb-8 grid gap-3"
-        >
-          <h2 className="font-display text-lg mb-1">Presentar un nuevo escrito</h2>
-          <div className="flex gap-3">
-            <select name="causaId" required className="flex-1 border border-grafito/20 rounded-sm px-3 py-2 text-sm">
-              <option value="">Selecciona la causa...</option>
-              {causasDisponibles.map((c) => (
-                <option key={c.id} value={c.id}>
-                  RIT {c.rit} — {c.caratulado}
-                </option>
-              ))}
-            </select>
-            <select name="tipo" className="border border-grafito/20 rounded-sm px-3 py-2 text-sm">
-              <option value="QUERELLA">Querella</option>
-              <option value="FORMALIZACION">Formalización</option>
-              <option value="ACUSACION">Acusación</option>
-              <option value="CONTESTACION">Contestación</option>
-              <option value="PRUEBA">Prueba</option>
-              <option value="RECURSO">Recurso</option>
-              <option value="OTRO">Otro</option>
-            </select>
-          </div>
-          <input name="titulo" required placeholder="Título del escrito" className="border border-grafito/20 rounded-sm px-3 py-2 text-sm" />
-          <textarea name="contenido" required rows={4} placeholder="Contenido..." className="border border-grafito/20 rounded-sm px-3 py-2 text-sm" />
-          <button className="bg-marino-950 text-hueso px-4 py-2 rounded-sm text-sm hover:bg-marino-900 justify-self-start">
-            Presentar escrito
-          </button>
-          {causasDisponibles.length === 0 && (
-            <p className="text-xs text-grafito/40">
-              No tienes causas asignadas todavía, así que no hay dónde presentar un escrito.
-            </p>
-          )}
-        </form>
-      )}
+      <div className="mx-auto max-w-4xl">
+        <div className="mb-6">
+          <p className="eyebrow flex items-center gap-1.5"><ScrollText size={12} /> Mesa de partes</p>
+          <h2 className="font-display text-3xl text-marino-950 mt-1">Escritos</h2>
+          <p className="mt-1 text-sm text-grafito/55">Registro cronológico de todo lo presentado ante el tribunal.</p>
+        </div>
 
-      <div className="grid gap-3">
-        {escritos.map((e) => (
-          <div key={e.id} className="bg-white border border-grafito/10 rounded-sm p-5">
-            <p className="text-xs font-mono text-grafito/40 uppercase mb-1">
-              {e.tipo} · {e.autor.name} · {format(e.presentadoEn, "dd/MM/yyyy HH:mm")}
-            </p>
-            <Link href={`/causas/${e.causa.id}`} className="font-semibold hover:underline">
-              {e.titulo}
-            </Link>
-            <p className="text-xs text-grafito/40 mb-2">
-              RIT {e.causa.rit} — {e.causa.caratulado}
-            </p>
-            <p className="text-sm text-grafito/60 whitespace-pre-wrap">{e.contenido}</p>
-          </div>
-        ))}
-        {escritos.length === 0 && <p className="text-grafito/50">Aún no hay escritos presentados.</p>}
+        {puedePresentar && (
+          <form action={presentarEscrito} className="panel-card p-6 mb-8 grid gap-3">
+            <h3 className="font-display text-lg mb-1 text-marino-950">Presentar un nuevo escrito</h3>
+            <div className="flex gap-3">
+              <select name="causaId" required className="flex-1 border border-grafito/15 rounded-lg px-3 py-2 text-sm bg-hueso/40">
+                <option value="">Selecciona la causa...</option>
+                {causasDisponibles.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    RIT {c.rit} — {c.caratulado}
+                  </option>
+                ))}
+              </select>
+              <select name="tipo" className="border border-grafito/15 rounded-lg px-3 py-2 text-sm bg-hueso/40">
+                <option value="QUERELLA">Querella</option>
+                <option value="FORMALIZACION">Formalización</option>
+                <option value="ACUSACION">Acusación</option>
+                <option value="CONTESTACION">Contestación</option>
+                <option value="PRUEBA">Prueba</option>
+                <option value="RECURSO">Recurso</option>
+                <option value="OTRO">Otro</option>
+              </select>
+            </div>
+            <input name="titulo" required placeholder="Título del escrito" className="border border-grafito/15 rounded-lg px-3 py-2 text-sm" />
+            <textarea name="contenido" required rows={4} placeholder="Contenido..." className="border border-grafito/15 rounded-lg px-3 py-2 text-sm" />
+            <button className="button-primary justify-self-start">Presentar escrito</button>
+            {causasDisponibles.length === 0 && (
+              <p className="text-xs text-grafito/40">
+                No tienes causas asignadas todavía, así que no hay dónde presentar un escrito.
+              </p>
+            )}
+          </form>
+        )}
+
+        <div className="grid gap-3">
+          {escritos.map((e) => (
+            <div key={e.id} className="panel-card p-5">
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center shrink-0 mt-0.5">
+                  <FileText size={14} className="text-blue-700" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-mono text-grafito/40 uppercase mb-1">
+                    {e.tipo} · {e.autor.name} · {format(e.presentadoEn, "dd/MM/yyyy HH:mm")}
+                  </p>
+                  <Link href={`/causas/${e.causa.id}`} className="font-semibold text-marino-950 hover:underline">
+                    {e.titulo}
+                  </Link>
+                  <p className="text-xs text-grafito/40 mb-2">
+                    RIT {e.causa.rit} — {e.causa.caratulado}
+                  </p>
+                  <p className="text-sm text-grafito/60 whitespace-pre-wrap leading-relaxed">{e.contenido}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+          {escritos.length === 0 && (
+            <div className="rounded-2xl border border-dashed border-grafito/20 bg-white p-12 text-center text-sm text-grafito/50">
+              Aún no hay escritos presentados.
+            </div>
+          )}
+        </div>
       </div>
     </DashboardShell>
   );

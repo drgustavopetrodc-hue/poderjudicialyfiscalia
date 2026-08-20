@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import DashboardShell from "@/components/DashboardShell";
 import Link from "next/link";
 import { publicarCausaEnDiscord } from "@/lib/discordForum";
+import { ESTILO_ESTADO_CAUSA, etiquetaEstado } from "@/lib/estilos";
 
 export const dynamic = "force-dynamic";
 
@@ -36,15 +37,6 @@ async function asumirDefensaRapida(causaId: string) {
   await publicarCausaEnDiscord(causaId, "Defensa técnica actualizada");
   revalidatePath("/causas");
 }
-
-const estadoVisual: Record<string, string> = {
-  EN_INVESTIGACION: "En investigación",
-  FORMALIZADA: "Formalizada",
-  EN_JUICIO: "En juicio",
-  SENTENCIADA: "Sentenciada",
-  ARCHIVADA: "Archivada",
-  SOBRESEIDA: "Sobreseída",
-};
 
 export default async function CausasPage() {
   const session = await getServerSession(authOptions);
@@ -101,10 +93,9 @@ export default async function CausasPage() {
                 >
                   <div className="mb-2 flex items-center justify-between gap-2">
                     <span className={`font-mono text-[10px] uppercase tracking-wider ${c.id === seleccionada.id ? "text-dorado-300" : "text-grafito/45"}`}>RIT {c.rit}</span>
-                    <span className={`h-2 w-2 rounded-full ${c.estado === "SENTENCIADA" ? "bg-dorado-400" : "bg-emerald-500"}`} />
+                    <span className={`badge ${ESTILO_ESTADO_CAUSA[c.estado] ?? "bg-grafito/20"}`}>{etiquetaEstado(c.estado)}</span>
                   </div>
                   <h3 className="line-clamp-2 font-display text-lg leading-tight">{c.caratulado}</h3>
-                  <p className={`mt-2 text-xs ${c.id === seleccionada.id ? "text-hueso/60" : "text-grafito/50"}`}>{estadoVisual[c.estado]}</p>
                   <p className={`mt-3 font-mono text-[10px] ${c.id === seleccionada.id ? "text-hueso/45" : "text-grafito/40"}`}>
                     {c._count.escritos} escritos · {c._count.audiencias} audiencias
                   </p>
@@ -137,7 +128,7 @@ function CausaPanel({ causa, rol, userId, tomarCausaComoJuez, asumirDefensaRapid
             <p className="font-mono text-xs uppercase tracking-[0.22em] text-dorado-300">Expediente · RIT {causa.rit}</p>
             <h2 className="mt-3 max-w-2xl font-display text-3xl leading-tight sm:text-4xl">{causa.caratulado}</h2>
           </div>
-          <span className="rounded-full border border-dorado-300/40 bg-dorado-400/10 px-3 py-1.5 font-mono text-[10px] uppercase tracking-wider text-dorado-300">{estadoVisual[causa.estado]}</span>
+          <span className={`badge border border-current/20 ${ESTILO_ESTADO_CAUSA[causa.estado] ?? "bg-hueso/10"}`}>{etiquetaEstado(causa.estado)}</span>
         </div>
         <div className="mt-7 grid gap-4 border-t border-hueso/10 pt-5 text-sm sm:grid-cols-3">
           <div><p className="text-hueso/45">Fiscal</p><p className="mt-1">{causa.fiscal.name}</p></div>

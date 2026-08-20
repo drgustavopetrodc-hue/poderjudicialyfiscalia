@@ -19,7 +19,7 @@ export default async function AdminDashboard() {
           ["Usuarios", totalUsuarios],
           ["Certificaciones pendientes", certPendientes],
         ].map(([label, value]) => (
-          <div key={label as string} className="bg-white border border-grafito/10 rounded-sm p-6">
+          <div key={label as string} className="panel-card p-6">
             <p className="text-sm text-grafito/50">{label}</p>
             <p className="font-display text-4xl mt-1">{value as number}</p>
           </div>
@@ -29,13 +29,13 @@ export default async function AdminDashboard() {
       <div className="flex gap-4">
         <Link
           href="/dashboard/admin/usuarios"
-          className="bg-marino-950 text-hueso px-5 py-2.5 rounded-sm text-sm hover:bg-marino-900"
+          className="button-primary"
         >
           Gestionar usuarios y roles
         </Link>
         <Link
           href="/dashboard/admin/certificaciones"
-          className="border border-grafito/20 px-5 py-2.5 rounded-sm text-sm hover:border-grafito/40"
+          className="button-outline"
         >
           Revisar certificaciones
         </Link>

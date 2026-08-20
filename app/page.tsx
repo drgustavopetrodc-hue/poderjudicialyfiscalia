@@ -4,13 +4,15 @@ import { prisma } from "@/lib/prisma";
 import DashboardShell from "@/components/DashboardShell";
 import { revalidatePath } from "next/cache";
 
-
 export const dynamic = "force-dynamic";
+
 async function solicitarCertificacion(formData: FormData) {
   "use server";
   const session = await getServerSession(authOptions);
   const userId = (session?.user as any)?.id as string;
   const numeroMatricula = String(formData.get("numeroMatricula") ?? "").trim();
+  
+  // Si no hay userId o matrícula, detiene la ejecución de forma segura
   if (!userId || !numeroMatricula) return;
 
   await prisma.certificacionAbogado.upsert({
@@ -18,13 +20,18 @@ async function solicitarCertificacion(formData: FormData) {
     create: { userId, numeroMatricula },
     update: { numeroMatricula, estado: "PENDIENTE" },
   });
+  
   revalidatePath("/dashboard/abogado/certificacion");
 }
 
 export default async function CertificacionPage() {
   const session = await getServerSession(authOptions);
-  const userId = (session?.user as any)?.id as string;
-  const certificacion = await prisma.certificacionAbogado.findUnique({ where: { userId } });
+  const userId = (session?.user as any)?.id as string | undefined;
+
+  // Solo hacemos la consulta si userId realmente existe
+  const certificacion = userId
+    ? await prisma.certificacionAbogado.findUnique({ where: { userId } })
+    : null;
 
   return (
     <DashboardShell rol="ABOGADO" titulo="Certificación de abogado">

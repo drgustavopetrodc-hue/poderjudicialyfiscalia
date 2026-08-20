@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import DashboardShell from "@/components/DashboardShell";
 import Link from "next/link";
+import { publicarCausaEnDiscord } from "@/lib/discordForum";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +18,7 @@ async function tomarCausaComoJuez(causaId: string) {
   const rol = (session?.user as any)?.rol;
   if (!juezId || (rol !== "JUEZ" && rol !== "ADMIN")) return;
   await prisma.causa.update({ where: { id: causaId }, data: { juezId } });
+  await publicarCausaEnDiscord(causaId, "Juez asignado");
   revalidatePath("/causas");
 }
 
@@ -31,6 +33,7 @@ async function asumirDefensaRapida(causaId: string) {
     if (!cert || cert.estado !== "APROBADA") return;
   }
   await prisma.defensa.create({ data: { causaId, abogadoId } });
+  await publicarCausaEnDiscord(causaId, "Defensa técnica actualizada");
   revalidatePath("/causas");
 }
 

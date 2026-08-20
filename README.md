@@ -36,6 +36,15 @@ npm run dev
 Si actualizas desde una versión anterior, vuelve a ejecutar `npx prisma db push`
 después de copiar el proyecto: esta versión agrega la tabla `OrdenCaptura`.
 
+### Publicación automática en el foro de Discord
+
+El bot puede crear un post automáticamente en el canal foro configurado y
+adjuntar el PDF actualizado del expediente cuando se crea o modifica una causa.
+El bot debe tener permisos de **View Channel**, **Create Posts**, **Send Messages**,
+**Send Messages in Threads** y **Attach Files** en ese canal. Configura
+`DISCORD_BOT_TOKEN` y ejecuta `npx prisma db push` para agregar el vínculo del
+post de Discord a cada causa.
+
 ## 5. Sincronización automática de roles con Discord
 El sistema puede leer los roles reales del servidor de Discord y asignar el rol
 correspondiente dentro de la app automáticamente, cada vez que alguien inicia sesión.

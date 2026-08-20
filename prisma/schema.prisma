@@ -146,6 +146,7 @@ model Causa {
   delito        String
   creadaEn      DateTime    @default(now())
   actualizadaEn DateTime    @updatedAt
+  discordForumThreadId String?
 
   fiscalId String
   fiscal   User   @relation("FiscalACargo", fields: [fiscalId], references: [id])

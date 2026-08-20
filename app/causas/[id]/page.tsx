@@ -7,6 +7,7 @@ import { revalidatePath } from "next/cache";
 import { format } from "date-fns";
 import DashboardShell from "@/components/DashboardShell";
 import Link from "next/link";
+import { publicarCausaEnDiscord } from "@/lib/discordForum";
 
 
 export const dynamic = "force-dynamic";
@@ -25,6 +26,7 @@ async function presentarEscrito(causaId: string, formData: FormData) {
       contenido: String(formData.get("contenido")),
     },
   });
+  await publicarCausaEnDiscord(causaId, "Nuevo escrito presentado");
   revalidatePath(`/causas/${causaId}`);
 }
 
@@ -41,6 +43,7 @@ async function asumirDefensa(causaId: string) {
   }
 
   await prisma.defensa.create({ data: { causaId, abogadoId } });
+  await publicarCausaEnDiscord(causaId, "Defensa técnica actualizada");
   revalidatePath(`/causas/${causaId}`);
 }
 
@@ -52,6 +55,7 @@ async function tomarCausaComoJuez(causaId: string) {
   if (!juezId || (rol !== "JUEZ" && rol !== "ADMIN")) return;
 
   await prisma.causa.update({ where: { id: causaId }, data: { juezId } });
+  await publicarCausaEnDiscord(causaId, "Juez asignado");
   revalidatePath(`/causas/${causaId}`);
 }
 
@@ -77,6 +81,7 @@ async function programarAudiencia(causaId: string, formData: FormData) {
       notas: String(formData.get("notas") ?? "") || null,
     },
   });
+  await publicarCausaEnDiscord(causaId, "Audiencia programada");
   revalidatePath(`/causas/${causaId}`);
 }
 
@@ -97,6 +102,7 @@ async function dictarSentencia(causaId: string, juezId: string, formData: FormDa
     },
   });
   await prisma.causa.update({ where: { id: causaId }, data: { estado: "SENTENCIADA" } });
+  await publicarCausaEnDiscord(causaId, "Sentencia dictada");
   revalidatePath(`/causas/${causaId}`);
 }
 
@@ -114,6 +120,7 @@ async function cambiarEstadoCausa(causaId: string, estado: EstadoEditable | Form
   const causa = await prisma.causa.findUnique({ where: { id: causaId }, select: { fiscalId: true, juezId: true } });
   if (!causa || (rol !== "ADMIN" && causa.fiscalId !== userId && causa.juezId !== userId)) return;
   await prisma.causa.update({ where: { id: causaId }, data: { estado: nuevoEstado as any } });
+  await publicarCausaEnDiscord(causaId, `Estado actualizado a ${nuevoEstado.replace(/_/g, " ")}`);
   revalidatePath(`/causas/${causaId}`);
   revalidatePath("/causas");
 }
@@ -128,6 +135,7 @@ async function crearOrdenCaptura(causaId: string, formData: FormData) {
   const motivo = String(formData.get("motivo") ?? "").trim();
   if (!nombrePersona || !motivo) return;
   await prisma.ordenCaptura.create({ data: { causaId, solicitadoPorId: solicitanteId, nombrePersona, motivo } });
+  await publicarCausaEnDiscord(causaId, "Nueva orden de captura emitida");
   revalidatePath(`/causas/${causaId}`);
 }
 
@@ -137,6 +145,7 @@ async function levantarOrdenCaptura(ordenId: string, causaId: string) {
   const rol = (session?.user as any)?.rol;
   if (rol !== "JUEZ" && rol !== "ADMIN") return;
   await prisma.ordenCaptura.update({ where: { id: ordenId }, data: { estado: "LEVANTADA", levantadaEn: new Date() } });
+  await publicarCausaEnDiscord(causaId, "Orden de captura levantada");
   revalidatePath(`/causas/${causaId}`);
 }
 

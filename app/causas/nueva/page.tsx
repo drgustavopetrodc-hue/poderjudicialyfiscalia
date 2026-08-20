@@ -3,6 +3,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import DashboardShell from "@/components/DashboardShell";
 import { redirect } from "next/navigation";
+import { publicarCausaEnDiscord } from "@/lib/discordForum";
 
 const ROLES_CON_ACCESO = ["FISCAL", "ADMIN"];
 
@@ -22,6 +23,7 @@ async function crearCausa(formData: FormData) {
     data: { rit, caratulado, delito, descripcion, fiscalId },
   });
 
+  await publicarCausaEnDiscord(causa.id, "Causa creada");
   redirect(`/causas/${causa.id}`);
 }
 

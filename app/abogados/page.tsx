@@ -1,9 +1,18 @@
 import { prisma } from "@/lib/prisma";
 import { format } from "date-fns";
+import DashboardShell from "@/components/DashboardShell";
+import Link from "next/link";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
 export default async function AbogadosPage() {
+  const session = await getServerSession(authOptions);
+  const rol = (session?.user as any)?.rol as string | undefined;
+  if (!session || !rol) redirect("/login");
+
   const certificados = await prisma.certificacionAbogado.findMany({
     where: { estado: "APROBADA" },
     include: { user: true },
@@ -11,41 +20,31 @@ export default async function AbogadosPage() {
   });
 
   return (
-    <main className="min-h-screen bg-hueso px-8 py-12 max-w-4xl mx-auto">
-      <p className="font-mono text-xs text-grafito/40 uppercase tracking-widest mb-2">
-        Registro público
-      </p>
-      <h1 className="font-display text-3xl mb-2">Abogados certificados</h1>
-      <p className="text-grafito/50 mb-8">
-        Nómina de abogados habilitados para ejercer la defensa técnica, certificados por la Corte Suprema.
-      </p>
-
-      <div className="grid gap-3">
-        {certificados.map((c) => (
-          <div
-            key={c.id}
-            className="bg-white border border-grafito/10 rounded-sm p-5 flex justify-between items-center"
-          >
-            <div>
-              <h3 className="font-display text-lg">{c.user.name}</h3>
-              <p className="text-sm text-grafito/50">
-                Matrícula <span className="font-mono">{c.numeroMatricula}</span>
-                {c.revisadoEn && ` · Certificado el ${format(c.revisadoEn, "dd/MM/yyyy")}`}
-              </p>
-            </div>
-            <a
-              href={`/api/certificados/${c.user.id}`}
-              className="text-sm bg-marino-950 text-hueso px-4 py-2 rounded-sm hover:bg-marino-900 shrink-0"
-              target="_blank"
-            >
-              Descargar certificado
-            </a>
+    <DashboardShell rol={rol} titulo="Abogados certificados">
+      <div className="mx-auto max-w-5xl">
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="eyebrow">Registro público</p>
+            <h2 className="font-display text-3xl text-marino-950">Abogados certificados</h2>
+            <p className="mt-1 text-sm text-grafito/55">Nómina de profesionales habilitados para ejercer la defensa técnica.</p>
           </div>
-        ))}
-        {certificados.length === 0 && (
-          <p className="text-grafito/50">Aún no hay abogados certificados.</p>
-        )}
+          <Link href="/dashboard" className="button-outline">← Volver al panel general</Link>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          {certificados.map((c) => (
+            <div key={c.id} className="flex items-center justify-between gap-4 rounded-2xl border border-grafito/10 bg-white p-5 shadow-[0_15px_35px_rgba(11,21,38,0.05)]">
+              <div>
+                <p className="eyebrow text-blue-700">Defensa técnica habilitada</p>
+                <h3 className="mt-2 font-display text-xl text-marino-950">{c.user.name}</h3>
+                <p className="mt-1 text-sm text-grafito/50">Matrícula <span className="font-mono">{c.numeroMatricula}</span></p>
+                {c.revisadoEn && <p className="mt-1 text-xs text-grafito/40">Certificado el {format(c.revisadoEn, "dd/MM/yyyy")}</p>}
+              </div>
+              <a href={`/api/certificados/${c.user.id}`} className="button-primary shrink-0" target="_blank">Descargar</a>
+            </div>
+          ))}
+        </div>
+        {certificados.length === 0 && <div className="rounded-2xl border border-dashed border-grafito/20 bg-white p-12 text-center text-sm text-grafito/50">Aún no hay abogados certificados.</div>}
       </div>
-    </main>
+    </DashboardShell>
   );
 }

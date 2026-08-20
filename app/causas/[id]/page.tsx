@@ -100,12 +100,20 @@ async function dictarSentencia(causaId: string, juezId: string, formData: FormDa
   revalidatePath(`/causas/${causaId}`);
 }
 
-async function cambiarEstadoCausa(causaId: string, estado: "SOBRESEIDA" | "ARCHIVADA") {
+type EstadoEditable = "EN_INVESTIGACION" | "EN_ESPERA_JUICIO" | "CERRADA" | "EN_APELACION" | "ARCHIVADA" | "SOBRESEIDA";
+
+async function cambiarEstadoCausa(causaId: string, estado: EstadoEditable | FormData, _formData?: FormData) {
   "use server";
   const session = await getServerSession(authOptions);
+  const userId = (session?.user as any)?.id as string;
   const rol = (session?.user as any)?.rol;
-  if (rol !== "JUEZ" && rol !== "ADMIN") return;
-  await prisma.causa.update({ where: { id: causaId }, data: { estado } });
+  if (!userId || (rol !== "FISCAL" && rol !== "JUEZ" && rol !== "ADMIN")) return;
+  const nuevoEstado = estado instanceof FormData ? String(estado.get("estado")) : estado;
+  const estadosPermitidos: EstadoEditable[] = ["EN_INVESTIGACION", "EN_ESPERA_JUICIO", "CERRADA", "EN_APELACION", "ARCHIVADA", "SOBRESEIDA"];
+  if (!estadosPermitidos.includes(nuevoEstado as EstadoEditable)) return;
+  const causa = await prisma.causa.findUnique({ where: { id: causaId }, select: { fiscalId: true, juezId: true } });
+  if (!causa || (rol !== "ADMIN" && causa.fiscalId !== userId && causa.juezId !== userId)) return;
+  await prisma.causa.update({ where: { id: causaId }, data: { estado: nuevoEstado as any } });
   revalidatePath(`/causas/${causaId}`);
   revalidatePath("/causas");
 }
@@ -180,6 +188,16 @@ export default async function CausaDetallePage({ params }: { params: { id: strin
   const puedeAsumirDefensa = (rol === "ABOGADO" || rol === "ADMIN") && !causa.defensas.some((d) => d.abogadoId === userId);
   const puedeTomarCausa = (rol === "JUEZ" || rol === "ADMIN") && !esJuezDeLaCausa;
   const puedeProgramarAudiencia = actuaComoJuez || esFiscalDeLaCausa;
+  const puedeEditarEstado = rol === "ADMIN" || esFiscalDeLaCausa || esJuezDeLaCausa;
+  const estadosCausa = [
+    ["EN_INVESTIGACION", "En investigación"],
+    ["EN_ESPERA_JUICIO", "En espera de juicio"],
+    ["EN_JUICIO", "En juicio"],
+    ["EN_APELACION", "En apelación"],
+    ["SOBRESEIDA", "Desestimada"],
+    ["ARCHIVADA", "Archivada"],
+    ["CERRADA", "Cerrada"],
+  ] as const;
 
   return (
     <DashboardShell rol={rol} titulo="Expediente completo">
@@ -188,6 +206,22 @@ export default async function CausaDetallePage({ params }: { params: { id: strin
         <Link href="/causas" className="button-outline">← Volver al panel general</Link>
         <a href={`/api/causas/${causa.id}/pdf`} className="button-primary">Descargar expediente PDF</a>
       </div>
+      {puedeEditarEstado && (
+        <section className="mb-6 rounded-xl border border-blue-100 bg-blue-50/60 p-5">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <p className="eyebrow text-blue-700">Tramitación del expediente</p>
+              <p className="mt-1 text-sm text-grafito/55">Fiscal y juez pueden actualizar el estado de esta causa.</p>
+            </div>
+            <form action={cambiarEstadoCausa.bind(null, causa.id)} className="flex flex-wrap gap-2">
+              <select name="estado" defaultValue={causa.estado} className="rounded-lg border border-blue-200 bg-white px-3 py-2 text-sm text-marino-950">
+                {estadosCausa.map(([valor, etiqueta]) => <option key={valor} value={valor}>{etiqueta}</option>)}
+              </select>
+              <button className="button-primary">Actualizar estado</button>
+            </form>
+          </div>
+        </section>
+      )}
       <p className="font-mono text-xs text-grafito/40 uppercase tracking-widest mb-2">RIT {causa.rit}</p>
       <div className="flex justify-between items-start mb-8">
         <h1 className="font-display text-3xl">{causa.caratulado}</h1>

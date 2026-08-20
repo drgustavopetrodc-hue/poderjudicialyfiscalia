@@ -116,7 +116,15 @@ export async function publicarCausaEnDiscord(causaId: string, evento: string) {
     form.append("payload_json", JSON.stringify({
       content: `🔄 **${evento}** · Estado: \`${causa.estado.replace(/_/g, " ")}\``,
     }));
-    form.append("files[0]", new Blob([pdf], { type: "application/pdf" }), `expediente-${causa.rit}.pdf`);
+    // Convertimos explícitamente a ArrayBuffer para que TypeScript y el runtime
+    // de Vercel acepten el Blob sin confundir ArrayBufferLike con SharedArrayBuffer.
+    const pdfArray = new Uint8Array(pdf.length);
+    pdfArray.set(pdf);
+    form.append(
+      "files[0]",
+      new Blob([pdfArray.buffer as ArrayBuffer], { type: "application/pdf" }),
+      `expediente-${causa.rit}.pdf`
+    );
     const upload = await discordRequest(`/channels/${threadId}/messages`, { method: "POST", body: form });
     if (!upload.ok) throw new Error(`Discord no pudo adjuntar el expediente (${upload.status})`);
   } catch (error) {

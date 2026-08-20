@@ -34,6 +34,17 @@ async function resolverCertificacion(formData: FormData) {
   revalidatePath("/dashboard/admin/certificaciones");
 }
 
+async function eliminarCertificacion(formData: FormData) {
+  "use server";
+  const session = await getServerSession(authOptions);
+  if ((session?.user as any)?.rol !== "ADMIN") return;
+  const id = String(formData.get("id"));
+  if (!id) return;
+  await prisma.certificacionAbogado.delete({ where: { id } });
+  revalidatePath("/dashboard/admin/usuarios");
+  revalidatePath("/dashboard/admin/certificaciones");
+}
+
 export default async function UsuariosAdminPage() {
   const usuarios = await prisma.user.findMany({ include: { certificacion: true }, orderBy: { creadoEn: "desc" } });
 
@@ -80,11 +91,14 @@ export default async function UsuariosAdminPage() {
                   </form>
                 </td>
                 <td className="px-4 py-3">
-                  {u.certificacion ? <form action={resolverCertificacion} className="flex min-w-[300px] items-center gap-2">
+                  {u.certificacion ? <div className="min-w-[300px]">
+                  <form action={resolverCertificacion} className="flex items-center gap-2">
                     <input type="hidden" name="id" value={u.certificacion.id} />
                     <span className={`rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase ${u.certificacion.estado === "APROBADA" ? "bg-emerald-100 text-emerald-800" : u.certificacion.estado === "PENDIENTE" ? "bg-amber-100 text-amber-800" : "bg-red-100 text-red-800"}`}>{u.certificacion.estado}</span>
                     {u.certificacion.estado === "PENDIENTE" && <><input name="observaciones" placeholder="Observación opcional" className="w-36 rounded-lg border border-grafito/15 px-2 py-1.5 text-xs" /><button name="estado" value="APROBADA" className="rounded-lg bg-emerald-700 px-2.5 py-1.5 text-xs font-semibold text-white">Aprobar</button><button name="estado" value="RECHAZADA" className="rounded-lg border border-red-200 px-2.5 py-1.5 text-xs text-red-700">Rechazar</button></>}
-                  </form> : <span className="text-xs text-grafito/35">No solicitada</span>}
+                  </form>
+                  <form action={eliminarCertificacion} className="mt-1"><input type="hidden" name="id" value={u.certificacion.id} /><button className="text-[10px] text-red-700 hover:underline">Eliminar certificación</button></form>
+                  </div> : <span className="text-xs text-grafito/35">No solicitada</span>}
                 </td>
               </tr>
             ))}

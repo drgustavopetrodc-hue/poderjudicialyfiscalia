@@ -14,12 +14,12 @@ const config: Config = {
           600: "#2c4f82",
         },
         dorado: {
-          500: "#b8923f",
-          400: "#c9a45c",
-          300: "#dabd85",
+          500: "#2563eb",
+          400: "#3b82f6",
+          300: "#93c5fd",
         },
-        hueso: "#f4f1ea",
-        grafito: "#2a2a28",
+        hueso: "#f5f8fc",
+        grafito: "#1e293b",
       },
       fontFamily: {
         display: ["'Fraunces'", "serif"],

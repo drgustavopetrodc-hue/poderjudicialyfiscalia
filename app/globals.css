@@ -5,8 +5,8 @@
 @import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap");
 
 body {
-  background-color: #f4f1ea;
-  color: #2a2a28;
+  background-color: #f5f8fc;
+  color: #1e293b;
 }
 
 .eyebrow {
@@ -30,10 +30,10 @@ body {
 }
 .button-primary { background: #0b1526; color: #f4f1ea; }
 .button-primary:hover { background: #1f3a63; transform: translateY(-1px); }
-.button-secondary { border: 1px solid rgba(184,146,63,.35); color: #8f6e26; background: rgba(201,164,92,.08); }
-.button-secondary:hover { background: rgba(201,164,92,.18); }
-.button-outline { border: 1px solid rgba(42,42,40,.15); color: rgba(42,42,40,.65); }
-.button-outline:hover { border-color: rgba(184,146,63,.55); color: #0b1526; }
+.button-secondary { border: 1px solid rgba(37,99,235,.3); color: #1d4ed8; background: rgba(59,130,246,.08); }
+.button-secondary:hover { background: rgba(59,130,246,.16); }
+.button-outline { border: 1px solid rgba(30,41,59,.15); color: rgba(30,41,59,.65); }
+.button-outline:hover { border-color: rgba(37,99,235,.55); color: #0b1526; }
 .stat-card { border: 1px solid rgba(42,42,40,.1); border-radius: 16px; background: white; padding: 1.15rem 1.25rem; box-shadow: 0 12px 30px rgba(11,21,38,.04); }
 
 .sello {

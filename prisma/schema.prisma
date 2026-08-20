@@ -36,6 +36,12 @@ enum EstadoCausa {
   SOBRESEIDA
 }
 
+enum EstadoOrdenCaptura {
+  VIGENTE
+  EJECUTADA
+  LEVANTADA
+}
+
 enum TipoAudiencia {
   FORMALIZACION
   PREPARACION_JUICIO
@@ -111,6 +117,8 @@ model User {
   audienciasCreadas  Audiencia[]            @relation("AudienciaCreador")
   sentenciasDictadas Sentencia[]            @relation("SentenciaJuez")
   partesEnCausas     ParteCausa[]
+  ordenesCapturaSolicitadas OrdenCaptura[]  @relation("OrdenCapturaSolicitante")
+  ordenesCapturaRecibidas OrdenCaptura[]    @relation("OrdenCapturaPersona")
 }
 
 // ---------- Certificación de abogados ----------
@@ -147,6 +155,22 @@ model Causa {
   escritos   Escrito[]
   audiencias Audiencia[]
   sentencia  Sentencia?
+  ordenesCaptura OrdenCaptura[]
+}
+
+model OrdenCaptura {
+  id          String              @id @default(cuid())
+  causaId     String
+  causa       Causa               @relation(fields: [causaId], references: [id], onDelete: Cascade)
+  solicitadoPorId String
+  solicitadoPor User               @relation("OrdenCapturaSolicitante", fields: [solicitadoPorId], references: [id])
+  personaId   String?
+  persona     User?               @relation("OrdenCapturaPersona", fields: [personaId], references: [id])
+  nombrePersona String
+  motivo      String              @db.Text
+  estado      EstadoOrdenCaptura  @default(VIGENTE)
+  emitidaEn   DateTime            @default(now())
+  levantadaEn DateTime?
 }
 
 // Relación entre una causa y las personas involucradas (imputado, víctima, querellante)

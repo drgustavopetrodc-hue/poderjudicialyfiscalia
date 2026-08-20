@@ -2,8 +2,11 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { format } from "date-fns";
+import DashboardShell from "@/components/DashboardShell";
+import Link from "next/link";
 
 
 export const dynamic = "force-dynamic";
@@ -97,6 +100,46 @@ async function dictarSentencia(causaId: string, juezId: string, formData: FormDa
   revalidatePath(`/causas/${causaId}`);
 }
 
+async function cambiarEstadoCausa(causaId: string, estado: "SOBRESEIDA" | "ARCHIVADA") {
+  "use server";
+  const session = await getServerSession(authOptions);
+  const rol = (session?.user as any)?.rol;
+  if (rol !== "JUEZ" && rol !== "ADMIN") return;
+  await prisma.causa.update({ where: { id: causaId }, data: { estado } });
+  revalidatePath(`/causas/${causaId}`);
+  revalidatePath("/causas");
+}
+
+async function crearOrdenCaptura(causaId: string, formData: FormData) {
+  "use server";
+  const session = await getServerSession(authOptions);
+  const solicitanteId = (session?.user as any)?.id as string;
+  const rol = (session?.user as any)?.rol;
+  if (!solicitanteId || (rol !== "JUEZ" && rol !== "ADMIN")) return;
+  const nombrePersona = String(formData.get("nombrePersona") ?? "").trim();
+  const motivo = String(formData.get("motivo") ?? "").trim();
+  if (!nombrePersona || !motivo) return;
+  await prisma.ordenCaptura.create({ data: { causaId, solicitadoPorId: solicitanteId, nombrePersona, motivo } });
+  revalidatePath(`/causas/${causaId}`);
+}
+
+async function levantarOrdenCaptura(ordenId: string, causaId: string) {
+  "use server";
+  const session = await getServerSession(authOptions);
+  const rol = (session?.user as any)?.rol;
+  if (rol !== "JUEZ" && rol !== "ADMIN") return;
+  await prisma.ordenCaptura.update({ where: { id: ordenId }, data: { estado: "LEVANTADA", levantadaEn: new Date() } });
+  revalidatePath(`/causas/${causaId}`);
+}
+
+async function eliminarCausa(causaId: string) {
+  "use server";
+  const session = await getServerSession(authOptions);
+  if ((session?.user as any)?.rol !== "ADMIN") return;
+  await prisma.causa.delete({ where: { id: causaId } });
+  redirect("/causas");
+}
+
 export default async function CausaDetallePage({ params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions);
   const userId = (session?.user as any)?.id as string;
@@ -112,6 +155,7 @@ export default async function CausaDetallePage({ params }: { params: { id: strin
       escritos: { include: { autor: true }, orderBy: { presentadoEn: "desc" } },
       audiencias: { orderBy: { fechaHora: "asc" } },
       sentencia: true,
+      ordenesCaptura: { orderBy: { emitidaEn: "desc" }, include: { solicitadoPor: true } },
     },
   });
 
@@ -127,7 +171,12 @@ export default async function CausaDetallePage({ params }: { params: { id: strin
   const puedeProgramarAudiencia = actuaComoJuez || esFiscalDeLaCausa;
 
   return (
-    <main className="min-h-screen bg-hueso px-8 py-12 max-w-3xl mx-auto">
+    <DashboardShell rol={rol} titulo="Expediente completo">
+      <div className="mx-auto max-w-5xl">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <Link href="/causas" className="button-outline">← Volver al panel general</Link>
+        <a href={`/api/causas/${causa.id}/pdf`} className="button-primary">Descargar expediente PDF</a>
+      </div>
       <p className="font-mono text-xs text-grafito/40 uppercase tracking-widest mb-2">RIT {causa.rit}</p>
       <div className="flex justify-between items-start mb-8">
         <h1 className="font-display text-3xl">{causa.caratulado}</h1>
@@ -151,6 +200,29 @@ export default async function CausaDetallePage({ params }: { params: { id: strin
             </button>
           </form>
         )}
+      </section>
+
+      <section className="bg-white border border-grafito/10 rounded-sm p-6 mb-6">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div><h2 className="font-display text-xl">Órdenes de captura</h2><p className="mt-1 text-sm text-grafito/50">Medidas emitidas por el tribunal dentro de esta causa.</p></div>
+          <span className="rounded-full bg-blue-50 px-3 py-1 font-mono text-xs text-blue-800">{causa.ordenesCaptura.filter((o) => o.estado === "VIGENTE").length} vigentes</span>
+        </div>
+        <div className="mt-4 grid gap-3">
+          {causa.ordenesCaptura.map((orden) => (
+            <div key={orden.id} className="rounded-xl border border-blue-100 bg-blue-50/40 p-4">
+              <div className="flex flex-wrap justify-between gap-2"><p className="font-medium text-marino-950">{orden.nombrePersona}</p><span className="font-mono text-[10px] uppercase text-blue-700">{orden.estado}</span></div>
+              <p className="mt-2 text-sm text-grafito/65">{orden.motivo}</p>
+              <p className="mt-2 text-xs text-grafito/40">Emitida el {format(orden.emitidaEn, "dd/MM/yyyy HH:mm")} por {orden.solicitadoPor.name}</p>
+              {orden.estado === "VIGENTE" && (rol === "JUEZ" || rol === "ADMIN") && <form action={levantarOrdenCaptura.bind(null, orden.id, causa.id)} className="mt-3"><button className="button-outline">Levantar orden</button></form>}
+            </div>
+          ))}
+          {!causa.ordenesCaptura.length && <p className="text-sm text-grafito/45">No hay órdenes emitidas.</p>}
+        </div>
+        {(rol === "JUEZ" || rol === "ADMIN") && <form action={crearOrdenCaptura.bind(null, causa.id)} className="mt-5 grid gap-3 border-t border-grafito/10 pt-5 sm:grid-cols-2">
+          <input name="nombrePersona" required placeholder="Nombre de la persona" className="border border-grafito/15 rounded-lg px-3 py-2 text-sm" />
+          <input name="motivo" required placeholder="Motivo de la orden" className="border border-grafito/15 rounded-lg px-3 py-2 text-sm" />
+          <button className="button-primary justify-self-start sm:col-span-2">Emitir orden de captura</button>
+        </form>}
       </section>
 
       {/* Defensa técnica */}
@@ -279,6 +351,23 @@ export default async function CausaDetallePage({ params }: { params: { id: strin
           <p className="text-grafito/50 text-sm">Aún no se ha dictado sentencia.</p>
         )}
       </section>
-    </main>
+      {(rol === "JUEZ" || rol === "ADMIN") && causa.estado !== "SENTENCIADA" && (
+        <section className="mt-6 rounded-xl border border-blue-100 bg-blue-50/50 p-5">
+          <p className="eyebrow text-blue-700">Resolución del expediente</p>
+          <p className="mt-1 text-sm text-grafito/55">Desestima o archiva la causa cuando corresponda.</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <form action={cambiarEstadoCausa.bind(null, causa.id, "SOBRESEIDA")}><button className="button-outline">Desestimar caso</button></form>
+            <form action={cambiarEstadoCausa.bind(null, causa.id, "ARCHIVADA")}><button className="button-outline">Archivar causa</button></form>
+          </div>
+        </section>
+      )}
+      {rol === "ADMIN" && (
+        <section className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-100 bg-red-50 p-5">
+          <div><p className="eyebrow text-red-700">Zona de administración</p><p className="mt-1 text-sm text-red-900/70">Eliminar esta causa borra también sus escritos, audiencias, defensas y órdenes de captura.</p></div>
+          <form action={eliminarCausa.bind(null, causa.id)}><button className="rounded-lg bg-red-700 px-3 py-2 text-xs font-semibold text-white hover:bg-red-800">Eliminar causa</button></form>
+        </section>
+      )}
+      </div>
+    </DashboardShell>
   );
 }

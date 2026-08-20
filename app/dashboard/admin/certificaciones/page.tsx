@@ -1,11 +1,15 @@
 import { prisma } from "@/lib/prisma";
 import DashboardShell from "@/components/DashboardShell";
 import { revalidatePath } from "next/cache";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
 
 export const dynamic = "force-dynamic";
 async function resolverCertificacion(formData: FormData) {
   "use server";
+  const session = await getServerSession(authOptions);
+  if ((session?.user as any)?.rol !== "ADMIN") return;
   const id = String(formData.get("id"));
   const estado = String(formData.get("estado"));
   const observaciones = String(formData.get("observaciones") ?? "");
@@ -25,6 +29,16 @@ async function resolverCertificacion(formData: FormData) {
   revalidatePath("/dashboard/admin/certificaciones");
 }
 
+async function eliminarCertificacion(formData: FormData) {
+  "use server";
+  const session = await getServerSession(authOptions);
+  if ((session?.user as any)?.rol !== "ADMIN") return;
+  const id = String(formData.get("id"));
+  if (!id) return;
+  await prisma.certificacionAbogado.delete({ where: { id } });
+  revalidatePath("/dashboard/admin/certificaciones");
+}
+
 export default async function CertificacionesAdminPage() {
   const certificaciones = await prisma.certificacionAbogado.findMany({
     where: { estado: "PENDIENTE" },
@@ -39,11 +53,8 @@ export default async function CertificacionesAdminPage() {
       ) : (
         <div className="grid gap-4">
           {certificaciones.map((c) => (
-            <form
-              key={c.id}
-              action={resolverCertificacion}
-              className="bg-white border border-grafito/10 rounded-sm p-5"
-            >
+            <div key={c.id} className="bg-white border border-grafito/10 rounded-sm p-5">
+            <form action={resolverCertificacion}>
               <input type="hidden" name="id" value={c.id} />
               <p className="font-display text-lg">{c.user.name}</p>
               <p className="text-sm text-grafito/50 mb-3">
@@ -71,6 +82,8 @@ export default async function CertificacionesAdminPage() {
                 </button>
               </div>
             </form>
+            <form action={eliminarCertificacion} className="mt-2"><input type="hidden" name="id" value={c.id} /><button className="text-xs text-red-700 hover:underline">Eliminar solicitud</button></form>
+            </div>
           ))}
         </div>
       )}

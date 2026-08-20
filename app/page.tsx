@@ -1,54 +1,63 @@
-import Link from "next/link";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import DashboardShell from "@/components/DashboardShell";
+import { revalidatePath } from "next/cache";
 
-export default function Home() {
+
+export const dynamic = "force-dynamic";
+async function solicitarCertificacion(formData: FormData) {
+  "use server";
+  const session = await getServerSession(authOptions);
+  const userId = (session?.user as any)?.id as string;
+  const numeroMatricula = String(formData.get("numeroMatricula") ?? "").trim();
+  if (!userId || !numeroMatricula) return;
+
+  await prisma.certificacionAbogado.upsert({
+    where: { userId },
+    create: { userId, numeroMatricula },
+    update: { numeroMatricula, estado: "PENDIENTE" },
+  });
+  revalidatePath("/dashboard/abogado/certificacion");
+}
+
+export default async function CertificacionPage() {
+  const session = await getServerSession(authOptions);
+  const userId = (session?.user as any)?.id as string;
+  const certificacion = await prisma.certificacionAbogado.findUnique({ where: { userId } });
+
   return (
-    <main className="min-h-screen bg-marino-950 text-hueso relative overflow-hidden">
-      {/* Sello ornamental de fondo */}
-      <div className="sello absolute inset-0 pointer-events-none" />
-
-      <div className="relative max-w-5xl mx-auto px-6 py-24">
-        <p className="font-mono text-dorado-400 text-sm tracking-[0.3em] uppercase mb-6">
-          República · Sistema Judicial
-        </p>
-        <h1 className="font-display text-5xl md:text-7xl leading-[1.05] mb-8 max-w-3xl">
-          La justicia, <span className="text-dorado-400">administrada con orden.</span>
-        </h1>
-        <p className="text-hueso/70 text-lg max-w-xl mb-12 leading-relaxed">
-          Registro de causas, certificación de abogados, presentación de escritos,
-          defensa técnica y audiencias — todo en un mismo expediente digital para
-          el servidor.
-        </p>
-
-        <div className="flex gap-4">
-          <Link
-            href="/login"
-            className="bg-dorado-400 text-marino-950 font-semibold px-7 py-3 rounded-sm hover:bg-dorado-300 transition-colors"
-          >
-            Ingresar con Discord
-          </Link>
-          <Link
-            href="/causas"
-            className="border border-hueso/25 px-7 py-3 rounded-sm hover:border-hueso/50 transition-colors"
-          >
-            Ver causas públicas
-          </Link>
+    <DashboardShell rol="ABOGADO" titulo="Certificación de abogado">
+      {certificacion ? (
+        <div className="panel-card p-6 max-w-md">
+          <p className="text-sm text-grafito/50 mb-1">Número de matrícula</p>
+          <p className="font-mono text-lg mb-4">{certificacion.numeroMatricula}</p>
+          <p className="text-sm text-grafito/50 mb-1">Estado</p>
+          <span className="badge bg-marino-950 text-hueso">
+            {certificacion.estado}
+          </span>
+          {certificacion.observaciones && (
+            <p className="text-sm text-grafito/60 mt-4 italic">
+              "{certificacion.observaciones}"
+            </p>
+          )}
         </div>
-
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-hueso/10 mt-24 border border-hueso/10">
-          {[
-            ["01", "Causas", "Registro y seguimiento de expedientes"],
-            ["02", "Abogados", "Certificación y matrícula habilitante"],
-            ["03", "Audiencias", "Agenda de formalización y juicio oral"],
-            ["04", "Sentencias", "Resoluciones dictadas por el tribunal"],
-          ].map(([num, title, desc]) => (
-            <div key={num} className="bg-marino-950 p-6">
-              <span className="font-mono text-dorado-400/70 text-xs">{num}</span>
-              <h3 className="font-display text-xl mt-2 mb-1">{title}</h3>
-              <p className="text-hueso/50 text-sm">{desc}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </main>
+      ) : (
+        <form action={solicitarCertificacion} className="max-w-md panel-card p-6">
+          <label className="block text-sm text-grafito/60 mb-2">
+            Número de matrícula (elige el que use tu personaje de rol)
+          </label>
+          <input
+            name="numeroMatricula"
+            required
+            className="w-full border border-grafito/15 rounded-lg px-3 py-2 mb-4"
+            placeholder="ej. AB-2026-014"
+          />
+          <button className="button-primary">
+            Solicitar certificación
+          </button>
+        </form>
+      )}
+    </DashboardShell>
   );
 }

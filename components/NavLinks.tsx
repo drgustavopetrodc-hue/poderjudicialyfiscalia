@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { LucideIcon } from "lucide-react";
+import React from "react";
 
-export type NavItem = { href: string; label: string; icon: LucideIcon };
+// Cambiamos LucideIcon por React.ReactNode para que sea 100% serializable
+export type NavItem = { href: string; label: string; icon: React.ReactNode };
 
 export default function NavLinks({ items }: { items: NavItem[] }) {
   const pathname = usePathname();
@@ -12,8 +13,9 @@ export default function NavLinks({ items }: { items: NavItem[] }) {
   return (
     <nav className="relative flex flex-col gap-0.5 flex-1">
       {items.map((item) => {
-        const Icon = item.icon;
-        const activo = pathname === item.href || (item.href !== "/causas" && pathname?.startsWith(item.href + "/"));
+        const activo =
+          pathname === item.href ||
+          (item.href !== "/causas" && pathname?.startsWith(item.href + "/"));
 
         return (
           <Link
@@ -25,10 +27,14 @@ export default function NavLinks({ items }: { items: NavItem[] }) {
                 : "text-hueso/60 hover:bg-hueso/[0.06] hover:text-hueso"
             }`}
           >
-            <Icon
-              size={15}
-              className={`shrink-0 transition-colors ${activo ? "text-dorado-400" : "text-hueso/35 group-hover:text-dorado-400"}`}
-            />
+            {/* Renderizamos directamente el nodo de JSX */}
+            <span
+              className={`shrink-0 transition-colors ${
+                activo ? "text-dorado-400" : "text-hueso/35 group-hover:text-dorado-400"
+              }`}
+            >
+              {item.icon}
+            </span>
             {item.label}
           </Link>
         );

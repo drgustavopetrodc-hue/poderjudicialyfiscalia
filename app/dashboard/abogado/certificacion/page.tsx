@@ -29,11 +29,11 @@ export default async function CertificacionPage() {
   return (
     <DashboardShell rol="ABOGADO" titulo="Certificación de abogado">
       {certificacion ? (
-        <div className="bg-white border border-grafito/10 rounded-sm p-6 max-w-md">
+        <div className="panel-card p-6 max-w-md">
           <p className="text-sm text-grafito/50 mb-1">Número de matrícula</p>
           <p className="font-mono text-lg mb-4">{certificacion.numeroMatricula}</p>
           <p className="text-sm text-grafito/50 mb-1">Estado</p>
-          <span className="inline-block font-mono text-xs uppercase bg-marino-950 text-hueso px-2 py-1 rounded-sm">
+          <span className="badge bg-marino-950 text-hueso">
             {certificacion.estado}
           </span>
           {certificacion.observaciones && (
@@ -43,17 +43,17 @@ export default async function CertificacionPage() {
           )}
         </div>
       ) : (
-        <form action={solicitarCertificacion} className="max-w-md bg-white border border-grafito/10 rounded-sm p-6">
+        <form action={solicitarCertificacion} className="max-w-md panel-card p-6">
           <label className="block text-sm text-grafito/60 mb-2">
             Número de matrícula (elige el que use tu personaje de rol)
           </label>
           <input
             name="numeroMatricula"
             required
-            className="w-full border border-grafito/20 rounded-sm px-3 py-2 mb-4"
+            className="w-full border border-grafito/15 rounded-lg px-3 py-2 mb-4"
             placeholder="ej. AB-2026-014"
           />
-          <button className="bg-marino-950 text-hueso px-5 py-2.5 rounded-sm text-sm hover:bg-marino-900">
+          <button className="button-primary">
             Solicitar certificación
           </button>
         </form>

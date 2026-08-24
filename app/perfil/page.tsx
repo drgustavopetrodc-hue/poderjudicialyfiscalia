@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import DashboardShell from "@/components/DashboardShell";
 import { ROLES_FUNCIONARIOS, INSTITUCION_POR_ROL, identidadCompleta } from "@/lib/identidad";
-import { IdCard, Download, AlertCircle } from "lucide-react";
+import { Fingerprint, Download, AlertCircle } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -61,7 +61,7 @@ export default async function PerfilPage({
       <div className="mx-auto max-w-lg grid gap-6">
         <div className="panel-card p-6">
           <p className="eyebrow flex items-center gap-1.5 mb-1">
-            <IdCard size={12} /> Identidad en personaje
+            <Fingerprint size={12} /> Identidad en personaje
           </p>
           <h2 className="font-display text-xl text-marino-950 mb-1">Tus datos oficiales</h2>
           <p className="text-sm text-grafito/55 mb-5 leading-relaxed">

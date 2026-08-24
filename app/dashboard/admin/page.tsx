@@ -1,10 +1,14 @@
 import { prisma } from "@/lib/prisma";
 import DashboardShell from "@/components/DashboardShell";
 import Link from "next/link";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
 
 export const dynamic = "force-dynamic";
 export default async function AdminDashboard() {
+  const session = await getServerSession(authOptions);
+  const rol = (session?.user as any)?.rol ?? "ADMIN";
   const [totalCausas, totalUsuarios, certPendientes] = await Promise.all([
     prisma.causa.count(),
     prisma.user.count(),
@@ -12,7 +16,7 @@ export default async function AdminDashboard() {
   ]);
 
   return (
-    <DashboardShell rol="ADMIN" titulo="Panel general">
+    <DashboardShell rol={rol} titulo="Panel general">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
         {[
           ["Causas registradas", totalCausas],

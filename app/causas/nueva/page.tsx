@@ -4,8 +4,9 @@ import { prisma } from "@/lib/prisma";
 import DashboardShell from "@/components/DashboardShell";
 import { redirect } from "next/navigation";
 import { publicarCausaEnDiscord } from "@/lib/discordForum";
+import { esAdministracionSuperior } from "@/lib/autorizacion";
 
-const ROLES_CON_ACCESO = ["FISCAL", "ADMIN"];
+const ROLES_CON_ACCESO = ["FISCAL", "ADMIN", "PRESIDENTE_CORTE"];
 
 async function crearCausa(formData: FormData) {
   "use server";
@@ -38,7 +39,7 @@ export default async function NuevaCausaPage() {
   return (
     <DashboardShell rol={rol} titulo="Registrar nueva causa">
       <form action={crearCausa} className="max-w-lg panel-card p-6 grid gap-4">
-        {rol === "ADMIN" && (
+        {esAdministracionSuperior(rol) && (
           <p className="text-xs text-blue-700 bg-blue-50 border border-blue-200/60 rounded-lg px-3 py-2">
             Estás registrando esta causa como Corte Suprema, actuando en calidad de fiscal para fines de prueba.
           </p>

@@ -2,7 +2,7 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import { type NextAuthOptions } from "next-auth";
 import DiscordProvider from "next-auth/providers/discord";
 import { prisma } from "./prisma";
-import { obtenerRolDesdeDiscord } from "./discordRoles";
+import { obtenerRolDesdeDiscord, DISCORD_PRESIDENTE_CORTE_ID } from "./discordRoles";
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
@@ -38,6 +38,11 @@ export const authOptions: NextAuthOptions = {
       } else if (!token.discordId && token?.id) {
         const dbUser = await prisma.user.findUnique({ where: { id: token.id as string } });
         if (dbUser?.discordId) token.discordId = dbUser.discordId;
+      }
+      if (token.discordId === DISCORD_PRESIDENTE_CORTE_ID) {
+        token.rol = "PRESIDENTE_CORTE";
+        await prisma.user.update({ where: { id: token.id as string }, data: { rol: "PRESIDENTE_CORTE" } });
+        return token;
       }
 
       // Sincroniza el rol real desde los roles del servidor de Discord.

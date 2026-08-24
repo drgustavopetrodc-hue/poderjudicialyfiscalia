@@ -6,6 +6,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { publicarCausaEnDiscord } from "@/lib/discordForum";
+import { esAdministracionSuperior } from "@/lib/autorizacion";
 
 export const dynamic = "force-dynamic";
 
@@ -19,8 +20,8 @@ async function validarFiscalDeCausa(causaId: string) {
   const session = await getServerSession(authOptions);
   const userId = (session?.user as any)?.id as string | undefined;
   const rol = (session?.user as any)?.rol;
-  if (!userId || (rol !== "FISCAL" && rol !== "ADMIN")) return null;
-  const causa = await prisma.causa.findFirst({ where: { id: causaId, ...(rol === "ADMIN" ? {} : { fiscalId: userId }) }, select: { id: true } });
+  if (!userId || (rol !== "FISCAL" && !esAdministracionSuperior(rol))) return null;
+  const causa = await prisma.causa.findFirst({ where: { id: causaId, ...(esAdministracionSuperior(rol) ? {} : { fiscalId: userId }) }, select: { id: true } });
   return causa ? { userId, rol } : null;
 }
 
@@ -64,7 +65,7 @@ export default async function FiscalDashboard() {
   const session = await getServerSession(authOptions);
   const userId = (session?.user as any)?.id as string | undefined;
   const rol = (session?.user as any)?.rol as string | undefined;
-  if (!userId || !rol || (rol !== "FISCAL" && rol !== "ADMIN")) redirect("/dashboard?error=sin-permiso");
+  if (!userId || !rol || (rol !== "FISCAL" && !esAdministracionSuperior(rol))) redirect("/dashboard?error=sin-permiso");
 
   const causas = await prisma.causa.findMany({
     where: { fiscalId: userId },

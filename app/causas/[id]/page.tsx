@@ -10,14 +10,17 @@ import DashboardShell from "@/components/DashboardShell";
 import Link from "next/link";
 import { publicarCausaEnDiscord } from "@/lib/discordForum";
 import { ESTILO_ESTADO_CAUSA, ESTILO_ESTADO_ORDEN, etiquetaEstado } from "@/lib/estilos";
+import { contextoSesion, puedeAccederCausa } from "@/lib/autorizacion";
+import { esAdministracionSuperior } from "@/lib/autorizacion";
 
 
 export const dynamic = "force-dynamic";
 async function presentarEscrito(causaId: string, formData: FormData) {
   "use server";
   const session = await getServerSession(authOptions);
-  const autorId = (session?.user as any)?.id as string;
-  if (!autorId) return;
+  const contexto = contextoSesion(session);
+  if (!contexto || !(await puedeAccederCausa(causaId, contexto))) return;
+  const autorId = contexto.userId;
 
   await prisma.escrito.create({
     data: {
@@ -37,9 +40,10 @@ async function asumirDefensa(causaId: string) {
   const session = await getServerSession(authOptions);
   const abogadoId = (session?.user as any)?.id as string;
   const rol = (session?.user as any)?.rol;
-  if (!abogadoId || (rol !== "ABOGADO" && rol !== "ADMIN")) return;
+  if (!abogadoId || (rol !== "ABOGADO" && !esAdministracionSuperior(rol))) return;
+  if (!(await puedeAccederCausa(causaId, { userId: abogadoId, rol }))) return;
 
-  if (rol !== "ADMIN") {
+  if (!esAdministracionSuperior(rol)) {
     const cert = await prisma.certificacionAbogado.findUnique({ where: { userId: abogadoId } });
     if (!cert || cert.estado !== "APROBADA") return;
   }
@@ -54,7 +58,9 @@ async function tomarCausaComoJuez(causaId: string) {
   const session = await getServerSession(authOptions);
   const juezId = (session?.user as any)?.id as string;
   const rol = (session?.user as any)?.rol;
-  if (!juezId || (rol !== "JUEZ" && rol !== "ADMIN")) return;
+  if (!juezId || (rol !== "JUEZ" && !esAdministracionSuperior(rol))) return;
+  const causa = await prisma.causa.findUnique({ where: { id: causaId }, select: { juezId: true } });
+  if (!causa || (!esAdministracionSuperior(rol) && causa.juezId && causa.juezId !== juezId)) return;
 
   await prisma.causa.update({ where: { id: causaId }, data: { juezId } });
   await publicarCausaEnDiscord(causaId, "Juez asignado");
@@ -66,7 +72,8 @@ async function programarAudiencia(causaId: string, formData: FormData) {
   const session = await getServerSession(authOptions);
   const creadorId = (session?.user as any)?.id as string;
   const rol = (session?.user as any)?.rol;
-  if (!creadorId || (rol !== "JUEZ" && rol !== "FISCAL" && rol !== "ADMIN")) return;
+  if (!creadorId || (rol !== "JUEZ" && rol !== "FISCAL" && !esAdministracionSuperior(rol))) return;
+  if (!(await puedeAccederCausa(causaId, { userId: creadorId, rol }))) return;
 
   const fecha = String(formData.get("fecha"));
   const hora = String(formData.get("hora"));
@@ -92,7 +99,9 @@ async function dictarSentencia(causaId: string, juezId: string, formData: FormDa
   const session = await getServerSession(authOptions);
   const rol = (session?.user as any)?.rol;
   const sessionUserId = (session?.user as any)?.id;
-  if (sessionUserId !== juezId || (rol !== "JUEZ" && rol !== "ADMIN")) return;
+  if (sessionUserId !== juezId || (rol !== "JUEZ" && !esAdministracionSuperior(rol))) return;
+  const causa = await prisma.causa.findUnique({ where: { id: causaId }, select: { juezId: true, sentencia: true } });
+  if (!causa || (!esAdministracionSuperior(rol) && causa.juezId !== sessionUserId) || causa.sentencia) return;
 
   await prisma.sentencia.create({
     data: {
@@ -115,12 +124,12 @@ async function cambiarEstadoCausa(causaId: string, estado: EstadoEditable | Form
   const session = await getServerSession(authOptions);
   const userId = (session?.user as any)?.id as string;
   const rol = (session?.user as any)?.rol;
-  if (!userId || (rol !== "FISCAL" && rol !== "JUEZ" && rol !== "ADMIN")) return;
+  if (!userId || (rol !== "FISCAL" && rol !== "JUEZ" && !esAdministracionSuperior(rol))) return;
   const nuevoEstado = estado instanceof FormData ? String(estado.get("estado")) : estado;
   const estadosPermitidos: EstadoEditable[] = ["EN_INVESTIGACION", "EN_ESPERA_JUICIO", "CERRADA", "EN_APELACION", "ARCHIVADA", "SOBRESEIDA"];
   if (!estadosPermitidos.includes(nuevoEstado as EstadoEditable)) return;
   const causa = await prisma.causa.findUnique({ where: { id: causaId }, select: { fiscalId: true, juezId: true } });
-  if (!causa || (rol !== "ADMIN" && causa.fiscalId !== userId && causa.juezId !== userId)) return;
+  if (!causa || (!esAdministracionSuperior(rol) && causa.fiscalId !== userId && causa.juezId !== userId)) return;
   await prisma.causa.update({ where: { id: causaId }, data: { estado: nuevoEstado as any } });
   await publicarCausaEnDiscord(causaId, `Estado actualizado a ${nuevoEstado.replace(/_/g, " ")}`);
   revalidatePath(`/causas/${causaId}`);
@@ -132,7 +141,7 @@ async function crearOrdenCaptura(causaId: string, formData: FormData) {
   const session = await getServerSession(authOptions);
   const solicitanteId = (session?.user as any)?.id as string;
   const rol = (session?.user as any)?.rol;
-  if (!solicitanteId || (rol !== "JUEZ" && rol !== "ADMIN")) return;
+  if (!solicitanteId || (rol !== "JUEZ" && !esAdministracionSuperior(rol))) return;
   const nombrePersona = String(formData.get("nombrePersona") ?? "").trim();
   const motivo = String(formData.get("motivo") ?? "").trim();
   if (!nombrePersona || !motivo) return;
@@ -145,7 +154,12 @@ async function levantarOrdenCaptura(ordenId: string, causaId: string) {
   "use server";
   const session = await getServerSession(authOptions);
   const rol = (session?.user as any)?.rol;
-  if (rol !== "JUEZ" && rol !== "ADMIN") return;
+  const userId = (session?.user as any)?.id as string;
+  if (!userId || (rol !== "JUEZ" && !esAdministracionSuperior(rol))) return;
+  const orden = await prisma.ordenCaptura.findUnique({ where: { id: ordenId }, select: { causaId: true, estado: true } });
+  if (!orden || orden.causaId !== causaId || orden.estado === "LEVANTADA") return;
+  const causa = await prisma.causa.findUnique({ where: { id: causaId }, select: { juezId: true } });
+  if (!causa || (!esAdministracionSuperior(rol) && causa.juezId !== userId)) return;
   await prisma.ordenCaptura.update({ where: { id: ordenId }, data: { estado: "LEVANTADA", levantadaEn: new Date() } });
   await publicarCausaEnDiscord(causaId, "Orden de captura levantada");
   revalidatePath(`/causas/${causaId}`);
@@ -154,18 +168,21 @@ async function levantarOrdenCaptura(ordenId: string, causaId: string) {
 async function eliminarCausa(causaId: string) {
   "use server";
   const session = await getServerSession(authOptions);
-  if ((session?.user as any)?.rol !== "ADMIN") return;
+  if (!esAdministracionSuperior((session?.user as any)?.rol)) return;
   await prisma.causa.delete({ where: { id: causaId } });
   redirect("/causas");
 }
 
-export default async function CausaDetallePage({ params }: { params: { id: string } }) {
+export default async function CausaDetallePage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const session = await getServerSession(authOptions);
   const userId = (session?.user as any)?.id as string;
   const rol = (session?.user as any)?.rol as string;
+  const contexto = contextoSesion(session);
+  if (!contexto || !(await puedeAccederCausa(id, contexto))) return notFound();
 
   const causa = await prisma.causa.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: {
       fiscal: true,
       juez: true,
@@ -196,12 +213,12 @@ export default async function CausaDetallePage({ params }: { params: { id: strin
   const esJuezDeLaCausa = causa.juezId === userId;
   const esFiscalDeLaCausa = causa.fiscalId === userId;
   // Los ADMIN representan a la Corte Suprema: tienen todas las facultades de un juez sobre cualquier causa.
-  const actuaComoJuez = esJuezDeLaCausa || rol === "ADMIN";
+  const actuaComoJuez = esJuezDeLaCausa || esAdministracionSuperior(rol);
   const puedeDictarSentencia = actuaComoJuez && causa.estado === "EN_JUICIO" && !causa.sentencia;
-  const puedeAsumirDefensa = (rol === "ABOGADO" || rol === "ADMIN") && !causa.defensas.some((d) => d.abogadoId === userId);
-  const puedeTomarCausa = (rol === "JUEZ" || rol === "ADMIN") && !esJuezDeLaCausa;
+  const puedeAsumirDefensa = (rol === "ABOGADO" || esAdministracionSuperior(rol)) && !causa.defensas.some((d) => d.abogadoId === userId);
+  const puedeTomarCausa = (rol === "JUEZ" || esAdministracionSuperior(rol)) && !esJuezDeLaCausa;
   const puedeProgramarAudiencia = actuaComoJuez || esFiscalDeLaCausa;
-  const puedeEditarEstado = rol === "ADMIN" || esFiscalDeLaCausa || esJuezDeLaCausa;
+  const puedeEditarEstado = esAdministracionSuperior(rol) || esFiscalDeLaCausa || esJuezDeLaCausa;
   const estadosCausa = [
     ["EN_INVESTIGACION", "En investigación"],
     ["EN_ESPERA_JUICIO", "En espera de juicio"],
@@ -301,13 +318,13 @@ export default async function CausaDetallePage({ params }: { params: { id: strin
               <p className="mt-2 text-xs text-grafito/40">Emitida el {format(orden.emitidaEn, "dd/MM/yyyy HH:mm")} por {orden.solicitadoPor.name}</p>
               <div className="mt-3 flex flex-wrap gap-2">
                 <a href={`/api/ordenes-captura/${orden.id}/pdf`} className="button-primary">Descargar PDF</a>
-                {orden.estado === "VIGENTE" && (rol === "JUEZ" || rol === "ADMIN") && <form action={levantarOrdenCaptura.bind(null, orden.id, causa.id)}><button className="button-outline">Levantar orden</button></form>}
+                {orden.estado === "VIGENTE" && (rol === "JUEZ" || esAdministracionSuperior(rol)) && <form action={levantarOrdenCaptura.bind(null, orden.id, causa.id)}><button className="button-outline">Levantar orden</button></form>}
               </div>
             </div>
           ))}
           {!ordenesCaptura.length && <p className="text-sm text-grafito/45">No hay órdenes emitidas.</p>}
         </div>
-        {(rol === "JUEZ" || rol === "ADMIN") && <form action={crearOrdenCaptura.bind(null, causa.id)} className="mt-5 grid gap-3 border-t border-grafito/10 pt-5 sm:grid-cols-2">
+        {(rol === "JUEZ" || esAdministracionSuperior(rol)) && <form action={crearOrdenCaptura.bind(null, causa.id)} className="mt-5 grid gap-3 border-t border-grafito/10 pt-5 sm:grid-cols-2">
           <input name="nombrePersona" required placeholder="Nombre de la persona" className="border border-grafito/15 rounded-lg px-3 py-2 text-sm" />
           <input name="motivo" required placeholder="Motivo de la orden" className="border border-grafito/15 rounded-lg px-3 py-2 text-sm" />
           <button className="button-primary justify-self-start sm:col-span-2">Emitir orden de captura</button>
@@ -440,7 +457,7 @@ export default async function CausaDetallePage({ params }: { params: { id: strin
           <p className="text-grafito/50 text-sm">Aún no se ha dictado sentencia.</p>
         )}
       </section>
-      {(rol === "JUEZ" || rol === "ADMIN") && causa.estado !== "SENTENCIADA" && (
+      {(rol === "JUEZ" || esAdministracionSuperior(rol)) && causa.estado !== "SENTENCIADA" && (
         <section className="mt-6 rounded-xl border border-blue-100 bg-blue-50/50 p-5">
           <p className="eyebrow text-blue-700">Resolución del expediente</p>
           <p className="mt-1 text-sm text-grafito/55">Desestima o archiva la causa cuando corresponda.</p>
@@ -450,7 +467,7 @@ export default async function CausaDetallePage({ params }: { params: { id: strin
           </div>
         </section>
       )}
-      {rol === "ADMIN" && (
+      {esAdministracionSuperior(rol) && (
         <section className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-100 bg-red-50 p-5">
           <div><p className="eyebrow text-red-700">Zona de administración</p><p className="mt-1 text-sm text-red-900/70">Eliminar esta causa borra también sus escritos, audiencias, defensas y órdenes de captura.</p></div>
           <form action={eliminarCausa.bind(null, causa.id)}><button className="rounded-lg bg-red-700 px-3 py-2 text-xs font-semibold text-white hover:bg-red-800">Eliminar causa</button></form>

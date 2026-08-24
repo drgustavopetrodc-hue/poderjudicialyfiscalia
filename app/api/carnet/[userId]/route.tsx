@@ -9,22 +9,24 @@ export const dynamic = "force-dynamic";
 
 const NOMBRE_ROL: Record<string, string> = {
   ADMIN: "Ministro de Corte Suprema",
+  PRESIDENTE_CORTE: "Presidente de la Corte Suprema",
   JUEZ: "Juez",
   FISCAL: "Fiscal",
   FUNCIONARIO: "Funcionario",
 };
 
-export async function GET(req: NextRequest, { params }: { params: { userId: string } }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ userId: string }> }) {
+  const { userId } = await params;
   const session = await getServerSession(authOptions);
   const sessionUserId = (session?.user as any)?.id as string | undefined;
   const sessionRol = (session?.user as any)?.rol as string | undefined;
 
   // Solo el propio usuario o un admin pueden generar la identificación.
-  if (!sessionUserId || (sessionUserId !== params.userId && sessionRol !== "ADMIN")) {
+  if (!sessionUserId || (sessionUserId !== userId && sessionRol !== "ADMIN" && sessionRol !== "PRESIDENTE_CORTE")) {
     return NextResponse.json({ error: "No autorizado" }, { status: 403 });
   }
 
-  const usuario = await prisma.user.findUnique({ where: { id: params.userId } });
+  const usuario = await prisma.user.findUnique({ where: { id: userId } });
   if (!usuario) {
     return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 });
   }
@@ -83,10 +85,10 @@ export async function GET(req: NextRequest, { params }: { params: { userId: stri
 
           {/* Cuerpo */}
           <div style={{ display: "flex", flex: 1, alignItems: "center", gap: 40, marginTop: 30 }}>
-            {usuario.image ? (
+            {usuario.robloxAvatarUrl || usuario.image ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
-                src={usuario.image}
+                src={usuario.robloxAvatarUrl || usuario.image || ""}
                 width={168}
                 height={168}
                 style={{ borderRadius: 16, border: "3px solid rgba(201,164,92,0.5)", objectFit: "cover" }}

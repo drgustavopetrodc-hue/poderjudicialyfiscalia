@@ -13,6 +13,7 @@ datasource db {
 // ---------- Roles ----------
 enum Rol {
   ADMIN
+  PRESIDENTE_CORTE
   JUEZ
   FISCAL
   ABOGADO
@@ -121,6 +122,9 @@ model User {
   rut           String?   @unique
   nacionalidad  String?
   institucion   String? // ej: "Carabineros de Chile", "Policía de Investigaciones", "Poder Judicial"
+  robloxUsername String? @unique
+  robloxUserId   String?
+  robloxAvatarUrl String?
 
   accounts Account[]
   sessions Session[]

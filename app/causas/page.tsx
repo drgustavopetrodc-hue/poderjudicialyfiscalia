@@ -8,17 +8,20 @@ import DashboardShell from "@/components/DashboardShell";
 import Link from "next/link";
 import { publicarCausaEnDiscord } from "@/lib/discordForum";
 import { ESTILO_ESTADO_CAUSA, etiquetaEstado } from "@/lib/estilos";
+import { esAdministracionSuperior } from "@/lib/autorizacion";
 
 export const dynamic = "force-dynamic";
 
-const ROLES_CON_ACCESO = ["ADMIN", "JUEZ", "FISCAL", "ABOGADO"];
+const ROLES_CON_ACCESO = ["ADMIN", "PRESIDENTE_CORTE", "JUEZ", "FISCAL", "ABOGADO"];
 
 async function tomarCausaComoJuez(causaId: string) {
   "use server";
   const session = await getServerSession(authOptions);
   const juezId = (session?.user as any)?.id as string;
   const rol = (session?.user as any)?.rol;
-  if (!juezId || (rol !== "JUEZ" && rol !== "ADMIN")) return;
+  if (!juezId || (rol !== "JUEZ" && !esAdministracionSuperior(rol))) return;
+  const causa = await prisma.causa.findUnique({ where: { id: causaId }, select: { juezId: true } });
+  if (!causa || (!esAdministracionSuperior(rol) && causa.juezId && causa.juezId !== juezId)) return;
   await prisma.causa.update({ where: { id: causaId }, data: { juezId } });
   await publicarCausaEnDiscord(causaId, "Juez asignado");
   revalidatePath("/causas");
@@ -29,11 +32,13 @@ async function asumirDefensaRapida(causaId: string) {
   const session = await getServerSession(authOptions);
   const abogadoId = (session?.user as any)?.id as string;
   const rol = (session?.user as any)?.rol;
-  if (!abogadoId || (rol !== "ABOGADO" && rol !== "ADMIN")) return;
-  if (rol !== "ADMIN") {
+  if (!abogadoId || (rol !== "ABOGADO" && !esAdministracionSuperior(rol))) return;
+  if (!esAdministracionSuperior(rol)) {
     const cert = await prisma.certificacionAbogado.findUnique({ where: { userId: abogadoId } });
     if (!cert || cert.estado !== "APROBADA") return;
   }
+  const causa = await prisma.causa.findUnique({ where: { id: causaId }, select: { id: true } });
+  if (!causa) return;
   await prisma.defensa.create({ data: { causaId, abogadoId } });
   await publicarCausaEnDiscord(causaId, "Defensa técnica actualizada");
   revalidatePath("/causas");
@@ -45,7 +50,18 @@ export default async function CausasPage() {
   const userId = (session?.user as any)?.id as string | undefined;
   if (!rol || !ROLES_CON_ACCESO.includes(rol)) redirect("/dashboard?error=sin-permiso");
 
+  const filtroAcceso = esAdministracionSuperior(rol)
+    ? {}
+    : {
+        OR: [
+          { fiscalId: userId },
+          { juezId: userId },
+          { partes: { some: { userId } } },
+          { defensas: { some: { abogadoId: userId, activa: true } } },
+        ],
+      };
   const causas = await prisma.causa.findMany({
+    where: filtroAcceso,
     orderBy: { creadaEn: "desc" },
     include: {
       fiscal: true,
@@ -120,7 +136,7 @@ export default async function CausasPage() {
 function CausaPanel({ causa, rol, userId, tomarCausaComoJuez, asumirDefensaRapida }: any) {
   const yoSoyDefensor = causa.defensas.some((d: any) => d.abogadoId === userId);
   const yoSoyElJuez = causa.juezId === userId;
-  const puedeDefensa = (rol === "ABOGADO" || rol === "ADMIN") && !yoSoyDefensor;
+  const puedeDefensa = (rol === "ABOGADO" || esAdministracionSuperior(rol)) && !yoSoyDefensor;
   return (
     <section className="min-w-0 overflow-hidden rounded-2xl border border-grafito/10 bg-white shadow-[0_15px_45px_rgba(11,21,38,0.06)]">
       <div className="bg-marino-950 px-6 py-7 text-hueso sm:px-8">
@@ -156,7 +172,7 @@ function CausaPanel({ causa, rol, userId, tomarCausaComoJuez, asumirDefensaRapid
           </div>
         </div>
         <div className="flex flex-wrap gap-2 border-t border-grafito/10 pt-5">
-          {(rol === "JUEZ" || rol === "ADMIN") && !yoSoyElJuez && <form action={tomarCausaComoJuez.bind(null, causa.id)}><button className="button-primary">Tomar como juez</button></form>}
+          {(rol === "JUEZ" || esAdministracionSuperior(rol)) && !yoSoyElJuez && <form action={tomarCausaComoJuez.bind(null, causa.id)}><button className="button-primary">Tomar como juez</button></form>}
           <Link href={`/causas/${causa.id}`} className="button-outline">Abrir expediente completo →</Link>
         </div>
       </div>

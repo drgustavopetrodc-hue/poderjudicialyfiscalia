@@ -8,17 +8,18 @@ import DashboardShell from "@/components/DashboardShell";
 import Link from "next/link";
 import { format } from "date-fns";
 import { ScrollText, FileText } from "lucide-react";
+import { esAdministracionSuperior } from "@/lib/autorizacion";
 
 export const dynamic = "force-dynamic";
 
-const ROLES_CON_ACCESO = ["ADMIN", "JUEZ", "FISCAL", "ABOGADO"];
+const ROLES_CON_ACCESO = ["ADMIN", "PRESIDENTE_CORTE", "JUEZ", "FISCAL", "ABOGADO"];
 
 async function presentarEscrito(formData: FormData) {
   "use server";
   const session = await getServerSession(authOptions);
   const autorId = (session?.user as any)?.id as string;
   const rol = (session?.user as any)?.rol;
-  if (!autorId || (rol !== "FISCAL" && rol !== "ABOGADO" && rol !== "ADMIN")) return;
+  if (!autorId || (rol !== "FISCAL" && rol !== "ABOGADO" && !esAdministracionSuperior(rol))) return;
 
   const causaId = String(formData.get("causaId"));
   if (!causaId) return;
@@ -44,7 +45,7 @@ export default async function EscritosPage() {
     redirect("/dashboard?error=sin-permiso");
   }
 
-  const puedePresentar = rol === "FISCAL" || rol === "ABOGADO" || rol === "ADMIN";
+  const puedePresentar = rol === "FISCAL" || rol === "ABOGADO" || esAdministracionSuperior(rol);
 
   // Causas donde la persona puede presentar un escrito: donde es el fiscal
   // asignado, o donde tiene una defensa activa.
@@ -54,7 +55,7 @@ export default async function EscritosPage() {
           OR: [
             { fiscalId: userId },
             { defensas: { some: { abogadoId: userId, activa: true } } },
-            ...(rol === "ADMIN" ? [{}] : []),
+            ...(esAdministracionSuperior(rol) ? [{}] : []),
           ],
         },
         select: { id: true, rit: true, caratulado: true },

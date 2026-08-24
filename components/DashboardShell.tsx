@@ -62,6 +62,7 @@ const NAV_POR_ROL: Record<string, NavItem[]> = {
 
 const NOMBRE_VISUAL_ROL: Record<string, string> = {
   ADMIN: "Corte Suprema",
+  PRESIDENTE_CORTE: "Presidente de la Corte Suprema",
   JUEZ: "Juez",
   FISCAL: "Fiscal",
   ABOGADO: "Abogado",

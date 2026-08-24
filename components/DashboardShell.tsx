@@ -11,6 +11,7 @@ import {
   ShieldCheck,
   UserCog,
   LogOut,
+  IdCard,
 } from "lucide-react";
 import NavLinks, { type NavItem } from "./NavLinks";
 
@@ -27,12 +28,14 @@ const NAV_POR_ROL: Record<string, NavItem[]> = {
     { href: "/escritos", label: "Escritos", icon: <ScrollText size={15} /> },
     { href: "/dashboard/admin/certificaciones", label: "Certificar abogados", icon: <BadgeCheck size={15} /> },
     { href: "/dashboard/admin/usuarios", label: "Usuarios y roles", icon: <UserCog size={15} /> },
+    { href: "/perfil", label: "Mi perfil", icon: <IdCard size={15} /> },
   ],
   JUEZ: [
     { href: "/dashboard/juez", label: "Mis causas", icon: <Gavel size={15} /> },
     { href: "/causas", label: "Todas las causas", icon: <Scale size={15} /> },
     { href: "/escritos", label: "Escritos", icon: <ScrollText size={15} /> },
     { href: "/abogados", label: "Abogados certificados", icon: <Award size={15} /> },
+    { href: "/perfil", label: "Mi perfil", icon: <IdCard size={15} /> },
   ],
   FISCAL: [
     { href: "/dashboard/fiscal", label: "Mi fiscalía", icon: <Users size={15} /> },
@@ -40,6 +43,7 @@ const NAV_POR_ROL: Record<string, NavItem[]> = {
     { href: "/causas/nueva", label: "Registrar causa", icon: <FilePlus2 size={15} /> },
     { href: "/escritos", label: "Escritos", icon: <ScrollText size={15} /> },
     { href: "/abogados", label: "Abogados certificados", icon: <Award size={15} /> },
+    { href: "/perfil", label: "Mi perfil", icon: <IdCard size={15} /> },
   ],
   ABOGADO: [
     { href: "/dashboard/abogado", label: "Mis defensas", icon: <ShieldCheck size={15} /> },
@@ -47,10 +51,12 @@ const NAV_POR_ROL: Record<string, NavItem[]> = {
     { href: "/escritos", label: "Escritos", icon: <ScrollText size={15} /> },
     { href: "/dashboard/abogado/certificacion", label: "Mi certificación", icon: <BadgeCheck size={15} /> },
     { href: "/abogados", label: "Abogados certificados", icon: <Award size={15} /> },
+    { href: "/perfil", label: "Mi perfil", icon: <IdCard size={15} /> },
   ],
   CIUDADANO: [
     { href: "/dashboard/parte", label: "Mis causas", icon: <Scale size={15} /> },
     { href: "/abogados", label: "Abogados certificados", icon: <Award size={15} /> },
+    { href: "/perfil", label: "Mi perfil", icon: <IdCard size={15} /> },
   ],
 };
 

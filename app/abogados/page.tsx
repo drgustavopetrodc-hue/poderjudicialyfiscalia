@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { nombreLegal } from "@/lib/identidad";
 import { format } from "date-fns";
 import DashboardShell from "@/components/DashboardShell";
 import Link from "next/link";
@@ -36,7 +37,7 @@ export default async function AbogadosPage() {
             <div key={c.id} className="panel-card flex items-center justify-between gap-4 p-5">
               <div>
                 <p className="eyebrow text-blue-700 flex items-center gap-1.5"><BadgeCheck size={12} /> Defensa técnica habilitada</p>
-                <h3 className="mt-2 font-display text-xl text-marino-950">{c.user.name}</h3>
+                <h3 className="mt-2 font-display text-xl text-marino-950">{nombreLegal(c.user)}</h3>
                 <p className="mt-1 text-sm text-grafito/50">Matrícula <span className="font-mono">{c.numeroMatricula}</span></p>
                 {c.revisadoEn && <p className="mt-1 text-xs text-grafito/40">Certificado el {format(c.revisadoEn, "dd/MM/yyyy")}</p>}
               </div>

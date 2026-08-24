@@ -114,6 +114,14 @@ model User {
   activo        Boolean   @default(true)
   creadoEn      DateTime  @default(now())
 
+  // ---------- Identidad "en personaje" (IC) ----------
+  // Datos del personaje de rol, usados en documentos oficiales, certificados
+  // e identificaciones — distintos del nombre de la cuenta de Discord.
+  nombreIC      String?
+  rut           String?   @unique
+  nacionalidad  String?
+  institucion   String? // ej: "Carabineros de Chile", "Policía de Investigaciones", "Poder Judicial"
+
   accounts Account[]
   sessions Session[]
 

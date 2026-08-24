@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import { format } from "date-fns";
 import { NextRequest, NextResponse } from "next/server";
+import { nombreLegal, formatearRut, identidadCompleta } from "@/lib/identidad";
 
 export const dynamic = "force-dynamic";
 
@@ -13,6 +14,13 @@ export async function GET(_req: NextRequest, { params }: { params: { userId: str
 
   if (!certificacion || certificacion.estado !== "APROBADA") {
     return NextResponse.json({ error: "Certificación no encontrada o no aprobada" }, { status: 404 });
+  }
+
+  if (!identidadCompleta(certificacion.user)) {
+    return NextResponse.json(
+      { error: "Este abogado aún no completa su nombre y RUT en /perfil, no se puede emitir el certificado." },
+      { status: 400 }
+    );
   }
 
   const pdfDoc = await PDFDocument.create();
@@ -56,17 +64,24 @@ export async function GET(_req: NextRequest, { params }: { params: { userId: str
   centerText("Certificado de Habilitación para el Ejercicio de la Defensa Técnica", height - 145, serifRegular, 13);
 
   centerText("Se certifica que", height - 210, serifRegular, 13);
-  centerText(certificacion.user.name ?? "Nombre no registrado", height - 250, serif, 30, marino);
+  centerText(nombreLegal(certificacion.user), height - 250, serif, 28, marino);
+  centerText(
+    `RUT ${formatearRut(certificacion.user.rut!)} — Nacionalidad ${certificacion.user.nacionalidad ?? "no registrada"}`,
+    height - 275,
+    mono,
+    11,
+    grafito
+  );
 
   centerText(
     `se encuentra habilitado(a) para ejercer la defensa técnica ante los tribunales,`,
-    height - 300,
+    height - 315,
     serifRegular,
     13
   );
   centerText(
     `bajo el número de matrícula ${certificacion.numeroMatricula}.`,
-    height - 322,
+    height - 337,
     serifRegular,
     13
   );

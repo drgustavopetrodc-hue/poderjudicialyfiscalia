@@ -1,4 +1,5 @@
 import { getServerSession } from "next-auth";
+import { nombreLegal } from "@/lib/identidad";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
@@ -118,7 +119,7 @@ export default async function EscritosPage() {
                 </div>
                 <div className="min-w-0">
                   <p className="text-xs font-mono text-grafito/40 uppercase mb-1">
-                    {e.tipo} · {e.autor.name} · {format(e.presentadoEn, "dd/MM/yyyy HH:mm")}
+                    {e.tipo} · {nombreLegal(e.autor)} · {format(e.presentadoEn, "dd/MM/yyyy HH:mm")}
                   </p>
                   <Link href={`/causas/${e.causa.id}`} className="font-semibold text-marino-950 hover:underline">
                     {e.titulo}

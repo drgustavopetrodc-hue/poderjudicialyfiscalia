@@ -1,4 +1,5 @@
 import { getServerSession } from "next-auth";
+import { nombreLegal } from "@/lib/identidad";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
@@ -131,8 +132,8 @@ function CausaPanel({ causa, rol, userId, tomarCausaComoJuez, asumirDefensaRapid
           <span className={`badge border border-current/20 ${ESTILO_ESTADO_CAUSA[causa.estado] ?? "bg-hueso/10"}`}>{etiquetaEstado(causa.estado)}</span>
         </div>
         <div className="mt-7 grid gap-4 border-t border-hueso/10 pt-5 text-sm sm:grid-cols-3">
-          <div><p className="text-hueso/45">Fiscal</p><p className="mt-1">{causa.fiscal.name}</p></div>
-          <div><p className="text-hueso/45">Juez</p><p className="mt-1">{causa.juez?.name ?? "Sin asignar"}</p></div>
+          <div><p className="text-hueso/45">Fiscal</p><p className="mt-1">{nombreLegal(causa.fiscal)}</p></div>
+          <div><p className="text-hueso/45">Juez</p><p className="mt-1">{causa.juez ? nombreLegal(causa.juez) : "Sin asignar"}</p></div>
           <div><p className="text-hueso/45">Partes / actividad</p><p className="mt-1">{causa._count.partes} partes · {causa._count.escritos} escritos</p></div>
         </div>
       </div>
@@ -145,7 +146,7 @@ function CausaPanel({ causa, rol, userId, tomarCausaComoJuez, asumirDefensaRapid
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="rounded-xl border border-grafito/10 bg-hueso/45 p-4">
             <p className="eyebrow">Defensa técnica</p>
-            <p className="mt-2 text-sm text-grafito/70">{causa.defensas.length ? causa.defensas.map((d: any) => d.abogado.name).join(", ") : "Sin abogado defensor"}</p>
+            <p className="mt-2 text-sm text-grafito/70">{causa.defensas.length ? causa.defensas.map((d: any) => nombreLegal(d.abogado)).join(", ") : "Sin abogado defensor"}</p>
             {puedeDefensa && <form action={asumirDefensaRapida.bind(null, causa.id)} className="mt-3"><button className="button-secondary">Asumir defensa</button></form>}
           </div>
           <div className="rounded-xl border border-grafito/10 bg-hueso/45 p-4">

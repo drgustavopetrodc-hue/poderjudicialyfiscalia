@@ -1,4 +1,5 @@
 import { getServerSession } from "next-auth";
+import { nombreLegal } from "@/lib/identidad";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
@@ -253,7 +254,7 @@ export default async function CausaDetallePage({ params }: { params: { id: strin
         <p className="text-sm text-grafito/50 mb-1">Descripción</p>
         <p className="mb-4 whitespace-pre-wrap">{causa.descripcion}</p>
         <p className="text-sm text-grafito/50">
-          Fiscal: {causa.fiscal.name} · Juez: {causa.juez?.name ?? "Sin asignar"}
+          Fiscal: {nombreLegal(causa.fiscal)} · Juez: {causa.juez ? nombreLegal(causa.juez) : "Sin asignar"}
         </p>
         {puedeTomarCausa && (
           <form action={tomarCausaComoJuez.bind(null, causa.id)} className="mt-4">
@@ -321,7 +322,7 @@ export default async function CausaDetallePage({ params }: { params: { id: strin
         ) : (
           <ul className="text-sm mb-3">
             {causa.defensas.map((d) => (
-              <li key={d.id}>{d.abogado.name}</li>
+              <li key={d.id}>{nombreLegal(d.abogado)}</li>
             ))}
           </ul>
         )}
@@ -341,7 +342,7 @@ export default async function CausaDetallePage({ params }: { params: { id: strin
           {causa.escritos.map((e) => (
             <div key={e.id} className="border-t border-grafito/10 pt-3 first:border-t-0 first:pt-0">
               <p className="text-xs font-mono text-grafito/40 uppercase">
-                {e.tipo} · {e.autor.name} · {format(e.presentadoEn, "dd/MM/yyyy HH:mm")}
+                {e.tipo} · {nombreLegal(e.autor)} · {format(e.presentadoEn, "dd/MM/yyyy HH:mm")}
               </p>
               <p className="font-semibold">{e.titulo}</p>
               <p className="text-sm text-grafito/60 whitespace-pre-wrap">{e.contenido}</p>

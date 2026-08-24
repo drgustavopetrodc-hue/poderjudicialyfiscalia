@@ -3,6 +3,7 @@ import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { nombreLegal } from "@/lib/identidad";
 
 export const dynamic = "force-dynamic";
 
@@ -41,13 +42,13 @@ export async function GET(_request: Request, { params }: { params: { id: string 
   line(causa.caratulado, 18, bold, navy);
   y -= 12;
   line(`Delito: ${causa.delito}`, 10, bold, navy);
-  line(`Fiscal: ${causa.fiscal.name ?? "Sin nombre"} · Juez: ${causa.juez?.name ?? "Sin asignar"}`);
+  line(`Fiscal: ${nombreLegal(causa.fiscal)} · Juez: ${causa.juez ? nombreLegal(causa.juez) : "Sin asignar"}`);
   y -= 8;
   line("DESCRIPCIÓN DE LOS HECHOS", 10, bold, blue);
   line(causa.descripcion);
   y -= 8;
   line(`ESCRITOS PRESENTADOS (${causa.escritos.length})`, 10, bold, blue);
-  for (const escrito of causa.escritos) line(`${escrito.tipo} — ${escrito.titulo} — ${escrito.autor.name ?? "Sin autor"}`);
+  for (const escrito of causa.escritos) line(`${escrito.tipo} — ${escrito.titulo} — ${nombreLegal(escrito.autor)}`);
   y -= 8;
   line(`ÓRDENES DE CAPTURA (${causa.ordenesCaptura.length})`, 10, bold, blue);
   for (const orden of causa.ordenesCaptura) line(`${orden.nombrePersona} — ${orden.estado} — ${orden.motivo}`);

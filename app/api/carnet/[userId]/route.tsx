@@ -9,7 +9,7 @@ import {
   formatearRut,
   esPresidenteCorteSuprema,
 } from "@/lib/identidad";
-import { obtenerAvatarRoblox } from "@/lib/roblox";
+import { obtenerAvatarRobloxDataUri } from "@/lib/roblox";
 
 export const dynamic = "force-dynamic";
 
@@ -46,11 +46,13 @@ export async function GET(req: NextRequest, { params }: { params: { userId: stri
   const cargo = esPresidente ? "Presidente de la Corte Suprema" : NOMBRE_ROL[usuario.rol] ?? usuario.rol;
 
   // La foto sale del avatar de Roblox si el usuario lo registró en su perfil;
-  // si no, se recurre al avatar de Discord; si tampoco hay, se usan iniciales.
-  const fotoUrl = usuario.robloxUsername
-    ? await obtenerAvatarRoblox(usuario.robloxUsername)
+  // se descarga como datos embebidos (no una URL externa) para que el render
+  // nunca dependa de una carga en vivo. Si falla o no hay usuario de Roblox,
+  // se recurre al avatar de Discord; si tampoco hay, se usan iniciales.
+  const fotoRoblox = usuario.robloxUsername
+    ? await obtenerAvatarRobloxDataUri(usuario.robloxUsername)
     : null;
-  const fotoFinal = fotoUrl ?? usuario.image ?? null;
+  const fotoFinal = fotoRoblox ?? usuario.image ?? null;
 
   return new ImageResponse(
     (

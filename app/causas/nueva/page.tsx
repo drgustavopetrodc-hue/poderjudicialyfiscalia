@@ -15,12 +15,13 @@ async function crearCausa(formData: FormData) {
   if (!fiscalId || !ROLES_CON_ACCESO.includes(rol)) return;
 
   const rit = String(formData.get("rit"));
+  const ruc = String(formData.get("ruc") ?? "").trim();
   const caratulado = String(formData.get("caratulado"));
   const delito = String(formData.get("delito"));
   const descripcion = String(formData.get("descripcion"));
 
   const causa = await prisma.causa.create({
-    data: { rit, caratulado, delito, descripcion, fiscalId },
+    data: { rit, ruc: ruc || null, caratulado, delito, descripcion, fiscalId },
   });
 
   await publicarCausaEnDiscord(causa.id, "Causa creada");
@@ -46,6 +47,10 @@ export default async function NuevaCausaPage() {
         <div>
           <label className="block text-sm text-grafito/60 mb-1">RIT (rol interno del tribunal)</label>
           <input name="rit" required placeholder="001-2026" className="w-full border border-grafito/15 rounded-lg px-3 py-2" />
+        </div>
+        <div>
+          <label className="block text-sm text-grafito/60 mb-1">RUC (rol único de causa, opcional)</label>
+          <input name="ruc" placeholder="2500123456-7" className="w-full border border-grafito/15 rounded-lg px-3 py-2" />
         </div>
         <div>
           <label className="block text-sm text-grafito/60 mb-1">Caratulado</label>

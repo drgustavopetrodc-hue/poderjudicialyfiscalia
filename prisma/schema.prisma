@@ -156,6 +156,7 @@ model CertificacionAbogado {
 model Causa {
   id            String      @id @default(cuid())
   rit           String      @unique // Rol Interno del Tribunal, ej: 001-2026
+  ruc           String? // Rol Único de Causa (identificador distinto del RIT)
   caratulado    String // ej: "Fisco vs. Juan Pérez"
   descripcion   String      @db.Text
   estado        EstadoCausa @default(EN_INVESTIGACION)
@@ -193,6 +194,25 @@ model OrdenCaptura {
   estado      EstadoOrdenCaptura  @default(VIGENTE)
   emitidaEn   DateTime            @default(now())
   levantadaEn DateTime?
+
+  // ---------- Datos del imputado/a (sección II de la plantilla) ----------
+  runOPasaporte     String? // RUN o pasaporte de la persona requerida
+  nacionalidadPersona String?
+  fechaNacimiento   String? // texto libre dd/mm/aaaa (dato "en personaje", no siempre disponible)
+  domicilioConocido String?
+  senasParticulares String?
+
+  // ---------- Fundamento legal (sección IV) ----------
+  causalLegal       String  @default("OTRO") // ART_127 | ART_128 | ART_33 | ART_129 | REBELDIA | OTRO
+  causalLegalOtro   String? // detalle si causalLegal = OTRO
+  fundamentoCautela String  @db.Text @default("")
+
+  // ---------- Resuelvo (sección V) ----------
+  policiaInstruida  String  @default("AMBAS") // PDI | CARABINEROS | AMBAS
+  vigenciaOrden     String  @default("Indefinida")
+
+  // ---------- Firma y certificación (sección VI) ----------
+  secretarioNombre  String?
 }
 
 model AdjuntoFiscal {

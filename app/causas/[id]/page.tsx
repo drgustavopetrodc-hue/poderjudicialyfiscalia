@@ -133,10 +133,30 @@ async function crearOrdenCaptura(causaId: string, formData: FormData) {
   const solicitanteId = (session?.user as any)?.id as string;
   const rol = (session?.user as any)?.rol;
   if (!solicitanteId || (rol !== "JUEZ" && rol !== "ADMIN")) return;
+
   const nombrePersona = String(formData.get("nombrePersona") ?? "").trim();
   const motivo = String(formData.get("motivo") ?? "").trim();
   if (!nombrePersona || !motivo) return;
-  await prisma.ordenCaptura.create({ data: { causaId, solicitadoPorId: solicitanteId, nombrePersona, motivo } });
+
+  await prisma.ordenCaptura.create({
+    data: {
+      causaId,
+      solicitadoPorId: solicitanteId,
+      nombrePersona,
+      motivo,
+      runOPasaporte: String(formData.get("runOPasaporte") ?? "").trim() || null,
+      nacionalidadPersona: String(formData.get("nacionalidadPersona") ?? "").trim() || null,
+      fechaNacimiento: String(formData.get("fechaNacimiento") ?? "").trim() || null,
+      domicilioConocido: String(formData.get("domicilioConocido") ?? "").trim() || null,
+      senasParticulares: String(formData.get("senasParticulares") ?? "").trim() || null,
+      causalLegal: String(formData.get("causalLegal") ?? "OTRO"),
+      causalLegalOtro: String(formData.get("causalLegalOtro") ?? "").trim() || null,
+      fundamentoCautela: String(formData.get("fundamentoCautela") ?? "").trim(),
+      policiaInstruida: String(formData.get("policiaInstruida") ?? "AMBAS"),
+      vigenciaOrden: String(formData.get("vigenciaOrden") ?? "Indefinida").trim() || "Indefinida",
+      secretarioNombre: String(formData.get("secretarioNombre") ?? "").trim() || null,
+    },
+  });
   await publicarCausaEnDiscord(causaId, "Nueva orden de captura emitida");
   revalidatePath(`/causas/${causaId}`);
 }
@@ -307,11 +327,61 @@ export default async function CausaDetallePage({ params }: { params: { id: strin
           ))}
           {!ordenesCaptura.length && <p className="text-sm text-grafito/45">No hay órdenes emitidas.</p>}
         </div>
-        {(rol === "JUEZ" || rol === "ADMIN") && <form action={crearOrdenCaptura.bind(null, causa.id)} className="mt-5 grid gap-3 border-t border-grafito/10 pt-5 sm:grid-cols-2">
-          <input name="nombrePersona" required placeholder="Nombre de la persona" className="border border-grafito/15 rounded-lg px-3 py-2 text-sm" />
-          <input name="motivo" required placeholder="Motivo de la orden" className="border border-grafito/15 rounded-lg px-3 py-2 text-sm" />
-          <button className="button-primary justify-self-start sm:col-span-2">Emitir orden de captura</button>
-        </form>}
+        {(rol === "JUEZ" || rol === "ADMIN") && (
+          <form action={crearOrdenCaptura.bind(null, causa.id)} className="mt-5 grid gap-4 border-t border-grafito/10 pt-5">
+            <div>
+              <p className="eyebrow text-blue-700 mb-2">II. Identificación del imputado/a</p>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <input name="nombrePersona" required placeholder="Nombre completo" className="border border-grafito/15 rounded-lg px-3 py-2 text-sm" />
+                <input name="runOPasaporte" placeholder="RUN / Pasaporte" className="border border-grafito/15 rounded-lg px-3 py-2 text-sm" />
+                <input name="nacionalidadPersona" placeholder="Nacionalidad" className="border border-grafito/15 rounded-lg px-3 py-2 text-sm" />
+                <input name="fechaNacimiento" placeholder="Fecha de nacimiento (dd/mm/aaaa)" className="border border-grafito/15 rounded-lg px-3 py-2 text-sm" />
+                <input name="domicilioConocido" placeholder="Domicilio conocido" className="border border-grafito/15 rounded-lg px-3 py-2 text-sm sm:col-span-2" />
+                <input name="senasParticulares" placeholder="Señas particulares / descripción física" className="border border-grafito/15 rounded-lg px-3 py-2 text-sm sm:col-span-2" />
+              </div>
+            </div>
+
+            <div>
+              <p className="eyebrow text-blue-700 mb-2">III. Antecedentes de la causa</p>
+              <textarea name="motivo" required rows={3} placeholder="Delito(s) imputado(s), fecha y lugar de los hechos, y síntesis de los antecedentes que fundan la solicitud" className="w-full border border-grafito/15 rounded-lg px-3 py-2 text-sm" />
+            </div>
+
+            <div>
+              <p className="eyebrow text-blue-700 mb-2">IV. Fundamento legal de la orden</p>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <select name="causalLegal" className="border border-grafito/15 rounded-lg px-3 py-2 text-sm bg-hueso/40">
+                  <option value="ART_127">Art. 127 CPP — Orden judicial previa solicitud del fiscal</option>
+                  <option value="ART_128">Art. 128 CPP — Detención por flagrancia, seguida de solicitud</option>
+                  <option value="ART_33">Art. 33 CPP — Citación judicial incumplida</option>
+                  <option value="ART_129">Art. 129 CPP — Detención por delito flagrante (Carabineros/PDI)</option>
+                  <option value="REBELDIA">Rebeldía o incomparecencia injustificada (art. 33 inc. final)</option>
+                  <option value="OTRO">Otro (especificar)</option>
+                </select>
+                <input name="causalLegalOtro" placeholder="Detalle si elegiste 'Otro'" className="border border-grafito/15 rounded-lg px-3 py-2 text-sm" />
+              </div>
+              <textarea name="fundamentoCautela" required rows={2} placeholder="Fundamentación de la necesidad de cautela (peligro de fuga, obstrucción a la investigación, etc.)" className="w-full border border-grafito/15 rounded-lg px-3 py-2 text-sm mt-3" />
+            </div>
+
+            <div>
+              <p className="eyebrow text-blue-700 mb-2">V. Resuelvo</p>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <select name="policiaInstruida" className="border border-grafito/15 rounded-lg px-3 py-2 text-sm bg-hueso/40">
+                  <option value="PDI">Policía de Investigaciones de Chile (PDI)</option>
+                  <option value="CARABINEROS">Carabineros de Chile</option>
+                  <option value="AMBAS">Ambas policías (orden amplia)</option>
+                </select>
+                <input name="vigenciaOrden" defaultValue="Indefinida" placeholder="Vigencia de la orden" className="border border-grafito/15 rounded-lg px-3 py-2 text-sm" />
+              </div>
+            </div>
+
+            <div>
+              <p className="eyebrow text-blue-700 mb-2">VI. Firma y certificación</p>
+              <input name="secretarioNombre" placeholder="Ministro de fe / Secretario/a (opcional)" className="w-full border border-grafito/15 rounded-lg px-3 py-2 text-sm" />
+            </div>
+
+            <button className="button-primary justify-self-start">Emitir orden de captura</button>
+          </form>
+        )}
       </section>
 
       {/* Defensa técnica */}

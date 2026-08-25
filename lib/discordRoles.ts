@@ -1,7 +1,5 @@
 import type { Rol } from "@prisma/client";
 
-export const DISCORD_PRESIDENTE_CORTE_ID = "1335396733152264264";
-
 // ---------- Configuración de mapeo ----------
 // IDs de roles del servidor de Discord → rol dentro del sistema judicial.
 // Se evalúan en orden: el primer rol de Discord que el usuario tenga y que
@@ -30,7 +28,6 @@ const DISCORD_BOT_TOKEN = process.env.DISCORD_BOT_TOKEN as string;
  * quien llame debe decidir un valor por defecto.
  */
 export async function obtenerRolDesdeDiscord(discordUserId: string): Promise<Rol | null> {
-  if (discordUserId === DISCORD_PRESIDENTE_CORTE_ID) return "PRESIDENTE_CORTE";
   if (!DISCORD_GUILD_ID || !DISCORD_BOT_TOKEN) {
     console.warn("DISCORD_GUILD_ID o DISCORD_BOT_TOKEN no configurados; se omite la sincronización de roles.");
     return null;

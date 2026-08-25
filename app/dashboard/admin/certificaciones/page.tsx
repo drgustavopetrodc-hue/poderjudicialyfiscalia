@@ -3,14 +3,13 @@ import DashboardShell from "@/components/DashboardShell";
 import { revalidatePath } from "next/cache";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { esAdministracionSuperior } from "@/lib/autorizacion";
 
 
 export const dynamic = "force-dynamic";
 async function resolverCertificacion(formData: FormData) {
   "use server";
   const session = await getServerSession(authOptions);
-  if (!esAdministracionSuperior((session?.user as any)?.rol)) return;
+  if ((session?.user as any)?.rol !== "ADMIN") return;
   const id = String(formData.get("id"));
   const estado = String(formData.get("estado"));
   const observaciones = String(formData.get("observaciones") ?? "");
@@ -33,7 +32,7 @@ async function resolverCertificacion(formData: FormData) {
 async function eliminarCertificacion(formData: FormData) {
   "use server";
   const session = await getServerSession(authOptions);
-  if (!esAdministracionSuperior((session?.user as any)?.rol)) return;
+  if ((session?.user as any)?.rol !== "ADMIN") return;
   const id = String(formData.get("id"));
   if (!id) return;
   await prisma.certificacionAbogado.delete({ where: { id } });

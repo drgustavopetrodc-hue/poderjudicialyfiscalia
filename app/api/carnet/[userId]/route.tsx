@@ -3,30 +3,34 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
-import { ROLES_FUNCIONARIOS, INSTITUCION_POR_ROL, formatearRut, nombreLegal } from "@/lib/identidad";
+import {
+  ROLES_FUNCIONARIOS,
+  INSTITUCION_POR_ROL,
+  formatearRut,
+  esPresidenteCorteSuprema,
+} from "@/lib/identidad";
+import { obtenerAvatarRoblox } from "@/lib/roblox";
 
 export const dynamic = "force-dynamic";
 
 const NOMBRE_ROL: Record<string, string> = {
   ADMIN: "Ministro de Corte Suprema",
-  PRESIDENTE_CORTE: "Presidente de la Corte Suprema",
   JUEZ: "Juez",
   FISCAL: "Fiscal",
   FUNCIONARIO: "Funcionario",
 };
 
-export async function GET(req: NextRequest, { params }: { params: Promise<{ userId: string }> }) {
-  const { userId } = await params;
+export async function GET(req: NextRequest, { params }: { params: { userId: string } }) {
   const session = await getServerSession(authOptions);
   const sessionUserId = (session?.user as any)?.id as string | undefined;
   const sessionRol = (session?.user as any)?.rol as string | undefined;
 
   // Solo el propio usuario o un admin pueden generar la identificación.
-  if (!sessionUserId || (sessionUserId !== userId && sessionRol !== "ADMIN" && sessionRol !== "PRESIDENTE_CORTE")) {
+  if (!sessionUserId || (sessionUserId !== params.userId && sessionRol !== "ADMIN")) {
     return NextResponse.json({ error: "No autorizado" }, { status: 403 });
   }
 
-  const usuario = await prisma.user.findUnique({ where: { id: userId } });
+  const usuario = await prisma.user.findUnique({ where: { id: params.userId } });
   if (!usuario) {
     return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 });
   }
@@ -38,7 +42,15 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ user
   }
 
   const institucion = usuario.institucion || INSTITUCION_POR_ROL[usuario.rol] || "Estado de Chile";
-  const cargo = NOMBRE_ROL[usuario.rol] ?? usuario.rol;
+  const esPresidente = esPresidenteCorteSuprema(usuario.discordId);
+  const cargo = esPresidente ? "Presidente de la Corte Suprema" : NOMBRE_ROL[usuario.rol] ?? usuario.rol;
+
+  // La foto sale del avatar de Roblox si el usuario lo registró en su perfil;
+  // si no, se recurre al avatar de Discord; si tampoco hay, se usan iniciales.
+  const fotoUrl = usuario.robloxUsername
+    ? await obtenerAvatarRoblox(usuario.robloxUsername)
+    : null;
+  const fotoFinal = fotoUrl ?? usuario.image ?? null;
 
   return new ImageResponse(
     (
@@ -79,16 +91,16 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ user
                 fontSize: 26,
               }}
             >
-              ⚖
+              {esPresidente ? "♛" : "⚖"}
             </div>
           </div>
 
           {/* Cuerpo */}
           <div style={{ display: "flex", flex: 1, alignItems: "center", gap: 40, marginTop: 30 }}>
-            {usuario.robloxAvatarUrl || usuario.image ? (
+            {fotoFinal ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
-                src={usuario.robloxAvatarUrl || usuario.image || ""}
+                src={fotoFinal}
                 width={168}
                 height={168}
                 style={{ borderRadius: 16, border: "3px solid rgba(201,164,92,0.5)", objectFit: "cover" }}

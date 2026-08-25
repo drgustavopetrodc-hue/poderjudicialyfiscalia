@@ -3,24 +3,18 @@ import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { contextoSesion, puedeAccederCausa } from "@/lib/autorizacion";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
+export async function GET(_request: Request, { params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
   const orden = await prisma.ordenCaptura.findUnique({
-    where: { id },
+    where: { id: params.id },
     include: { causa: true, solicitadoPor: true },
   });
   if (!orden) return NextResponse.json({ error: "Orden no encontrada" }, { status: 404 });
-  const contexto = contextoSesion(session);
-  if (!contexto || !(await puedeAccederCausa(orden.causaId, contexto))) {
-    return NextResponse.json({ error: "Sin permiso para esta orden" }, { status: 403 });
-  }
 
   const pdf = await PDFDocument.create();
   const page = pdf.addPage([595, 842]);

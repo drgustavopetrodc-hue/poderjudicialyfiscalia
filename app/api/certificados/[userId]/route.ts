@@ -3,22 +3,12 @@ import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import { format } from "date-fns";
 import { NextRequest, NextResponse } from "next/server";
 import { nombreLegal, formatearRut, identidadCompleta } from "@/lib/identidad";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(_req: NextRequest, { params }: { params: Promise<{ userId: string }> }) {
-  const { userId } = await params;
-  const session = await getServerSession(authOptions);
-  const sessionUserId = (session?.user as any)?.id;
-  const sessionRol = (session?.user as any)?.rol;
-  if (!sessionUserId) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
-  if (sessionUserId !== userId && sessionRol !== "ADMIN" && sessionRol !== "PRESIDENTE_CORTE") {
-    return NextResponse.json({ error: "Sin permiso para este certificado" }, { status: 403 });
-  }
+export async function GET(_req: NextRequest, { params }: { params: { userId: string } }) {
   const certificacion = await prisma.certificacionAbogado.findUnique({
-    where: { userId },
+    where: { userId: params.userId },
     include: { user: true },
   });
 

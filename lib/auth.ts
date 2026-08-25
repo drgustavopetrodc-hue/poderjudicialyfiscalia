@@ -2,7 +2,8 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import { type NextAuthOptions } from "next-auth";
 import DiscordProvider from "next-auth/providers/discord";
 import { prisma } from "./prisma";
-import { obtenerRolDesdeDiscord, DISCORD_PRESIDENTE_CORTE_ID } from "./discordRoles";
+import { obtenerRolDesdeDiscord } from "./discordRoles";
+import { esPresidenteCorteSuprema } from "./identidad";
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
@@ -39,11 +40,6 @@ export const authOptions: NextAuthOptions = {
         const dbUser = await prisma.user.findUnique({ where: { id: token.id as string } });
         if (dbUser?.discordId) token.discordId = dbUser.discordId;
       }
-      if (token.discordId === DISCORD_PRESIDENTE_CORTE_ID) {
-        token.rol = "PRESIDENTE_CORTE";
-        await prisma.user.update({ where: { id: token.id as string }, data: { rol: "PRESIDENTE_CORTE" } });
-        return token;
-      }
 
       // Sincroniza el rol real desde los roles del servidor de Discord.
       if (token.discordId) {
@@ -60,6 +56,13 @@ export const authOptions: NextAuthOptions = {
           const dbUser = await prisma.user.findUnique({ where: { id: token.id as string } });
           if (dbUser) token.rol = dbUser.rol;
         }
+
+        // El Presidente de la Corte Suprema siempre tiene rango ADMIN,
+        // sin importar lo que diga la sincronización de roles de Discord.
+        if (esPresidenteCorteSuprema(token.discordId as string) && token.rol !== "ADMIN") {
+          token.rol = "ADMIN";
+          await prisma.user.update({ where: { id: token.id as string }, data: { rol: "ADMIN" } });
+        }
       }
 
       return token;
@@ -68,6 +71,7 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         (session.user as any).id = token.id;
         (session.user as any).rol = token.rol;
+        (session.user as any).discordId = token.discordId;
       }
       return session;
     },

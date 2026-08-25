@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import DashboardShell from "@/components/DashboardShell";
 import { ROLES_FUNCIONARIOS, INSTITUCION_POR_ROL, identidadCompleta } from "@/lib/identidad";
-import { Fingerprint, Download, AlertCircle } from "lucide-react";
+import { Fingerprint, Download, AlertCircle, Gamepad2 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -20,34 +20,6 @@ async function guardarPerfil(formData: FormData) {
   const nacionalidad = String(formData.get("nacionalidad") ?? "").trim();
   const institucion = String(formData.get("institucion") ?? "").trim();
   const robloxUsername = String(formData.get("robloxUsername") ?? "").trim();
-  if (!nombreIC || !rut || !nacionalidad || !robloxUsername || robloxUsername.length > 32) {
-    redirect("/perfil?error=datos-incompletos");
-  }
-
-  let robloxUserId: string;
-  let robloxAvatarUrl: string;
-  try {
-    const lookup = await fetch("https://users.roblox.com/v1/usernames/users", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ usernames: [robloxUsername], excludeBannedUsers: false }),
-      cache: "no-store",
-    });
-    const result = await lookup.json() as { data?: { id: number; name: string }[] };
-    const match = result.data?.[0];
-    if (!lookup.ok || !match) throw new Error("Roblox user not found");
-    const thumbnails = await fetch(
-      `https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${match.id}&size=150x150&format=Png&isCircular=false`,
-      { cache: "no-store" }
-    );
-    const thumbnailResult = await thumbnails.json() as { data?: { imageUrl?: string; state?: string }[] };
-    const imageUrl = thumbnailResult.data?.[0]?.imageUrl;
-    if (!thumbnails.ok || !imageUrl) throw new Error("Roblox avatar not found");
-    robloxUserId = String(match.id);
-    robloxAvatarUrl = imageUrl;
-  } catch {
-    redirect("/perfil?error=roblox-invalido");
-  }
 
   try {
     await prisma.user.update({
@@ -57,9 +29,7 @@ async function guardarPerfil(formData: FormData) {
         rut: rut || null,
         nacionalidad: nacionalidad || null,
         institucion: institucion || null,
-        robloxUsername,
-        robloxUserId,
-        robloxAvatarUrl,
+        robloxUsername: robloxUsername || null,
       },
     });
   } catch (error) {
@@ -75,9 +45,8 @@ async function guardarPerfil(formData: FormData) {
 export default async function PerfilPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: { error?: string };
 }) {
-  const params = await searchParams;
   const session = await getServerSession(authOptions);
   const userId = (session?.user as any)?.id as string;
   const rol = (session?.user as any)?.rol as string;
@@ -102,15 +71,10 @@ export default async function PerfilPage({
             expedientes y cualquier documento oficial que generes.
           </p>
 
-          {params?.error === "rut-duplicado" && (
+          {searchParams?.error === "rut-duplicado" && (
             <div className="flex items-start gap-2 bg-red-50 border border-red-200/60 text-red-700 rounded-lg px-3 py-2.5 text-sm mb-4">
               <AlertCircle size={15} className="shrink-0 mt-0.5" />
               Ese RUT ya está registrado por otro usuario. Revísalo e inténtalo de nuevo.
-            </div>
-          )}
-          {params?.error === "roblox-invalido" && (
-            <div className="bg-red-50 border border-red-200/60 text-red-700 rounded-lg px-3 py-2.5 text-sm mb-4">
-              No encontramos ese usuario de Roblox o no pudimos obtener su avatar. Revisa el nombre exacto.
             </div>
           )}
 
@@ -147,20 +111,6 @@ export default async function PerfilPage({
                 />
               </div>
             </div>
-            <div>
-              <label className="block text-xs text-grafito/55 mb-1">Usuario de Roblox</label>
-              <input
-                name="robloxUsername"
-                defaultValue={usuario.robloxUsername ?? ""}
-                placeholder="Ej: Builderman"
-                required
-                maxLength={32}
-                className="w-full border border-grafito/15 rounded-lg px-3 py-2 text-sm"
-              />
-              <p className="text-[11px] text-grafito/45 mt-1">
-                Usaremos el avatar público de Roblox como foto de tu identificación.
-              </p>
-            </div>
             {esFuncionario && (
               <div>
                 <label className="block text-xs text-grafito/55 mb-1">
@@ -174,6 +124,21 @@ export default async function PerfilPage({
                 />
               </div>
             )}
+            <div>
+              <label className="text-xs text-grafito/55 mb-1 flex items-center gap-1.5">
+                <Gamepad2 size={12} /> Usuario de Roblox
+              </label>
+              <input
+                name="robloxUsername"
+                defaultValue={usuario.robloxUsername ?? ""}
+                placeholder="Tu nombre de usuario exacto en Roblox"
+                required
+                className="w-full border border-grafito/15 rounded-lg px-3 py-2 text-sm"
+              />
+              <p className="text-[11px] text-grafito/40 mt-1">
+                Se usa para tomar tu foto de avatar de Roblox y ponerla en tu identificación oficial.
+              </p>
+            </div>
             <button className="button-primary justify-self-start mt-1">Guardar datos</button>
           </form>
         </div>

@@ -4,21 +4,15 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { nombreLegal } from "@/lib/identidad";
-import { contextoSesion, puedeAccederCausa } from "@/lib/autorizacion";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
+export async function GET(_request: Request, { params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
-  const contexto = contextoSesion(session);
-  if (!contexto || !(await puedeAccederCausa(id, contexto))) {
-    return NextResponse.json({ error: "Sin permiso para este expediente" }, { status: 403 });
-  }
 
   const causa = await prisma.causa.findUnique({
-    where: { id },
+    where: { id: params.id },
     include: { fiscal: true, juez: true, escritos: { include: { autor: true }, orderBy: { presentadoEn: "asc" } }, ordenesCaptura: true, adjuntosFiscales: true, testimonios: true, sentencia: true },
   });
   if (!causa) return NextResponse.json({ error: "Causa no encontrada" }, { status: 404 });

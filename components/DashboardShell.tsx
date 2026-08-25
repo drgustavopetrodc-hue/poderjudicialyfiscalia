@@ -1,4 +1,7 @@
 import Link from "next/link";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { esPresidenteCorteSuprema } from "@/lib/identidad";
 import {
   LayoutDashboard,
   Scale,
@@ -12,6 +15,7 @@ import {
   UserCog,
   LogOut,
   Fingerprint,
+  Crown,
 } from "lucide-react";
 import NavLinks, { type NavItem } from "./NavLinks";
 
@@ -62,7 +66,6 @@ const NAV_POR_ROL: Record<string, NavItem[]> = {
 
 const NOMBRE_VISUAL_ROL: Record<string, string> = {
   ADMIN: "Corte Suprema",
-  PRESIDENTE_CORTE: "Presidente de la Corte Suprema",
   JUEZ: "Juez",
   FISCAL: "Fiscal",
   ABOGADO: "Abogado",
@@ -70,7 +73,7 @@ const NOMBRE_VISUAL_ROL: Record<string, string> = {
   CIUDADANO: "Ciudadano",
 };
 
-export default function DashboardShell({
+export default async function DashboardShell({
   rol,
   titulo,
   children,
@@ -80,7 +83,13 @@ export default function DashboardShell({
   children: React.ReactNode;
 }) {
   const items = NAV_POR_ROL[rol] ?? NAV_POR_ROL.CIUDADANO;
-  const nombreRol = NOMBRE_VISUAL_ROL[rol] ?? rol;
+
+  // La identidad de Presidente se determina por el usuario real de la sesión
+  // (no por el prop "rol", que puede reflejar una vista "ver como X" del admin).
+  const session = await getServerSession(authOptions);
+  const esPresidente = esPresidenteCorteSuprema((session?.user as any)?.discordId);
+
+  const nombreRol = esPresidente ? "Presidente Corte Suprema" : NOMBRE_VISUAL_ROL[rol] ?? rol;
 
   return (
     <div className="min-h-screen bg-hueso flex">
@@ -103,9 +112,21 @@ export default function DashboardShell({
         </div>
 
         <div className="relative pt-4 mt-4 border-t border-hueso/10">
-          <div className="flex items-center gap-2.5 px-3 py-2 rounded-lg bg-hueso/[0.04] mb-1">
-            <div className="w-7 h-7 rounded-full bg-dorado-400/15 border border-dorado-400/30 flex items-center justify-center shrink-0">
-              <span className="font-mono text-dorado-400 text-[10px] font-bold">{nombreRol.charAt(0)}</span>
+          <div
+            className={`flex items-center gap-2.5 px-3 py-2 rounded-lg mb-1 ${
+              esPresidente ? "bg-dorado-400/10 border border-dorado-400/30" : "bg-hueso/[0.04]"
+            }`}
+          >
+            <div
+              className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 border ${
+                esPresidente ? "bg-dorado-400/20 border-dorado-400/50" : "bg-dorado-400/15 border-dorado-400/30"
+              }`}
+            >
+              {esPresidente ? (
+                <Crown size={13} className="text-dorado-400" />
+              ) : (
+                <span className="font-mono text-dorado-400 text-[10px] font-bold">{nombreRol.charAt(0)}</span>
+              )}
             </div>
             <p className="font-mono text-[10px] text-hueso/60 uppercase tracking-widest">{nombreRol}</p>
           </div>
@@ -120,7 +141,9 @@ export default function DashboardShell({
 
       <div className="flex-1 min-w-0">
         <header className="border-b border-grafito/8 bg-white/85 backdrop-blur-md px-6 md:px-10 py-6 sticky top-0 z-10 shadow-[0_1px_0_rgba(11,21,38,.04)]">
-          <p className="eyebrow text-blue-700/80 mb-1">{nombreRol}</p>
+          <p className="eyebrow text-blue-700/80 mb-1 flex items-center gap-1.5">
+            {esPresidente && <Crown size={11} />} {nombreRol}
+          </p>
           <h1 className="font-display text-2xl md:text-[28px] text-grafito tracking-tight">{titulo}</h1>
         </header>
         <main className="p-6 md:p-10 fade-up">{children}</main>

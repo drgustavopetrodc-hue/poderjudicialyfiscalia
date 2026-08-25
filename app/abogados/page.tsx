@@ -41,9 +41,7 @@ export default async function AbogadosPage() {
                 <p className="mt-1 text-sm text-grafito/50">Matrícula <span className="font-mono">{c.numeroMatricula}</span></p>
                 {c.revisadoEn && <p className="mt-1 text-xs text-grafito/40">Certificado el {format(c.revisadoEn, "dd/MM/yyyy")}</p>}
               </div>
-                  {c.user.id === (session.user as any).id || rol === "ADMIN" || rol === "PRESIDENTE_CORTE" ? (
-                    <a href={`/api/certificados/${c.user.id}`} className="button-primary shrink-0" target="_blank">Descargar</a>
-                  ) : null}
+              <a href={`/api/certificados/${c.user.id}`} className="button-primary shrink-0" target="_blank">Descargar</a>
             </div>
           ))}
         </div>

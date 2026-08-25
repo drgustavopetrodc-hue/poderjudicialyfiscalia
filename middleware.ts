@@ -3,11 +3,11 @@ import { NextResponse } from "next/server";
 
 // Mapa de qué roles pueden entrar a qué sección del dashboard
 const rutasPorRol: Record<string, string[]> = {
-  "/dashboard/admin": ["ADMIN", "PRESIDENTE_CORTE"],
-  "/dashboard/juez": ["ADMIN", "PRESIDENTE_CORTE", "JUEZ"],
-  "/dashboard/fiscal": ["ADMIN", "PRESIDENTE_CORTE", "FISCAL"],
-  "/dashboard/abogado": ["ADMIN", "PRESIDENTE_CORTE", "ABOGADO"],
-  "/dashboard/parte": ["ADMIN", "PRESIDENTE_CORTE", "CIUDADANO", "JUEZ", "FISCAL", "ABOGADO", "FUNCIONARIO"],
+  "/dashboard/admin": ["ADMIN"],
+  "/dashboard/juez": ["ADMIN", "JUEZ"],
+  "/dashboard/fiscal": ["ADMIN", "FISCAL"],
+  "/dashboard/abogado": ["ADMIN", "ABOGADO"],
+  "/dashboard/parte": ["ADMIN", "CIUDADANO", "JUEZ", "FISCAL", "ABOGADO", "FUNCIONARIO"],
 };
 
 export default withAuth(

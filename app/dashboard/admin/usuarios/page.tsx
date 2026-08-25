@@ -3,7 +3,6 @@ import DashboardShell from "@/components/DashboardShell";
 import { revalidatePath } from "next/cache";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { esAdministracionSuperior } from "@/lib/autorizacion";
 
 
 export const dynamic = "force-dynamic";
@@ -12,7 +11,7 @@ const ROLES = ["ADMIN", "JUEZ", "FISCAL", "ABOGADO", "FUNCIONARIO", "CIUDADANO"]
 async function cambiarRol(formData: FormData) {
   "use server";
   const session = await getServerSession(authOptions);
-  if (!esAdministracionSuperior((session?.user as any)?.rol)) return;
+  if ((session?.user as any)?.rol !== "ADMIN") return;
   const userId = String(formData.get("userId"));
   const rol = String(formData.get("rol"));
   if (!userId || !ROLES.includes(rol)) return;
@@ -23,7 +22,7 @@ async function cambiarRol(formData: FormData) {
 async function resolverCertificacion(formData: FormData) {
   "use server";
   const session = await getServerSession(authOptions);
-  if (!esAdministracionSuperior((session?.user as any)?.rol)) return;
+  if ((session?.user as any)?.rol !== "ADMIN") return;
   const id = String(formData.get("id"));
   const estado = String(formData.get("estado"));
   if (!id || !["APROBADA", "RECHAZADA", "SUSPENDIDA"].includes(estado)) return;
@@ -38,7 +37,7 @@ async function resolverCertificacion(formData: FormData) {
 async function eliminarCertificacion(formData: FormData) {
   "use server";
   const session = await getServerSession(authOptions);
-  if (!esAdministracionSuperior((session?.user as any)?.rol)) return;
+  if ((session?.user as any)?.rol !== "ADMIN") return;
   const id = String(formData.get("id"));
   if (!id) return;
   await prisma.certificacionAbogado.delete({ where: { id } });
@@ -49,7 +48,7 @@ async function eliminarCertificacion(formData: FormData) {
 async function certificarDirectamente(formData: FormData) {
   "use server";
   const session = await getServerSession(authOptions);
-  if (!esAdministracionSuperior((session?.user as any)?.rol)) return;
+  if ((session?.user as any)?.rol !== "ADMIN") return;
   const userId = String(formData.get("userId"));
   const numeroMatricula = String(formData.get("numeroMatricula") ?? "").trim();
   if (!userId || !numeroMatricula) return;

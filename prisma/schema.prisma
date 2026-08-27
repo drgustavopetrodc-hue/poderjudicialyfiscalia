@@ -48,6 +48,7 @@ enum EstadoOrdenCaptura {
 enum TipoAdjuntoFiscal {
   EVIDENCIA_VISUAL
   OFICIO
+  VIDEO
 }
 
 enum TipoAudiencia {
@@ -224,8 +225,9 @@ model AdjuntoFiscal {
   tipo        TipoAdjuntoFiscal
   nombre      String
   mimeType    String
-  tamano      Int
-  datos       Bytes
+  tamano      Int              @default(0)
+  datos       Bytes? // usado por imágenes/PDF (archivos pequeños, guardados directo en la BD)
+  url         String? // usado por videos (alojados en Vercel Blob, por su tamaño)
   creadoEn    DateTime         @default(now())
 }
 

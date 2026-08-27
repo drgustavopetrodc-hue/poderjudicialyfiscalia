@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import DashboardShell from "@/components/DashboardShell";
 import { redirect } from "next/navigation";
 import { publicarCausaEnDiscord } from "@/lib/discordForum";
+import { codigoPenalPorTitulo, articuloPorNumero } from "@/lib/codigoPenal";
 
 const ROLES_CON_ACCESO = ["FISCAL", "ADMIN"];
 
@@ -17,7 +18,9 @@ async function crearCausa(formData: FormData) {
   const rit = String(formData.get("rit"));
   const ruc = String(formData.get("ruc") ?? "").trim();
   const caratulado = String(formData.get("caratulado"));
-  const delito = String(formData.get("delito"));
+  const numeroArticulo = Number(formData.get("articulo"));
+  const articulo = articuloPorNumero(numeroArticulo);
+  const delito = articulo ? `Art. ${articulo.numero} — ${articulo.delito}` : String(formData.get("delito") ?? "");
   const descripcion = String(formData.get("descripcion"));
 
   const causa = await prisma.causa.create({
@@ -57,8 +60,20 @@ export default async function NuevaCausaPage() {
           <input name="caratulado" required placeholder="Fisco vs. Juan Pérez" className="w-full border border-grafito/15 rounded-lg px-3 py-2" />
         </div>
         <div>
-          <label className="block text-sm text-grafito/60 mb-1">Delito imputado</label>
-          <input name="delito" required placeholder="Robo con violencia" className="w-full border border-grafito/15 rounded-lg px-3 py-2" />
+          <label className="block text-sm text-grafito/60 mb-1">Delito imputado (Código Penal)</label>
+          <select name="articulo" required defaultValue="" className="w-full border border-grafito/15 rounded-lg px-3 py-2 bg-hueso/40">
+            <option value="" disabled>Selecciona el artículo aplicable...</option>
+            {codigoPenalPorTitulo().map(({ titulo, articulos }) => (
+              <optgroup key={titulo} label={titulo}>
+                {articulos.map((a) => (
+                  <option key={a.numero} value={a.numero} title={a.pena}>
+                    Art. {a.numero} — {a.delito}
+                  </option>
+                ))}
+              </optgroup>
+            ))}
+          </select>
+          <p className="text-[11px] text-grafito/40 mt-1">Pasa el cursor sobre una opción para ver la pena asociada.</p>
         </div>
         <div>
           <label className="block text-sm text-grafito/60 mb-1">Descripción de los hechos</label>

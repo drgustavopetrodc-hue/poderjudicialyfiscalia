@@ -6,6 +6,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { publicarCausaEnDiscord } from "@/lib/discordForum";
+import SubirVideoFiscal from "@/components/SubirVideoFiscal";
 
 export const dynamic = "force-dynamic";
 
@@ -111,7 +112,21 @@ export default async function FiscalDashboard() {
                   <input type="file" name="archivo" required accept="image/*,application/pdf" className="rounded-lg border border-blue-200 bg-white px-3 py-2 text-xs" />
                   <button className="button-primary justify-self-start">Subir archivo</button>
                 </form>
-                {c.adjuntosFiscales.length > 0 && <div className="mt-4 space-y-1 border-t border-blue-100 pt-3">{c.adjuntosFiscales.map((a) => <a key={a.id} href={`/api/fiscal/adjuntos/${a.id}`} target="_blank" className="block truncate text-xs text-blue-700 hover:underline">↗ {a.nombre} <span className="text-grafito/40">({a.tipo === "OFICIO" ? "oficio" : "evidencia"})</span></a>)}</div>}
+
+                <div className="mt-4 border-t border-blue-100 pt-3">
+                  <p className="eyebrow text-blue-700 mb-2">Adjuntar video</p>
+                  <SubirVideoFiscal causaId={c.id} />
+                </div>
+
+                {c.adjuntosFiscales.length > 0 && (
+                  <div className="mt-4 space-y-1 border-t border-blue-100 pt-3">
+                    {c.adjuntosFiscales.map((a) => (
+                      <a key={a.id} href={`/api/fiscal/adjuntos/${a.id}`} target="_blank" className="block truncate text-xs text-blue-700 hover:underline">
+                        ↗ {a.nombre} <span className="text-grafito/40">({a.tipo === "OFICIO" ? "oficio" : a.tipo === "VIDEO" ? "video" : "evidencia"})</span>
+                      </a>
+                    ))}
+                  </div>
+                )}
               </div>
               <div className="rounded-xl border border-blue-100 bg-blue-50/40 p-4">
                 <p className="eyebrow text-blue-700">Registrar testimonio</p>

@@ -19,6 +19,14 @@ export async function GET(_request: Request, { params }: { params: { id: string 
   const tieneAcceso = rol === "ADMIN" || adjunto.causa.fiscalId === userId || adjunto.causa.juezId === userId;
   if (!tieneAcceso) return NextResponse.json({ error: "Sin permiso para este archivo" }, { status: 403 });
 
+  // Los videos se sirven directo desde Vercel Blob (no viven en la base de datos).
+  if (adjunto.url) {
+    return NextResponse.redirect(adjunto.url);
+  }
+  if (!adjunto.datos) {
+    return NextResponse.json({ error: "Este archivo no tiene contenido disponible" }, { status: 404 });
+  }
+
   return new NextResponse(Buffer.from(adjunto.datos), {
     headers: {
       "Content-Type": adjunto.mimeType,

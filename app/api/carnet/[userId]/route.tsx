@@ -52,7 +52,28 @@ export async function GET(req: NextRequest, { params }: { params: { userId: stri
   const fotoRoblox = usuario.robloxUsername
     ? await obtenerAvatarRobloxDataUri(usuario.robloxUsername)
     : null;
-  const fotoFinal = fotoRoblox ?? usuario.image ?? null;
+
+  // Si no hay foto de Roblox, convertimos `usuario.image` (URL externa) a
+  // data URI para que `next/og` pueda incrustarla sin depender de fetches
+  // remotos durante el renderizado. Si falla, queda en null y se usan iniciales.
+  let fotoFinal: string | null = null;
+  if (fotoRoblox) {
+    fotoFinal = fotoRoblox;
+  } else if (usuario.image) {
+    try {
+      const resImg = await fetch(usuario.image, { cache: "no-store" });
+      if (resImg.ok) {
+        const bytes = Buffer.from(await resImg.arrayBuffer());
+        const contentType = resImg.headers.get("content-type") ?? "image/png";
+        fotoFinal = `data:${contentType};base64,${bytes.toString("base64")}`;
+      } else {
+        fotoFinal = null;
+      }
+    } catch (err) {
+      console.warn("No se pudo descargar el avatar externo:", err);
+      fotoFinal = null;
+    }
+  }
 
   return new ImageResponse(
     (

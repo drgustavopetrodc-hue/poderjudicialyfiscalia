@@ -58,33 +58,41 @@ async function crearCausa(formData: FormData) {
     .map((d) => d.codigo)
     .filter((codigo) => formData.get(`diligencia_${codigo}`) === "on");
 
-  const causa = await prisma.causa.create({
-    data: {
-      rit,
-      ruc: ruc || null,
-      tribunal: tribunal || null,
-      caratulado,
-      delito,
-      descripcion,
-      fiscalId,
-      ordenInvestigar: {
-        create: {
-          fiscalia: fiscalia || null,
-          unidadPolicial,
-          imputadoIndividualizado,
-          imputadoNombre: imputadoIndividualizado ? imputadoNombre || null : null,
-          imputadoRut: imputadoIndividualizado ? imputadoRut || null : null,
-          victimaNombre: victimaNombre || null,
-          diligencias,
-          diligenciasOtras: diligenciasOtras || null,
-          plazoInforme: plazoInforme || null,
-          urgencia,
-          formaRemision: formaRemision || null,
-          instrucciones: instrucciones || null,
+  let causa;
+  try {
+    causa = await prisma.causa.create({
+      data: {
+        rit,
+        ruc: ruc || null,
+        tribunal: tribunal || null,
+        caratulado,
+        delito,
+        descripcion,
+        fiscalId,
+        ordenInvestigar: {
+          create: {
+            fiscalia: fiscalia || null,
+            unidadPolicial,
+            imputadoIndividualizado,
+            imputadoNombre: imputadoIndividualizado ? imputadoNombre || null : null,
+            imputadoRut: imputadoIndividualizado ? imputadoRut || null : null,
+            victimaNombre: victimaNombre || null,
+            diligencias,
+            diligenciasOtras: diligenciasOtras || null,
+            plazoInforme: plazoInforme || null,
+            urgencia,
+            formaRemision: formaRemision || null,
+            instrucciones: instrucciones || null,
+          },
         },
       },
-    },
-  });
+    });
+  } catch (error: any) {
+    if (error?.code === "P2002" && error?.meta?.target?.includes("rit")) {
+      redirect("/causas/nueva?error=rit-duplicado");
+    }
+    throw error;
+  }
 
   await publicarCausaEnDiscord(causa.id, "Causa creada — Orden de investigar emitida");
   redirect(`/causas/${causa.id}`);
@@ -114,6 +122,12 @@ export default async function NuevaCausaPage({
           <div className="flex items-start gap-2 bg-red-50 border border-red-200/60 text-red-700 rounded-lg px-3 py-2.5 text-sm">
             <AlertCircle size={15} className="shrink-0 mt-0.5" />
             Debes marcar al menos un artículo del Código Penal como delito imputado.
+          </div>
+        )}
+        {searchParams?.error === "rit-duplicado" && (
+          <div className="flex items-start gap-2 bg-red-50 border border-red-200/60 text-red-700 rounded-lg px-3 py-2.5 text-sm">
+            <AlertCircle size={15} className="shrink-0 mt-0.5" />
+            Ya existe una causa registrada con ese RIT. Usa un número distinto (ej. agrega un guion y el año si se repite).
           </div>
         )}
 

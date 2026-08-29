@@ -34,6 +34,7 @@ const NAV_POR_ROL: Record<string, NavItem[]> = {
     { href: "/dashboard/admin/usuarios", label: "Usuarios y roles", icon: <UserCog size={15} /> },
     { href: "/consulta", label: "Consulta pública", icon: <Scale size={15} /> },
     { href: "/ordenes-captura", label: "Órdenes de captura", icon: <Gavel size={15} /> },
+    { href: "/denuncias", label: "Denuncias", icon: <FilePlus2 size={15} /> },
     { href: "/perfil", label: "Mi perfil", icon: <Fingerprint size={15} /> },
   ],
   JUEZ: [
@@ -47,6 +48,7 @@ const NAV_POR_ROL: Record<string, NavItem[]> = {
     { href: "/dashboard/fiscal", label: "Mi fiscalía", icon: <Users size={15} /> },
     { href: "/causas", label: "Todas las causas", icon: <Scale size={15} /> },
     { href: "/causas/nueva", label: "Registrar causa", icon: <FilePlus2 size={15} /> },
+    { href: "/denuncias", label: "Denuncias", icon: <FilePlus2 size={15} /> },
     { href: "/escritos", label: "Escritos", icon: <ScrollText size={15} /> },
     { href: "/abogados", label: "Abogados certificados", icon: <Award size={15} /> },
     { href: "/perfil", label: "Mi perfil", icon: <Fingerprint size={15} /> },

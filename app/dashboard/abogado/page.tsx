@@ -3,6 +3,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import DashboardShell from "@/components/DashboardShell";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
 
 export const dynamic = "force-dynamic";
@@ -23,7 +24,10 @@ async function solicitarCertificacion(formData: FormData) {
 
 export default async function CertificacionPage() {
   const session = await getServerSession(authOptions);
-  const userId = (session?.user as any)?.id as string;
+  const userId = (session?.user as any)?.id as string | undefined;
+
+  if (!userId) redirect("/login");
+
   const certificacion = await prisma.certificacionAbogado.findUnique({ where: { userId } });
 
   return (

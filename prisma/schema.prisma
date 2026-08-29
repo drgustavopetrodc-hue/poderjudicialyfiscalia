@@ -159,6 +159,7 @@ model Causa {
   rit           String      @unique // Rol Interno del Tribunal, ej: 001-2026
   ruc           String? // Rol Único de Causa (identificador distinto del RIT)
   caratulado    String // ej: "Fisco vs. Juan Pérez"
+  tribunal      String? // ej: "Primer Juzgado de Garantía de Santiago"
   descripcion   String      @db.Text
   estado        EstadoCausa @default(EN_INVESTIGACION)
   delito        String
@@ -178,8 +179,41 @@ model Causa {
   audiencias Audiencia[]
   sentencia  Sentencia?
   ordenesCaptura OrdenCaptura[]
+  ordenInvestigar OrdenInvestigar?
   adjuntosFiscales AdjuntoFiscal[]
   testimonios Testimonio[]
+}
+
+// ---------- Orden de investigar (Ministerio Público → policía) ----------
+// A diferencia de la orden de captura, esta NO requiere firma de un juez —
+// es un instrumento administrativo del fiscal dirigido a la PDI/Carabineros
+// (art. 79-91 CPP). Se genera automáticamente al registrar cada causa.
+model OrdenInvestigar {
+  id       String @id @default(cuid())
+  causaId  String @unique
+  causa    Causa  @relation(fields: [causaId], references: [id], onDelete: Cascade)
+
+  fiscalia          String?
+  unidadPolicial    String  @default("AMBAS") // PDI | CARABINEROS | AMBAS
+
+  // El imputado puede no estar identificado al momento de abrir la causa.
+  imputadoIndividualizado Boolean @default(true)
+  imputadoNombre    String?
+  imputadoRut       String?
+
+  victimaNombre     String? // "N/A" si se reserva identidad / no aplica
+
+  diligencias       String[] @default([])
+  diligenciasOtras  String?
+
+  plazoInforme      String?
+  urgencia          String  @default("ORDINARIA") // ORDINARIA | CON_DETENIDO | SUMA_URGENCIA
+  formaRemision     String?
+
+  instrucciones             String? @db.Text
+  funcionarioPolicialNombre String?
+
+  emitidaEn DateTime @default(now())
 }
 
 model OrdenCaptura {

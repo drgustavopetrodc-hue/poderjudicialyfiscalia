@@ -1,69 +1,67 @@
-import Link from "next/link";
-import { Scale, ShieldCheck, CalendarClock, Gavel, ArrowRight } from "lucide-react";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import DashboardShell from "@/components/DashboardShell";
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
-export default function Home() {
+
+export const dynamic = "force-dynamic";
+async function solicitarCertificacion(formData: FormData) {
+  "use server";
+  const session = await getServerSession(authOptions);
+  const userId = (session?.user as any)?.id as string;
+  const numeroMatricula = String(formData.get("numeroMatricula") ?? "").trim();
+  if (!userId || !numeroMatricula) return;
+
+  await prisma.certificacionAbogado.upsert({
+    where: { userId },
+    create: { userId, numeroMatricula },
+    update: { numeroMatricula, estado: "PENDIENTE" },
+  });
+  revalidatePath("/dashboard/abogado/certificacion");
+}
+
+export default async function CertificacionPage() {
+  const session = await getServerSession(authOptions);
+  const userId = (session?.user as any)?.id as string | undefined;
+
+  if (!userId) redirect("/login");
+
+  const certificacion = await prisma.certificacionAbogado.findUnique({ where: { userId } });
+
   return (
-    <main className="min-h-screen bg-marino-950 text-hueso relative overflow-hidden">
-      <div className="sello absolute inset-0 pointer-events-none" />
-      <div className="grid-ornamento absolute inset-0 pointer-events-none opacity-30" />
-      <div
-        className="absolute -top-40 -right-40 w-[560px] h-[560px] rounded-full pointer-events-none"
-        style={{ background: "radial-gradient(circle, rgba(37,99,235,.16), transparent 70%)" }}
-      />
-
-      <div className="relative max-w-5xl mx-auto px-6 py-24">
-        <div className="flex items-center gap-2.5 mb-10">
-          <div className="w-9 h-9 rounded-full border border-dorado-400/40 flex items-center justify-center bg-hueso/[0.04]">
-            <Scale size={16} className="text-dorado-400" strokeWidth={1.75} />
-          </div>
-          <p className="font-mono text-dorado-400 text-xs tracking-[0.3em] uppercase">
-            República · Sistema Judicial
-          </p>
+    <DashboardShell rol="ABOGADO" titulo="Certificación de abogado">
+      {certificacion ? (
+        <div className="panel-card p-6 max-w-md">
+          <p className="text-sm text-grafito/50 mb-1">Número de matrícula</p>
+          <p className="font-mono text-lg mb-4">{certificacion.numeroMatricula}</p>
+          <p className="text-sm text-grafito/50 mb-1">Estado</p>
+          <span className="badge bg-marino-950 text-hueso">
+            {certificacion.estado}
+          </span>
+          {certificacion.observaciones && (
+            <p className="text-sm text-grafito/60 mt-4 italic">
+              "{certificacion.observaciones}"
+            </p>
+          )}
         </div>
-
-        <h1 className="font-display text-5xl md:text-7xl leading-[1.05] mb-8 max-w-3xl">
-          La justicia, <span className="text-dorado-400">administrada con orden.</span>
-        </h1>
-        <p className="text-hueso/65 text-lg max-w-xl mb-12 leading-relaxed">
-          Registro de causas, certificación de abogados, presentación de escritos,
-          defensa técnica y audiencias — todo en un mismo expediente digital para
-          el servidor.
-        </p>
-
-        <div className="flex flex-wrap gap-4 mb-24">
-          <Link
-            href="/login"
-            className="group flex items-center gap-2 bg-dorado-400 text-marino-950 font-semibold px-7 py-3.5 rounded-lg hover:bg-dorado-300 transition-all hover:-translate-y-0.5 shadow-[0_8px_24px_-8px_rgba(37,99,235,.6)]"
-          >
-            Ingresar con Discord
-            <ArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
-          </Link>
-          <Link
-            href="/abogados"
-            className="border border-hueso/20 px-7 py-3.5 rounded-lg hover:border-hueso/40 hover:bg-hueso/[0.03] transition-colors"
-          >
-            Ver abogados certificados
-          </Link>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {[
-            { icon: Scale, title: "Causas", desc: "Registro y seguimiento de expedientes judiciales" },
-            { icon: ShieldCheck, title: "Abogados", desc: "Certificación y matrícula habilitante" },
-            { icon: CalendarClock, title: "Audiencias", desc: "Agenda de formalización y juicio oral" },
-            { icon: Gavel, title: "Sentencias", desc: "Resoluciones dictadas por el tribunal" },
-          ].map(({ icon: Icon, title, desc }) => (
-            <div
-              key={title}
-              className="border border-hueso/10 rounded-xl p-6 bg-hueso/[0.02] hover:bg-hueso/[0.04] hover:border-dorado-400/25 transition-colors"
-            >
-              <Icon size={20} className="text-dorado-400 mb-4" strokeWidth={1.5} />
-              <h3 className="font-display text-xl mb-1.5">{title}</h3>
-              <p className="text-hueso/45 text-sm leading-relaxed">{desc}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </main>
+      ) : (
+        <form action={solicitarCertificacion} className="max-w-md panel-card p-6">
+          <label className="block text-sm text-grafito/60 mb-2">
+            Número de matrícula (elige el que use tu personaje de rol)
+          </label>
+          <input
+            name="numeroMatricula"
+            required
+            className="w-full border border-grafito/15 rounded-lg px-3 py-2 mb-4"
+            placeholder="ej. AB-2026-014"
+          />
+          <button className="button-primary">
+            Solicitar certificación
+          </button>
+        </form>
+      )}
+    </DashboardShell>
   );
 }

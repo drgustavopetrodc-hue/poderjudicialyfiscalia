@@ -276,13 +276,16 @@ export default async function CausaDetallePage({ params }: { params: { id: strin
         <p className="text-sm text-grafito/50">
           Fiscal: {nombreLegal(causa.fiscal)} · Juez: {causa.juez ? nombreLegal(causa.juez) : "Sin asignar"}
         </p>
-        {puedeTomarCausa && (
-          <form action={tomarCausaComoJuez.bind(null, causa.id)} className="mt-4">
-            <button className="button-primary">
-              Tomar esta causa
-            </button>
-          </form>
-        )}
+        <div className="flex flex-wrap gap-2 mt-4">
+          {puedeTomarCausa && (
+            <form action={tomarCausaComoJuez.bind(null, causa.id)}>
+              <button className="button-primary">Tomar esta causa</button>
+            </form>
+          )}
+          <a href={`/api/ordenes-investigar/${causa.id}/pdf`} target="_blank" className="button-secondary">
+            Descargar Orden de Investigar (PDF)
+          </a>
+        </div>
       </section>
 
       <section className="panel-card p-6 mb-6">

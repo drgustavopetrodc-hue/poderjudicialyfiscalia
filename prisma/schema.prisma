@@ -45,6 +45,12 @@ enum EstadoOrdenCaptura {
   LEVANTADA
 }
 
+enum EstadoDenuncia {
+  PENDIENTE
+  RECIBIDA
+  REVISADA
+}
+
 enum TipoAdjuntoFiscal {
   EVIDENCIA_VISUAL
   OFICIO
@@ -139,6 +145,7 @@ model User {
   ordenesCapturaRecibidas OrdenCaptura[]    @relation("OrdenCapturaPersona")
   adjuntosFiscales AdjuntoFiscal[]         @relation("AdjuntosFiscalesUsuario")
   testimoniosRegistrados Testimonio[]       @relation("TestimoniosUsuario")
+  denunciasPresentadas Denuncia[]
 }
 
 // ---------- Certificación de abogados ----------
@@ -365,4 +372,15 @@ model Sentencia {
   fundamento   String             @db.Text
   pena         String?
   dictadaEn    DateTime           @default(now())
+}
+
+// ---------- Denuncias (presentadas por civiles) ----------
+model Denuncia {
+  id             String         @id @default(cuid())
+  titulo         String
+  descripcion    String         @db.Text
+  denuncianteId  String
+  denunciante    User           @relation(fields: [denuncianteId], references: [id])
+  estado         EstadoDenuncia @default(PENDIENTE)
+  creadaEn       DateTime       @default(now())
 }

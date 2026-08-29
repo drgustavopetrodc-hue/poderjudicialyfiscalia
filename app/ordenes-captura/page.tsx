@@ -13,15 +13,17 @@ export default async function OrdenesCapturaPage({ searchParams }: { searchParam
   if (!rol || !ROLES_FUNCIONARIOS.includes(rol)) redirect('/login');
 
   const q = (searchParams?.q ?? '').trim();
-  const where: any = {};
+  const baseWhere: any = { estado: { not: 'LEVANTADA' } };
   if (q) {
-    where.OR = [
-      { nombrePersona: { contains: q, mode: 'insensitive' } },
-      { runOPasaporte: q },
+    baseWhere.AND = [
+      { OR: [
+        { nombrePersona: { contains: q, mode: 'insensitive' } },
+        { runOPasaporte: q },
+      ] },
     ];
   }
 
-  const ordenes = await prisma.ordenCaptura.findMany({ where, orderBy: { emitidaEn: 'desc' }, include: { causa: true, solicitadoPor: true } });
+  const ordenes = await prisma.ordenCaptura.findMany({ where: baseWhere, orderBy: { emitidaEn: 'desc' }, include: { causa: true, solicitadoPor: true } });
 
   return (
     <DashboardShell rol={rol ?? 'FUNCIONARIO'} titulo="Órdenes de captura">

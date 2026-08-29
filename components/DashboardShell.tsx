@@ -32,6 +32,8 @@ const NAV_POR_ROL: Record<string, NavItem[]> = {
     { href: "/escritos", label: "Escritos", icon: <ScrollText size={15} /> },
     { href: "/dashboard/admin/certificaciones", label: "Certificar abogados", icon: <BadgeCheck size={15} /> },
     { href: "/dashboard/admin/usuarios", label: "Usuarios y roles", icon: <UserCog size={15} /> },
+    { href: "/consulta", label: "Consulta pública", icon: <Scale size={15} /> },
+    { href: "/ordenes-captura", label: "Órdenes de captura", icon: <Gavel size={15} /> },
     { href: "/perfil", label: "Mi perfil", icon: <Fingerprint size={15} /> },
   ],
   JUEZ: [

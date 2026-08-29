@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import DashboardShell from "@/components/DashboardShell";
+import ConfirmSubmitButton from '@/components/ConfirmSubmitButton';
 import { redirect } from "next/navigation";
 import { publicarCausaEnDiscord } from "@/lib/discordForum";
 import { codigoPenalPorTitulo, articuloPorNumero } from "@/lib/codigoPenal";
@@ -87,6 +88,15 @@ async function crearCausa(formData: FormData) {
         },
       },
     });
+      // Si venimos de una denuncia, marcarla como RECIBIDA
+      const fromDenunciaId = String(formData.get('fromDenunciaId') ?? '').trim();
+      if (fromDenunciaId) {
+        try {
+          await prisma.denuncia.update({ where: { id: fromDenunciaId }, data: { estado: 'RECIBIDA' } });
+        } catch (e) {
+          console.warn('No se pudo actualizar la denuncia al crear causa:', e);
+        }
+      }
   } catch (error: any) {
     if (error?.code === "P2002" && error?.meta?.target?.includes("rit")) {
       redirect("/causas/nueva?error=rit-duplicado");
@@ -101,13 +111,41 @@ async function crearCausa(formData: FormData) {
 export default async function NuevaCausaPage({
   searchParams,
 }: {
-  searchParams: { error?: string };
+  searchParams: { error?: string; fromDenunciaId?: string };
 }) {
   const session = await getServerSession(authOptions);
   const rol = (session?.user as any)?.rol as string | undefined;
 
   if (!rol || !ROLES_CON_ACCESO.includes(rol)) {
     redirect("/dashboard?error=sin-permiso");
+  }
+
+  // Si venimos de una denuncia, obtenerla para prefijar campos
+  let denuncia: any = null;
+  const fromDenunciaId = searchParams?.fromDenunciaId;
+  if (fromDenunciaId) {
+    denuncia = await prisma.denuncia.findUnique({ where: { id: fromDenunciaId }, include: { denunciante: true } });
+  }
+
+  // Detectar artículos sugeridos a partir de la descripción de la denuncia (si existe)
+  const descripcionTexto = (denuncia?.descripcion ?? "").toLowerCase();
+  const articulosTodos = codigoPenalPorTitulo().flatMap((t) => t.articulos);
+  const sugeridosSet = new Set<number>();
+  if (descripcionTexto) {
+    for (const a of articulosTodos) {
+      const delitoLower = a.delito.toLowerCase();
+      if (descripcionTexto.includes(delitoLower) || descripcionTexto.includes(String(a.numero))) {
+        sugeridosSet.add(a.numero);
+        continue;
+      }
+      const keywords = delitoLower.split(/\W+/).filter(Boolean).filter((w) => w.length > 4);
+      for (const kw of keywords) {
+        if (descripcionTexto.includes(kw)) {
+          sugeridosSet.add(a.numero);
+          break;
+        }
+      }
+    }
   }
 
   return (
@@ -137,7 +175,7 @@ export default async function NuevaCausaPage({
           <div className="grid sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-sm text-grafito/60 mb-1">RIT</label>
-              <input name="rit" required placeholder="001-2026" className="w-full border border-grafito/15 rounded-lg px-3 py-2" />
+              <input name="rit" required placeholder="001-2026" className="w-full border border-grafito/15 rounded-lg px-3 py-2" defaultValue={undefined} />
             </div>
             <div>
               <label className="block text-sm text-grafito/60 mb-1">RUC (opcional)</label>
@@ -146,11 +184,11 @@ export default async function NuevaCausaPage({
           </div>
           <div>
             <label className="block text-sm text-grafito/60 mb-1">Caratulado</label>
-            <input name="caratulado" required placeholder="Fisco vs. Juan Pérez" className="w-full border border-grafito/15 rounded-lg px-3 py-2" />
+            <input name="caratulado" required placeholder="Fisco vs. Juan Pérez" className="w-full border border-grafito/15 rounded-lg px-3 py-2" defaultValue={denuncia ? `Denuncia: ${denuncia.titulo}` : undefined} />
           </div>
           <div>
             <label className="block text-sm text-grafito/60 mb-1">Tribunal (opcional)</label>
-            <input name="tribunal" placeholder="Primer Juzgado de Garantía de Santiago" className="w-full border border-grafito/15 rounded-lg px-3 py-2" />
+            <input name="tribunal" placeholder="Primer Juzgado de Garantía de Santiago" className="w-full border border-grafito/15 rounded-lg px-3 py-2" defaultValue={undefined} />
           </div>
         </div>
 
@@ -161,7 +199,7 @@ export default async function NuevaCausaPage({
             Marca uno o más artículos. Despliega cada título para ver sus delitos; pasa el cursor sobre uno para ver la pena.
           </p>
           <div className="border border-grafito/15 rounded-lg max-h-72 overflow-y-auto divide-y divide-grafito/10">
-            {codigoPenalPorTitulo().map(({ titulo, articulos }) => (
+              {codigoPenalPorTitulo().map(({ titulo, articulos }) => (
               <details key={titulo} className="group px-3">
                 <summary className="cursor-pointer list-none py-2.5 text-sm font-medium text-grafito/70 flex items-center justify-between select-none">
                   {titulo}
@@ -170,7 +208,7 @@ export default async function NuevaCausaPage({
                 <div className="pb-3 pl-2 grid gap-1.5">
                   {articulos.map((a) => (
                     <label key={a.numero} title={a.pena} className="flex items-start gap-2 text-sm text-grafito/80 cursor-pointer hover:text-marino-950">
-                      <input type="checkbox" name="articulos" value={a.numero} className="mt-1 accent-marino-950" />
+                      <input type="checkbox" name="articulos" value={a.numero} className="mt-1 accent-marino-950" defaultChecked={sugeridosSet.has(a.numero)} />
                       <span>Art. {a.numero} — {a.delito}</span>
                     </label>
                   ))}
@@ -182,7 +220,8 @@ export default async function NuevaCausaPage({
 
         <div>
           <label className="block text-sm text-grafito/60 mb-1">Descripción de los hechos</label>
-          <textarea name="descripcion" required rows={4} className="w-full border border-grafito/15 rounded-lg px-3 py-2" />
+          <textarea name="descripcion" required rows={4} className="w-full border border-grafito/15 rounded-lg px-3 py-2" defaultValue={denuncia?.descripcion ?? undefined} />
+          {fromDenunciaId && <input type="hidden" name="fromDenunciaId" value={fromDenunciaId} />}
         </div>
 
         {/* ---------- Imputado ---------- */}
@@ -275,7 +314,7 @@ export default async function NuevaCausaPage({
           </div>
         </div>
 
-        <button className="button-primary justify-self-start">Registrar causa</button>
+        <ConfirmSubmitButton formId="crearCausaForm" label="Registrar causa" message="¿Confirmas crear la causa?" />
       </form>
     </DashboardShell>
   );

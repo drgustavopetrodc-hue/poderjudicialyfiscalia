@@ -2,6 +2,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import DashboardShell from '@/components/DashboardShell';
+import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { ROLES_FUNCIONARIOS } from '@/lib/identidad';
 
@@ -60,9 +61,7 @@ export default async function DenunciasPage() {
                   </div>
                   <div className="flex-shrink-0 flex flex-col gap-2">
                     {(rol === 'FISCAL' || rol === 'ADMIN') && (
-                      <form action={abrirCausaDesdeDenuncia.bind(null, d.id)}>
-                        <button className="button-primary">Elevar a causa</button>
-                      </form>
+                      <Link href={`/causas/nueva?fromDenunciaId=${d.id}`} className="button-primary">Elevar a causa</Link>
                     )}
                     <span className="text-xs text-grafito/50">Estado: {d.estado}</span>
                   </div>

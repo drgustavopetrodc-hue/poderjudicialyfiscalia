@@ -150,7 +150,7 @@ export default async function NuevaCausaPage({
 
   return (
     <DashboardShell rol={rol} titulo="Registrar nueva causa">
-      <form id="crearCausaForm" action={crearCausa} className="max-w-2xl panel-card p-6 grid gap-6">
+      <form id="crearCausaForm" method="post" action={crearCausa} className="max-w-2xl panel-card p-6 grid gap-6">
         {rol === "ADMIN" && (
           <p className="text-xs text-blue-700 bg-blue-50 border border-blue-200/60 rounded-lg px-3 py-2">
             Estás registrando esta causa como Corte Suprema, actuando en calidad de fiscal para fines de prueba.
@@ -314,6 +314,7 @@ export default async function NuevaCausaPage({
           </div>
         </div>
 
+        <button type="submit" className="hidden" aria-hidden />
         <ConfirmSubmitButton formId="crearCausaForm" label="Registrar causa" message="¿Confirmas crear la causa?" />
       </form>
     </DashboardShell>

@@ -29,7 +29,7 @@ const T_XVI = "XVI. De las faltas";
 
 export const CODIGO_PENAL: ArticuloPenal[] = [
   { numero: 46, delito: "Homicidio simple", pena: PENA.M1, titulo: T_V },
-  { numero: 46.1, delito: "Homicidio Frustrado", pena: PENA.N1, titulo: T_V },
+  { numero: 46.1, delito: "Homicidio frustrado", pena: PENA.N1, titulo: T_V },
   { numero: 47, delito: "Homicidio calificado", pena: PENA.M2, titulo: T_V },
   { numero: 48, delito: "Parricidio", pena: PENA.M2, titulo: T_V },
   { numero: 49, delito: "Femicidio", pena: PENA.M2, titulo: T_V },
@@ -153,6 +153,7 @@ export const CODIGO_PENAL: ArticuloPenal[] = [
   { numero: 159, delito: "Fabricación o tráfico de armas de fuego", pena: PENA.M2, titulo: T_XIII },
   { numero: 160, delito: "Tenencia ilegal de explosivos", pena: PENA.N1, titulo: T_XIII },
   { numero: 161, delito: "Asociación ilícita", pena: PENA.M1, titulo: T_XIII },
+  { numero: 161.1, delito: "Asociación criminal", pena: PENA.M1, titulo: T_XIII },
   { numero: 162, delito: "Financiamiento del terrorismo", pena: PENA.ESP, titulo: T_XIII },
   { numero: 163, delito: "Amenaza de atentado", pena: PENA.N1, titulo: T_XIII },
 

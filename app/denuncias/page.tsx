@@ -12,7 +12,7 @@ async function abrirCausaDesdeDenuncia(denunciaId: string) {
   const session = await getServerSession(authOptions);
   const userId = (session?.user as any)?.id as string | undefined;
   const rol = (session?.user as any)?.rol as string | undefined;
-  if (!userId || rol !== 'FISCAL') return;
+  if (!userId || (rol !== 'FISCAL' && rol !== 'ADMIN')) return;
 
   const denuncia = await prisma.denuncia.findUnique({ where: { id: denunciaId } });
   if (!denuncia) return;
@@ -59,9 +59,9 @@ export default async function DenunciasPage() {
                     <p className="mt-2 text-xs text-grafito/50">Presentada por: {d.denunciante?.nombreIC || d.denunciante?.name || 'Usuario anónimo'} · {d.creadaEn.toISOString().slice(0,19).replace('T',' ')}</p>
                   </div>
                   <div className="flex-shrink-0 flex flex-col gap-2">
-                    {rol === 'FISCAL' && (
+                    {(rol === 'FISCAL' || rol === 'ADMIN') && (
                       <form action={abrirCausaDesdeDenuncia.bind(null, d.id)}>
-                        <button className="button-primary">Abrir causa desde denuncia</button>
+                        <button className="button-primary">Elevar a causa</button>
                       </form>
                     )}
                     <span className="text-xs text-grafito/50">Estado: {d.estado}</span>

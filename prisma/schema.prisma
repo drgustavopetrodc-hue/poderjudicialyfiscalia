@@ -51,6 +51,11 @@ enum EstadoDenuncia {
   REVISADA
 }
 
+enum TipoAdjuntoDenuncia {
+  IMAGEN
+  VIDEO
+}
+
 enum TipoAdjuntoFiscal {
   EVIDENCIA_VISUAL
   OFICIO
@@ -146,6 +151,7 @@ model User {
   adjuntosFiscales AdjuntoFiscal[]         @relation("AdjuntosFiscalesUsuario")
   testimoniosRegistrados Testimonio[]       @relation("TestimoniosUsuario")
   denunciasPresentadas Denuncia[]
+  denunciaAdjuntos DenunciaAdjunto[]
 }
 
 // ---------- Certificación de abogados ----------
@@ -383,4 +389,20 @@ model Denuncia {
   denunciante    User           @relation(fields: [denuncianteId], references: [id])
   estado         EstadoDenuncia @default(PENDIENTE)
   creadaEn       DateTime       @default(now())
+  adjuntos       DenunciaAdjunto[]
+}
+
+model DenunciaAdjunto {
+  id           String   @id @default(cuid())
+  denunciaId   String
+  denuncia     Denuncia @relation(fields: [denunciaId], references: [id], onDelete: Cascade)
+  subidoPorId  String
+  subidoPor    User     @relation(fields: [subidoPorId], references: [id])
+  tipo         TipoAdjuntoDenuncia
+  nombre       String
+  mimeType     String
+  tamano       Int
+  datos        Bytes?
+  url          String?
+  creadoEn     DateTime @default(now())
 }

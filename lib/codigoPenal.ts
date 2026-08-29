@@ -3,7 +3,6 @@ export interface ArticuloPenal {
   delito: string;
   pena: string;
   titulo: string;
-  numeroyletra: string;
 }
 
 const PENA = {
@@ -30,6 +29,7 @@ const T_XVI = "XVI. De las faltas";
 
 export const CODIGO_PENAL: ArticuloPenal[] = [
   { numero: 46, delito: "Homicidio simple", pena: PENA.M1, titulo: T_V },
+  { numero: 46.1, delito: "Homicidio Frustrado", pena: PENA.N1, titulo: T_V },
   { numero: 47, delito: "Homicidio calificado", pena: PENA.M2, titulo: T_V },
   { numero: 48, delito: "Parricidio", pena: PENA.M2, titulo: T_V },
   { numero: 49, delito: "Femicidio", pena: PENA.M2, titulo: T_V },

@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import DashboardShell from "@/components/DashboardShell";
+import CredencialPreview from "@/components/CredencialPreview";
 import Link from "next/link";
 
 
@@ -11,14 +12,18 @@ export default async function JuezDashboard() {
   const userId = (session?.user as any)?.id as string;
   const rol = (session?.user as any)?.rol as string;
 
-  const causas = await prisma.causa.findMany({
-    where: { juezId: userId },
-    orderBy: { actualizadaEn: "desc" },
-    include: { fiscal: true, _count: { select: { audiencias: true, escritos: true } } },
-  });
+  const [causas, usuarioActual] = await Promise.all([
+    prisma.causa.findMany({
+      where: { juezId: userId },
+      orderBy: { actualizadaEn: "desc" },
+      include: { fiscal: true, _count: { select: { audiencias: true, escritos: true } } },
+    }),
+    prisma.user.findUnique({ where: { id: userId }, select: { id: true, rol: true, nombreIC: true, rut: true } }),
+  ]);
 
   return (
     <DashboardShell rol={rol} titulo="Causas asignadas a mi tribunal">
+      {usuarioActual && <CredencialPreview usuario={usuarioActual} />}
       {causas.length === 0 ? (
         <p className="text-grafito/50">
           Aún no tienes causas asignadas. El fiscal a cargo o un administrador

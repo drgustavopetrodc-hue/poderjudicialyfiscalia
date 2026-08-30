@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import DashboardShell from "@/components/DashboardShell";
+import CredencialPreview from "@/components/CredencialPreview";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
@@ -67,20 +68,24 @@ export default async function FiscalDashboard() {
   const rol = (session?.user as any)?.rol as string | undefined;
   if (!userId || !rol || (rol !== "FISCAL" && rol !== "ADMIN")) redirect("/dashboard?error=sin-permiso");
 
-  const causas = await prisma.causa.findMany({
-    where: { fiscalId: userId },
-    orderBy: { actualizadaEn: "desc" },
-    include: {
-      juez: true,
-      adjuntosFiscales: { orderBy: { creadoEn: "desc" }, take: 5 },
-      testimonios: { orderBy: { creadoEn: "desc" }, take: 5 },
-      _count: { select: { escritos: true, audiencias: true, ordenesCaptura: true, adjuntosFiscales: true, testimonios: true } },
-    },
-  });
+  const [causas, usuarioActual] = await Promise.all([
+    prisma.causa.findMany({
+      where: { fiscalId: userId },
+      orderBy: { actualizadaEn: "desc" },
+      include: {
+        juez: true,
+        adjuntosFiscales: { orderBy: { creadoEn: "desc" }, take: 5 },
+        testimonios: { orderBy: { creadoEn: "desc" }, take: 5 },
+        _count: { select: { escritos: true, audiencias: true, ordenesCaptura: true, adjuntosFiscales: true, testimonios: true } },
+      },
+    }),
+    prisma.user.findUnique({ where: { id: userId }, select: { id: true, rol: true, nombreIC: true, rut: true } }),
+  ]);
   const activas = causas.filter((c) => !["CERRADA", "ARCHIVADA", "SENTENCIADA", "SOBRESEIDA"].includes(c.estado)).length;
 
   return (
     <DashboardShell rol={rol} titulo="Mi fiscalía">
+      {usuarioActual && <CredencialPreview usuario={usuarioActual} />}
       <div className="mb-7 flex flex-wrap items-end justify-between gap-4">
         <div><p className="eyebrow">Área de fiscalía</p><h2 className="font-display text-3xl text-marino-950">Causas a mi cargo</h2><p className="mt-1 text-sm text-grafito/55">Investiga, documenta y tramita cada expediente desde un solo lugar.</p></div>
         <Link href="/causas/nueva" className="button-primary">+ Registrar nueva causa</Link>

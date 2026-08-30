@@ -7,7 +7,6 @@ import {
   INSTITUCION_POR_ROL,
   formatearRut,
   esPresidenteCorteSuprema,
-  generarNifFiscal,
 } from "@/lib/identidad";
 import { obtenerAvatarRobloxDataUri } from "@/lib/roblox";
 
@@ -73,7 +72,6 @@ function buildCarnetSvg({
   const cargoEscapado = escapeXml(cargo);
   const initials = escapeXml((nombreIC || "?").trim().slice(0, 2).toUpperCase() || "PJ");
 
-  // Configuración de Estilo e Identidad según la institución (PJUD vs Fiscalía)
   const esFiscalia = rol === "FISCAL";
   const colorPrimario = esFiscalia ? "#0f2e5c" : "#0a192f";
   const colorSecundario = esFiscalia ? "#174785" : "#112240";
@@ -81,26 +79,27 @@ function buildCarnetSvg({
   const tituloEntidad = esFiscalia ? "MINISTERIO PÚBLICO" : "PODER JUDICIAL";
   const subtituloEntidad = esFiscalia ? "FISCALÍA DE CHILE" : "REPÚBLICA DE CHILE";
   const siglasSello = esFiscalia ? "MP" : "PJUD";
-  const colorTextoCargo = esFiscalia ? "#dc2626" : "#0a192f"; // Rojo para fiscales, Azul para jueces
+  const colorTextoCargo = esFiscalia ? "#dc2626" : "#0a192f";
   const textoFooter = esFiscalia ? "DOCUMENTO INTERNO" : "MINISTERIO DE JUSTICIA";
 
   const avatarMarkup = fotoDataUri
     ? `<image href="${escapeXml(fotoDataUri)}" x="88" y="140" width="184" height="184" preserveAspectRatio="xMidYMid slice" />`
     : `<text x="180" y="250" text-anchor="middle" font-size="52" font-weight="800" fill="${colorPrimario}">${initials}</text>`;
 
-  // Coordenadas calculadas relativas al contenedor transformado g (translate(140 150))
+  // AJUSTE QR: Escala reducida a 1.75 y desfases X/Y recalculados para centrar perfectamente en la caja blanca
   const qrCells = buildQrPattern();
   const qrMarkup = qrCells
-    .map((cell) => (cell.active ? `<rect x="${cell.x * 2.2 + 248}" y="${cell.y * 2.2 + 342}" width="2.2" height="2.2" fill="#111827" />` : ""))
+    .map((cell) => (cell.active ? `<rect x="${cell.x * 1.75 + 253}" y="${cell.y * 1.75 + 345}" width="1.8" height="1.8" fill="#111827" />` : ""))
     .join("");
 
+  // AJUSTE BARRAS: Espaciador horizontal controlado para evitar desbordamientos en el extremo derecho
   const barcode = buildBarcodePattern();
   const barcodeMarkup = barcode
-    .map((active, idx) => (active ? `<rect x="${246 + idx * 1.35}" y="432" width="1.1" height="28" fill="#111827" />` : ""))
+    .map((active, idx) => (active ? `<rect x="${251 + idx * 1.2}" y="435" width="1.0" height="20" fill="#111827" />` : ""))
     .join("");
 
   return `
-    <svg width="640" height="1000" viewBox="0 0 640 1000" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Credencial institucional">
+    <svg width="640" height="1000" viewBox="0 0 640 1000" xmlns="http://w3.org" role="img" aria-label="Credencial institucional">
       <defs>
         <linearGradient id="headerGradient" x1="0" x2="0" y1="0" y2="1">
           <stop offset="0%" stop-color="${colorPrimario}" />
@@ -108,10 +107,8 @@ function buildCarnetSvg({
         </linearGradient>
       </defs>
 
-      {/* Fondo de Canvas */}
       <rect width="640" height="1000" fill="#1f232b" />
 
-      {/* Tarjeta Centrada */}
       <g transform="translate(140 150)">
         <rect width="360" height="560" rx="16" fill="#ffffff" stroke="${colorDetalle}" stroke-width="2" />
         <rect x="0" y="0" width="360" height="118" rx="16" fill="url(#headerGradient)" />
@@ -119,15 +116,12 @@ function buildCarnetSvg({
         <text x="180" y="38" text-anchor="middle" font-size="16" font-family="Arial, sans-serif" font-weight="900" fill="#ffffff" letter-spacing="1.5">${tituloEntidad}</text>
         <text x="180" y="56" text-anchor="middle" font-size="9" font-family="Arial, sans-serif" fill="${colorDetalle}" font-weight="700" letter-spacing="2">${subtituloEntidad}</text>
 
-        {/* Emblema Circular */}
         <circle cx="180" cy="94" r="26" fill="${colorPrimario}" stroke="${colorDetalle}" stroke-width="2" />
         <text x="180" y="98" text-anchor="middle" font-size="11" font-family="Arial, sans-serif" font-weight="900" fill="${colorDetalle}">${siglasSello}</text>
 
-        {/* Recuadro de la Fotografía */}
         <rect x="86" y="138" width="188" height="188" rx="6" fill="#f3f4f6" stroke="${colorPrimario}" stroke-width="2" />
         ${avatarMarkup}
 
-        {/* Datos Personaje */}
         <g font-family="Arial, sans-serif">
           <text x="24" y="356" font-size="8" fill="#6b7280" font-weight="700" letter-spacing="1">FUNCIONARIO / MAGISTRADO</text>
           <text x="24" y="378" font-size="15" fill="#111827" font-weight="800">${nombre}</text>
@@ -136,7 +130,6 @@ function buildCarnetSvg({
           <text x="24" y="438" font-size="15" fill="#111827" font-weight="800">${rutFormateado}</text>
         </g>
 
-        {/* Códigos Dinámicos */}
         <g>
           <rect x="246" y="340" width="82" height="82" fill="#ffffff" stroke="#e5e7eb" stroke-width="1" />
           ${qrMarkup}
@@ -145,14 +138,12 @@ function buildCarnetSvg({
           ${barcodeMarkup}
         </g>
 
-        {/* Caja de Rango */}
-        <rect x="22" y="468" width="316" height="42" fill="#f9fafb" stroke="#e5e7eb" stroke-width="1" stroke-dasharray="0" />
+        <rect x="22" y="468" width="316" height="42" fill="#f9fafb" stroke="#e5e7eb" stroke-width="1" />
         <line x1="22" y1="468" x2="22" y2="510" stroke="${colorDetalle}" stroke-width="4" />
         
         <text x="34" y="484" font-family="Arial, sans-serif" font-size="8" fill="#6b7280" font-weight="700" letter-spacing="1">CARGO INSTITUCIONAL</text>
         <text x="34" y="504" font-family="Arial, sans-serif" font-size="14" fill="${colorTextoCargo}" font-weight="900">${cargoEscapado}</text>
 
-        {/* Franja de Cierre */}
         <rect x="0" y="524" width="360" height="36" fill="${colorPrimario}" rx="0" />
         <line x1="0" y1="524" x2="360" y2="524" stroke="${colorDetalle}" stroke-width="2" />
         <text x="20" y="546" font-family="monospace" font-size="8" fill="#ffffff" letter-spacing="4">|||| |||| ||||</text>
@@ -183,7 +174,6 @@ export async function GET(req: NextRequest, { params }: { params: { userId: stri
       return NextResponse.json({ error: "Faltan datos de identidad (nombre o RUT)" }, { status: 400 });
     }
 
-    const institucion = usuario.institucion || INSTITUCION_POR_ROL[usuario.rol] || "Estado de Chile";
     const esPresidente = esPresidenteCorteSuprema(usuario.discordId);
     const cargo = esPresidente ? "Presidente de la Corte Suprema" : NOMBRE_ROL[usuario.rol] ?? usuario.rol;
 

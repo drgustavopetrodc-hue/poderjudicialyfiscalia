@@ -28,20 +28,6 @@ const NOMBRE_ROL: Record<string, string> = {
 const dirFuentes = path.join(process.cwd(), "public", "fonts");
 const rutaFuente = path.join(dirFuentes, "Arial.ttf");
 
-// Función asíncrona interna para garantizar que la fuente esté registrada antes de dibujar
-async function asegurarFuenteTipografica() {
-  try {
-    if (fs.existsSync(rutaFuente)) {
-      registerFont(rutaFuente, { family: "CustomArial", weight: "bold" });
-      console.log("[SUCCESS] Fuente Arial.ttf registrada desde public/fonts/");
-      return;
-    }
-    console.warn("[WARN] Fuente Arial.ttf no encontrada en public/fonts/ - usando fallback");
-  } catch (error) {
-    console.error("[ERROR] Error al registrar fuente:", error);
-  }
-}
-
 function drawRoundRect(ctx: any, x: number, y: number, w: number, h: number, r: number) {
   if (w < 2 * r) r = w / 2;
   if (h < 2 * r) r = h / 2;
@@ -67,11 +53,17 @@ async function generarPlacaPng({
   rol: string;
   fotoDataUri?: string | null;
 }): Promise<Buffer> {
-  // Nos aseguramos que la fuente esté lista antes de inicializar el lienzo
-  await asegurarFuenteTipografica();
+  // Registrar la fuente en cada request (fallback seguro para Vercel)
+  if (fs.existsSync(rutaFuente)) {
+    try {
+      registerFont(rutaFuente, { family: "CustomArial", weight: "bold" });
+    } catch (e) {
+      // La fuente ya podría estar registrada, ignorar
+    }
+  }
   
-  // Usamos CustomArial si está disponible, fallback a sans-serif
-  const FUENTE_GLOBAL = fs.existsSync(rutaFuente) ? "CustomArial" : "sans-serif";
+  // Siempre usar CustomArial - es la única forma de evitar caracteres censurados
+  const FUENTE_GLOBAL = "CustomArial";
 
   const width = 360;
   const height = 560;

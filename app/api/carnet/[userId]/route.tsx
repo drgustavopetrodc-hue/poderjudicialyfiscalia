@@ -1,4 +1,5 @@
 import { getServerSession } from "next-auth";
+import { ImageResponse } from "next/og";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
@@ -19,7 +20,62 @@ const NOMBRE_ROL: Record<string, string> = {
   FUNCIONARIO: "Funcionario Judicial",
 };
 
-async function generarPlacaSvg({
+const ANCHO_CREDENCIAL = 380;
+const ALTO_CREDENCIAL = 600;
+
+/** Hash determinístico simple (djb2/fnv-like) para sembrar los patrones de QR y código de barras. */
+function semillaDesdeTexto(texto: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < texto.length; i++) {
+    h ^= texto.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+
+/** PRNG mulberry32: mismo texto de entrada -> siempre el mismo patrón visual para ese usuario. */
+function generarRng(semilla: number) {
+  let a = semilla;
+  return function rng() {
+    a |= 0;
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/** Patrón tipo QR (decorativo, no escaneable) con los 3 "ojos" de posición típicos de un QR real. */
+function generarPatronQr(semillaTexto: string, tamano = 7): boolean[][] {
+  const rng = generarRng(semillaDesdeTexto(semillaTexto));
+  const grid: boolean[][] = Array.from({ length: tamano }, () =>
+    Array.from({ length: tamano }, () => rng() > 0.55)
+  );
+
+  const marcarOjo = (oy: number, ox: number) => {
+    for (let y = 0; y < 3; y++) {
+      for (let x = 0; x < 3; x++) {
+        grid[oy + y][ox + x] = y === 0 || y === 2 || x === 0 || x === 2;
+      }
+    }
+  };
+  marcarOjo(0, 0);
+  marcarOjo(0, tamano - 3);
+  marcarOjo(tamano - 3, 0);
+
+  return grid;
+}
+
+/** Barras de ancho variable (decorativo, no un código real) para simular un código de verificación. */
+function generarBarras(semillaTexto: string, cantidad = 26) {
+  const rng = generarRng(semillaDesdeTexto(semillaTexto + "-barras"));
+  return Array.from({ length: cantidad }, (_, i) => ({
+    ancho: 1 + Math.floor(rng() * 3),
+    oscura: i % 2 === 0,
+  }));
+}
+
+function Credencial({
   nombreIC,
   rut,
   cargo,
@@ -31,88 +87,245 @@ async function generarPlacaSvg({
   cargo: string;
   rol: string;
   fotoDataUri?: string | null;
-}): Promise<string> {
+}) {
   const esFiscalia = rol === "FISCAL";
   const colorPrimario = esFiscalia ? "#0f2e5c" : "#0a192f";
   const colorSecundario = esFiscalia ? "#174785" : "#112240";
   const colorDetalle = esFiscalia ? "#79b2fc" : "#b3924b";
-  const tituloEntidad = esFiscalia ? "MINISTERIO PUBLICO" : "PODER JUDICIAL";
-  const subtituloEntidad = esFiscalia ? "FISCALIA DE CHILE" : "REPUBLICA DE CHILE";
+  const tituloEntidad = esFiscalia ? "MINISTERIO PÚBLICO" : "PODER JUDICIAL";
+  const subtituloEntidad = esFiscalia ? "FISCALÍA DE CHILE" : "REPÚBLICA DE CHILE";
   const siglasSello = esFiscalia ? "MP" : "PJUD";
-  const colorTextoCargo = esFiscalia ? "#dc2626" : "#0a192f";
+  const colorTextoCargo = esFiscalia ? "#b91c1c" : "#0a192f";
+  const fondoCargo = esFiscalia ? "#fde3e3" : "#dbe8f6";
   const textoFooter = esFiscalia ? "DOCUMENTO INTERNO" : "MINISTERIO DE JUSTICIA";
 
-  const width = 360;
-  const height = 560;
+  const semilla = `${nombreIC}-${rut}`;
+  const qr = generarPatronQr(semilla);
+  const barras = generarBarras(semilla);
+  const iniciales = (nombreIC || "?").trim().slice(0, 2).toUpperCase();
+  const CELDA = 9;
 
-  // Imagen de avatar (si existe)
-  let avatarSvg = "";
-  if (fotoDataUri) {
-    avatarSvg = `<image href="${fotoDataUri}" x="87" y="138" width="188" height="188" preserveAspectRatio="xMidYMid slice" />`;
-  } else {
-    const initials = (nombreIC || "?").trim().slice(0, 2).toUpperCase();
-    avatarSvg = `<text x="180" y="240" font-size="72" font-weight="bold" fill="${colorPrimario}" text-anchor="middle" dominant-baseline="middle">${initials}</text>`;
-  }
+  return (
+    <div
+      style={{
+        width: ANCHO_CREDENCIAL,
+        height: ALTO_CREDENCIAL,
+        display: "flex",
+        flexDirection: "column",
+        backgroundColor: "#ffffff",
+        borderRadius: 22,
+        overflow: "hidden",
+        border: `3px solid ${colorPrimario}`,
+        boxShadow: "0 18px 40px rgba(10,25,47,0.28)",
+        fontFamily: "Arial, sans-serif",
+      }}
+    >
+      {/* Encabezado */}
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 6,
+          padding: "22px 20px 26px",
+          backgroundImage: `linear-gradient(180deg, ${colorPrimario} 0%, ${colorSecundario} 100%)`,
+          borderBottom: `3px solid ${colorDetalle}`,
+        }}
+      >
+        <div style={{ display: "flex", fontSize: 20, fontWeight: 800, color: "#ffffff", letterSpacing: 1 }}>
+          {tituloEntidad}
+        </div>
+        <div
+          style={{
+            display: "flex",
+            fontSize: 11,
+            fontWeight: 700,
+            color: colorDetalle,
+            letterSpacing: 3,
+            textTransform: "uppercase",
+          }}
+        >
+          {subtituloEntidad}
+        </div>
+        <div
+          style={{
+            display: "flex",
+            marginTop: 8,
+            width: 52,
+            height: 52,
+            borderRadius: 999,
+            backgroundColor: colorPrimario,
+            border: `3px solid ${colorDetalle}`,
+            alignItems: "center",
+            justifyContent: "center",
+            boxShadow: "0 4px 10px rgba(0,0,0,0.25)",
+          }}
+        >
+          <div style={{ display: "flex", fontSize: 15, fontWeight: 800, color: colorDetalle }}>{siglasSello}</div>
+        </div>
+      </div>
 
-  return `<?xml version="1.0" encoding="UTF-8"?>
-<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <linearGradient id="headerGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" style="stop-color:${colorPrimario};stop-opacity:1" />
-      <stop offset="100%" style="stop-color:${colorSecundario};stop-opacity:1" />
-    </linearGradient>
-  </defs>
-  
-  <!-- Fondo blanco -->
-  <rect width="${width}" height="${height}" fill="#ffffff"/>
-  
-  <!-- Bordes redondeados -->
-  <rect x="0" y="0" width="${width}" height="${height}" rx="16" ry="16" fill="none" stroke="#0a192f" stroke-width="2"/>
-  
-  <!-- Encabezado degradado -->
-  <rect x="0" y="0" width="${width}" height="118" fill="url(#headerGrad)" rx="16" ry="16"/>
-  
-  <!-- Título -->
-  <text x="${width / 2}" y="38" font-size="18" font-weight="bold" fill="#ffffff" text-anchor="middle" font-family="Arial, sans-serif">${tituloEntidad}</text>
-  
-  <!-- Subtítulo -->
-  <text x="${width / 2}" y="60" font-size="11" font-weight="bold" fill="${colorDetalle}" text-anchor="middle" font-family="Arial, sans-serif">${subtituloEntidad}</text>
-  
-  <!-- Círculo con sello -->
-  <circle cx="${width / 2}" cy="100" r="24" fill="${colorPrimario}" stroke="${colorDetalle}" stroke-width="2"/>
-  <text x="${width / 2}" y="105" font-size="14" font-weight="bold" fill="${colorDetalle}" text-anchor="middle" dominant-baseline="middle" font-family="Arial, sans-serif">${siglasSello}</text>
-  
-  <!-- Caja de foto -->
-  <rect x="86" y="138" width="188" height="188" fill="#f3f4f6" stroke="${colorPrimario}" stroke-width="2" rx="4"/>
-  ${avatarSvg}
-  
-  <!-- Labels y datos -->
-  <text x="24" y="352" font-size="9" font-weight="bold" fill="#6b7280" font-family="Arial, sans-serif">FUNCIONARIO / MAGISTRADO</text>
-  <text x="24" y="375" font-size="16" font-weight="bold" fill="#111827" font-family="Arial, sans-serif">${nombreIC}</text>
-  
-  <text x="24" y="410" font-size="9" font-weight="bold" fill="#6b7280" font-family="Arial, sans-serif">RUN / RUT NACIONAL</text>
-  <text x="24" y="433" font-size="15" font-weight="bold" fill="#111827" font-family="Arial, sans-serif">${formatearRut(rut)}</text>
-  
-  <!-- QR placeholder -->
-  <rect x="246" y="330" width="82" height="82" fill="#ffffff" stroke="#0a192f" stroke-width="2"/>
-  <text x="287" y="371" font-size="10" font-weight="bold" fill="#0a192f" text-anchor="middle" dominant-baseline="middle" font-family="Arial, sans-serif">QR CODE</text>
-  
-  <!-- Barcode placeholder -->
-  <rect x="246" y="422" width="82" height="28" fill="#ffffff" stroke="#0a192f" stroke-width="1"/>
-  <text x="287" y="437" font-size="8" font-weight="bold" fill="#0a192f" text-anchor="middle" dominant-baseline="middle" font-family="monospace">BARCODE</text>
-  
-  <!-- Cargo -->
-  <rect x="22" y="462" width="316" height="42" fill="#dbe8f6" stroke="#0a192f" stroke-width="1" rx="2"/>
-  <line x1="26" y1="462" x2="26" y2="504" stroke="${colorDetalle}" stroke-width="3"/>
-  <text x="34" y="478" font-size="8" font-weight="bold" fill="#6b7280" font-family="Arial, sans-serif">CARGO INSTITUCIONAL</text>
-  <text x="34" y="500" font-size="14" font-weight="bold" fill="${colorTextoCargo}" font-family="Arial, sans-serif">${cargo}</text>
-  
-  <!-- Footer -->
-  <rect x="0" y="524" width="${width}" height="36" fill="${colorPrimario}"/>
-  <line x1="0" y1="524" x2="${width}" y2="524" stroke="${colorDetalle}" stroke-width="2"/>
-  <text x="20" y="546" font-size="11" font-weight="bold" fill="#dfeaff" font-family="monospace">|||| |||| ||||</text>
-  <text x="${width - 20}" y="546" font-size="9" font-weight="bold" fill="#ffffff" text-anchor="end" font-family="Arial, sans-serif">${textoFooter}</text>
-</svg>`;
+      {/* Cuerpo */}
+      <div style={{ display: "flex", flex: 1, flexDirection: "row" }}>
+        <div style={{ display: "flex", width: 6, backgroundColor: colorDetalle }} />
+
+        <div style={{ display: "flex", flex: 1, flexDirection: "column", padding: "24px 22px", gap: 20 }}>
+          {/* Foto + nombre/rut */}
+          <div style={{ display: "flex", flexDirection: "row", gap: 18, alignItems: "flex-start" }}>
+            <div
+              style={{
+                display: "flex",
+                width: 136,
+                height: 136,
+                borderRadius: 14,
+                border: `2px solid ${colorPrimario}`,
+                backgroundColor: "#f3f4f6",
+                overflow: "hidden",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+              }}
+            >
+              {fotoDataUri ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={fotoDataUri} width={136} height={136} style={{ objectFit: "cover" }} />
+              ) : (
+                <div style={{ display: "flex", fontSize: 52, fontWeight: 800, color: colorPrimario }}>
+                  {iniciales}
+                </div>
+              )}
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", flex: 1, paddingTop: 4, gap: 14 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                <div style={{ display: "flex", fontSize: 9, fontWeight: 800, color: "#6b7280", letterSpacing: 1 }}>
+                  FUNCIONARIO / MAGISTRADO
+                </div>
+                <div style={{ display: "flex", fontSize: 18, fontWeight: 800, color: "#111827", lineHeight: 1.15 }}>
+                  {nombreIC}
+                </div>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                <div style={{ display: "flex", fontSize: 9, fontWeight: 800, color: "#6b7280", letterSpacing: 1 }}>
+                  RUN / RUT NACIONAL
+                </div>
+                <div style={{ display: "flex", fontSize: 16, fontWeight: 800, color: "#111827" }}>
+                  {formatearRut(rut)}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Cargo */}
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 3,
+              backgroundColor: fondoCargo,
+              borderLeft: `4px solid ${colorDetalle}`,
+              borderRadius: 8,
+              padding: "10px 16px",
+            }}
+          >
+            <div style={{ display: "flex", fontSize: 9, fontWeight: 800, color: "#6b7280", letterSpacing: 1 }}>
+              CARGO INSTITUCIONAL
+            </div>
+            <div style={{ display: "flex", fontSize: 16, fontWeight: 800, color: colorTextoCargo }}>{cargo}</div>
+          </div>
+
+          {/* QR + código de verificación */}
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "flex-end",
+              marginTop: "auto",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                padding: 4,
+                backgroundColor: "#ffffff",
+                border: `2px solid ${colorPrimario}`,
+                borderRadius: 4,
+              }}
+            >
+              {qr.map((fila, y) => (
+                <div key={y} style={{ display: "flex", flexDirection: "row" }}>
+                  {fila.map((activa, x) => (
+                    <div
+                      key={x}
+                      style={{
+                        display: "flex",
+                        width: CELDA,
+                        height: CELDA,
+                        backgroundColor: activa ? colorPrimario : "#ffffff",
+                      }}
+                    />
+                  ))}
+                </div>
+              ))}
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "flex-end" }}>
+              <div style={{ display: "flex", fontSize: 8, fontWeight: 800, color: "#6b7280", letterSpacing: 1 }}>
+                COD. VERIFICACIÓN
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "row",
+                  height: 34,
+                  backgroundColor: "#ffffff",
+                  border: `1px solid ${colorPrimario}`,
+                  borderRadius: 2,
+                  padding: "5px",
+                }}
+              >
+                {barras.map((barra, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      display: "flex",
+                      width: barra.ancho,
+                      height: 24,
+                      backgroundColor: barra.oscura ? colorPrimario : "#ffffff",
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Pie */}
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
+          height: 40,
+          padding: "0 20px",
+          backgroundColor: colorPrimario,
+          borderTop: `2px solid ${colorDetalle}`,
+        }}
+      >
+        <div style={{ display: "flex", fontSize: 9, fontWeight: 700, color: colorDetalle, letterSpacing: 2 }}>
+          ID-{siglasSello}-{iniciales}
+        </div>
+        <div style={{ display: "flex", fontSize: 9, fontWeight: 800, color: "#ffffff", letterSpacing: 1 }}>
+          {textoFooter}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export async function GET(req: NextRequest, { params }: { params: { userId: string } }) {
@@ -160,24 +373,27 @@ export async function GET(req: NextRequest, { params }: { params: { userId: stri
       fotoFinal = null;
     }
 
-    const svgContent = await generarPlacaSvg({
-      nombreIC: usuario.nombreIC,
-      rut: usuario.rut,
-      cargo,
-      rol: usuario.rol,
-      fotoDataUri: fotoFinal,
-    });
+    const filename = `credencial_${usuario.nombreIC.toLowerCase().replace(/\s+/g, "_")}.png`;
 
-    const filename = `credencial_${usuario.nombreIC.toLowerCase().replace(/\s+/g, "_")}.svg`;
-
-    return new NextResponse(svgContent, {
-      status: 200,
-      headers: {
-        "Content-Type": "image/svg+xml; charset=utf-8",
-        "Content-Disposition": `inline; filename="${filename}"`,
-        "Cache-Control": "no-store, max-age=0, must-revalidate",
-      },
-    });
+    return new ImageResponse(
+      (
+        <Credencial
+          nombreIC={usuario.nombreIC}
+          rut={usuario.rut}
+          cargo={cargo}
+          rol={usuario.rol}
+          fotoDataUri={fotoFinal}
+        />
+      ),
+      {
+        width: ANCHO_CREDENCIAL,
+        height: ALTO_CREDENCIAL,
+        headers: {
+          "Content-Disposition": `inline; filename="${filename}"`,
+          "Cache-Control": "no-store, max-age=0, must-revalidate",
+        },
+      }
+    );
   } catch (error) {
     console.error("Error crítico en endpoint de carnet:", error);
     return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });

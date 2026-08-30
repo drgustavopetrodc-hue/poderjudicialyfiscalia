@@ -28,36 +28,18 @@ const NOMBRE_ROL: Record<string, string> = {
 const dirFuentes = path.join(process.cwd(), "public", "fonts");
 const rutaFuente = path.join(dirFuentes, "Arial.ttf");
 
-// Función asíncrona interna para garantizar que la fuente exista físicamente en el hosting antes de dibujar
+// Función asíncrona interna para garantizar que la fuente esté registrada antes de dibujar
 async function asegurarFuenteTipografica() {
-  if (fs.existsSync(rutaFuente)) {
-    return;
-  }
-
   try {
-    // Si no existen las carpetas dentro de /public, las creamos automáticamente
-    if (!fs.existsSync(dirFuentes)) {
-      fs.mkdirSync(dirFuentes, { recursive: true });
+    if (fs.existsSync(rutaFuente)) {
+      registerFont(rutaFuente, { family: "CustomArial", weight: "bold" });
+      console.log("[SUCCESS] Fuente Arial.ttf registrada desde public/fonts/");
+      return;
     }
-
-    console.log("[INFO] Descargando tipografía oficial desde Google Fonts para evitar censura...");
-    // Descargamos Roboto Bold (que es idéntica a Arial y de uso libre absoluto)
-    const urlFuenteEstandar = "https://github.com";
-    const respuesta = await fetch(urlFuenteEstandar);
-    
-    if (!respuesta.ok) throw new Error("Fallo la descarga del servidor de Google");
-    
-    const bufferArray = await respuesta.arrayBuffer();
-    fs.writeFileSync(rutaFuente, Buffer.from(bufferArray));
-    console.log("[SUCCESS] Fuente guardada exitosamente en public/fonts/Arial.ttf");
+    console.warn("[WARN] Fuente Arial.ttf no encontrada en public/fonts/ - usando fallback");
   } catch (error) {
-    console.error("[ERROR] No se pudo descargar la fuente de manera automática:", error);
+    console.error("[ERROR] Error al registrar fuente:", error);
   }
-}
-
-// Intentamos registrarla si ya está en disco al compilar
-if (fs.existsSync(rutaFuente)) {
-  registerFont(rutaFuente, { family: "CustomArial", weight: "bold" });
 }
 
 function drawRoundRect(ctx: any, x: number, y: number, w: number, h: number, r: number) {
@@ -88,10 +70,7 @@ async function generarPlacaPng({
   // Nos aseguramos que la fuente esté lista antes de inicializar el lienzo
   await asegurarFuenteTipografica();
   
-  // Si se descargó correctamente usamos el alias, si no, usamos la genérica por seguridad
-  if (fs.existsSync(rutaFuente)) {
-    registerFont(rutaFuente, { family: "CustomArial", weight: "bold" });
-  }
+  // Usamos CustomArial si está disponible, fallback a sans-serif
   const FUENTE_GLOBAL = fs.existsSync(rutaFuente) ? "CustomArial" : "sans-serif";
 
   const width = 360;

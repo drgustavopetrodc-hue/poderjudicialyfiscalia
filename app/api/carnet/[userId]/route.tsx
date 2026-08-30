@@ -23,40 +23,8 @@ const NOMBRE_ROL: Record<string, string> = {
 };
 
 // ========================================================
-// MANEJO DE FUENTES - ESTRATEGIA ROBUSTA
+// GENERACIÓN DE CREDENCIAL - SOLO FUENTES GENÉRICAS
 // ========================================================
-const dirFuentes = path.join(process.cwd(), "public", "fonts");
-const rutaFuente = path.join(dirFuentes, "Arial.ttf");
-
-let fontsRegistered: { [key: string]: boolean } = {};
-
-function ensureFont() {
-  // Intentar registrar la fuente local si existe
-  if (!fontsRegistered["Arial"] && fs.existsSync(rutaFuente)) {
-    try {
-      registerFont(rutaFuente, { family: "Arial" });
-      fontsRegistered["Arial"] = true;
-      console.log("[FONT] Registró Arial custom");
-      return "Arial";
-    } catch (err) {
-      console.error("[FONT] Error al registrar Arial custom:", err);
-    }
-  }
-
-  // Fallback a fuentes del sistema (disponibles en Linux/Vercel)
-  const fontFamilies = ["Liberation Sans", "DejaVu Sans", "Arial", "sans-serif"];
-  
-  for (const fontFamily of fontFamilies) {
-    if (!fontsRegistered[fontFamily]) {
-      // Intentar fuentes del sistema
-      console.log("[FONT] Intentando usar fuente del sistema:", fontFamily);
-      fontsRegistered[fontFamily] = true;
-      return fontFamily;
-    }
-  }
-
-  return "sans-serif";
-}
 
 function drawRoundRect(ctx: any, x: number, y: number, w: number, h: number, r: number) {
   if (w < 2 * r) r = w / 2;
@@ -83,9 +51,6 @@ async function generarPlacaPng({
   rol: string;
   fotoDataUri?: string | null;
 }): Promise<Buffer> {
-  // Asegurar que la fuente esté registrada
-  const FUENTE_GLOBAL = ensureFont();
-
   const width = 360;
   const height = 560;
   const canvas = createCanvas(width, height);
@@ -95,8 +60,8 @@ async function generarPlacaPng({
   const colorPrimario = esFiscalia ? "#0f2e5c" : "#0a192f";
   const colorSecundario = esFiscalia ? "#174785" : "#112240";
   const colorDetalle = esFiscalia ? "#79b2fc" : "#b3924b";
-  const tituloEntidad = esFiscalia ? "MINISTERIO PÚBLICO" : "PODER JUDICIAL";
-  const subtituloEntidad = esFiscalia ? "FISCALÍA DE CHILE" : "REPÚBLICA DE CHILE";
+  const tituloEntidad = esFiscalia ? "MINISTERIO PUBLICO" : "PODER JUDICIAL";
+  const subtituloEntidad = esFiscalia ? "FISCALIA DE CHILE" : "REPUBLICA DE CHILE";
   const siglasSello = esFiscalia ? "MP" : "PJUD";
   const colorTextoCargo = esFiscalia ? "#dc2626" : "#0a192f";
   const textoFooter = esFiscalia ? "DOCUMENTO INTERNO" : "MINISTERIO DE JUSTICIA";
@@ -111,12 +76,12 @@ async function generarPlacaPng({
   ctx.fillRect(0, 0, width, 118);
 
   ctx.fillStyle = "#ffffff";
-  ctx.font = `bold 14px ${FUENTE_GLOBAL}`;
+  ctx.font = "bold 14px sans-serif";
   ctx.textAlign = "center";
   ctx.fillText(tituloEntidad, width / 2, 38);
 
   ctx.fillStyle = colorDetalle;
-  ctx.font = `bold 9px ${FUENTE_GLOBAL}`;
+  ctx.font = "bold 9px sans-serif";
   ctx.fillText(subtituloEntidad, width / 2, 56);
 
   ctx.beginPath();
@@ -128,7 +93,7 @@ async function generarPlacaPng({
   ctx.stroke();
 
   ctx.fillStyle = colorDetalle;
-  ctx.font = `bold 11px ${FUENTE_GLOBAL}`;
+  ctx.font = "bold 11px sans-serif";
   ctx.textBaseline = "middle";
   ctx.fillText(siglasSello, width / 2, 94);
 
@@ -152,7 +117,7 @@ async function generarPlacaPng({
     }
   } else {
     ctx.fillStyle = colorPrimario;
-    ctx.font = `bold 42px ${FUENTE_GLOBAL}`;
+    ctx.font = "bold 42px sans-serif";
     ctx.fillText((nombreIC || "?").trim().slice(0, 2).toUpperCase(), width / 2, boxY + (boxH / 2));
   }
 
@@ -160,17 +125,17 @@ async function generarPlacaPng({
   ctx.textBaseline = "alphabetic";
 
   ctx.fillStyle = "#6b7280";
-  ctx.font = `bold 8px ${FUENTE_GLOBAL}`;
+  ctx.font = "bold 8px sans-serif";
   ctx.fillText("FUNCIONARIO / MAGISTRADO", 24, 344);
   ctx.fillStyle = "#111827";
-  ctx.font = `bold 14px ${FUENTE_GLOBAL}`;
+  ctx.font = "bold 14px sans-serif";
   ctx.fillText(nombreIC, 24, 364);
 
   ctx.fillStyle = "#6b7280";
-  ctx.font = `bold 8px ${FUENTE_GLOBAL}`;
+  ctx.font = "bold 8px sans-serif";
   ctx.fillText("RUN / RUT NACIONAL", 24, 404);
   ctx.fillStyle = "#111827";
-  ctx.font = `bold 14px ${FUENTE_GLOBAL}`;
+  ctx.font = "bold 14px sans-serif";
   ctx.fillText(formatearRut(rut), 24, 424);
 
   ctx.strokeStyle = "#e5e7eb";
@@ -204,10 +169,10 @@ async function generarPlacaPng({
   ctx.fillRect(22, 462, 4, 42);
 
   ctx.fillStyle = "#6b7280";
-  ctx.font = `bold 8px ${FUENTE_GLOBAL}`;
+  ctx.font = "bold 8px sans-serif";
   ctx.fillText("CARGO INSTITUCIONAL", 34, 478);
   ctx.fillStyle = colorTextoCargo;
-  ctx.font = `bold 13px ${FUENTE_GLOBAL}`;
+  ctx.font = "bold 13px sans-serif";
   ctx.fillText(cargo, 34, 496);
 
   ctx.fillStyle = colorPrimario;
@@ -221,7 +186,7 @@ async function generarPlacaPng({
   ctx.fillText("|||| |||| ||||", 20, 546);
 
   ctx.textAlign = "right";
-  ctx.font = `bold 8px ${FUENTE_GLOBAL}`;
+  ctx.font = "bold 8px sans-serif";
   ctx.fillText(textoFooter, width - 20, 546);
 
   ctx.globalCompositeOperation = "destination-in";

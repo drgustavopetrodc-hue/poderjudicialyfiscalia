@@ -131,6 +131,7 @@ model User {
   // e identificaciones — distintos del nombre de la cuenta de Discord.
   nombreIC      String?
   rut           String?   @unique
+  nif           String?   @unique // Número de Identificación Fiscal para funcionarios del Ministerio Público
   nacionalidad  String?
   institucion   String? // ej: "Carabineros de Chile", "Policía de Investigaciones", "Poder Judicial"
   robloxUsername String? // usado para obtener la foto de la identificación institucional

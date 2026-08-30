@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import DashboardShell from "@/components/DashboardShell";
-import { ROLES_FUNCIONARIOS, INSTITUCION_POR_ROL, identidadCompleta } from "@/lib/identidad";
+import { ROLES_FUNCIONARIOS, INSTITUCION_POR_ROL, identidadCompleta, generarNifFiscal } from "@/lib/identidad";
 import { Fingerprint, Download, AlertCircle, Gamepad2 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -20,6 +20,9 @@ async function guardarPerfil(formData: FormData) {
   const nacionalidad = String(formData.get("nacionalidad") ?? "").trim();
   const institucion = String(formData.get("institucion") ?? "").trim();
   const robloxUsername = String(formData.get("robloxUsername") ?? "").trim();
+  const rol = (session?.user as any)?.rol as string | undefined;
+  const usuarioActual = await prisma.user.findUnique({ where: { id: userId } });
+  const nif = rol === "FISCAL" ? (usuarioActual?.nif || generarNifFiscal(userId)) : usuarioActual?.nif || null;
 
   try {
     await prisma.user.update({
@@ -27,6 +30,7 @@ async function guardarPerfil(formData: FormData) {
       data: {
         nombreIC: nombreIC || null,
         rut: rut || null,
+        nif: nif || null,
         nacionalidad: nacionalidad || null,
         institucion: institucion || null,
         robloxUsername: robloxUsername || null,
@@ -111,6 +115,17 @@ export default async function PerfilPage({
                 />
               </div>
             </div>
+            {rol === "FISCAL" && (
+              <div>
+                <label className="block text-xs text-grafito/55 mb-1">NIF</label>
+                <input
+                  value={usuario.nif ?? generarNifFiscal(usuario.id)}
+                  readOnly
+                  className="w-full border border-grafito/15 rounded-lg px-3 py-2 text-sm bg-hueso/40 text-grafito/75"
+                />
+                <p className="text-[11px] text-grafito/40 mt-1">Se genera automáticamente al crear el perfil de un fiscal.</p>
+              </div>
+            )}
             {esFuncionario && (
               <div>
                 <label className="block text-xs text-grafito/55 mb-1">

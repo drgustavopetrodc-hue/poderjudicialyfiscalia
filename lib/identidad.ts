@@ -45,3 +45,10 @@ export function formatearRut(rut: string): string {
   const conPuntos = numero.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
   return `${conPuntos}-${dv.toUpperCase()}`;
 }
+
+/** Genera un NIF único para fiscales. */
+export function generarNifFiscal(userId: string): string {
+  const base = (userId || "FISCAL").replace(/[^a-zA-Z0-9]/g, "").slice(-8).toUpperCase();
+  const anio = new Date().getFullYear();
+  return `NIF-${anio}-${base.padStart(8, "0")}`;
+}

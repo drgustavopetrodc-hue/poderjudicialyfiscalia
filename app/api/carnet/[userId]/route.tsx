@@ -78,8 +78,8 @@ function buildCarnetSvg({
   const initials = escapeXml((nombreIC || "?").trim().slice(0, 2).toUpperCase() || "MP");
 
   const avatarMarkup = fotoDataUri
-    ? `<image href="${escapeXml(fotoDataUri)}" x="87" y="159" width="186" height="186" preserveAspectRatio="xMidYMid slice" />`
-    : `<text x="180" y="265" text-anchor="middle" font-size="58" font-weight="800" fill="#0f2444">${initials}</text>`;
+    ? `<image href="${escapeXml(fotoDataUri)}" x="87" y="155" width="186" height="186" preserveAspectRatio="xMidYMid slice" />`
+    : `<text x="180" y="258" text-anchor="middle" font-size="58" font-weight="800" fill="#0f2444">${initials}</text>`;
 
   const qrCells = buildQrPattern();
   const qrMarkup = qrCells
@@ -88,7 +88,7 @@ function buildCarnetSvg({
 
   const barcode = buildBarcodePattern();
   const barcodeMarkup = barcode
-    .map((active, idx) => (active ? `<rect x="${245 + idx * 1.5}" y="420" width="1.2" height="28" fill="#111827" />` : ""))
+    .map((active, idx) => (active ? `<rect x="${246 + idx * 1.35}" y="422" width="1.1" height="28" fill="#111827" />` : ""))
     .join("");
 
   return `
@@ -103,44 +103,41 @@ function buildCarnetSvg({
       <rect width="640" height="1000" fill="#1f232b" />
 
       <g transform="translate(140 150)">
-        <rect width="360" height="560" rx="14" fill="#edf2f5" stroke="#0f2444" stroke-width="2" />
-        <rect x="0" y="0" width="360" height="118" rx="14" fill="url(#headerGradient)" />
+        <rect width="360" height="560" rx="16" fill="#edf2f5" stroke="#0f2444" stroke-width="2" />
+        <rect x="0" y="0" width="360" height="118" rx="16" fill="url(#headerGradient)" />
 
-        <text x="180" y="34" text-anchor="middle" font-size="22" font-weight="900" fill="#ffffff" letter-spacing="2">MINISTERIO PÚBLICO</text>
-        <text x="180" y="58" text-anchor="middle" font-size="11" fill="#dfeaff" font-weight="700" letter-spacing="1">${institucionEscapada}</text>
+        <text x="180" y="36" text-anchor="middle" font-size="22" font-weight="900" fill="#ffffff" letter-spacing="2">MINISTERIO PÚBLICO</text>
+        <text x="180" y="58" text-anchor="middle" font-size="11" fill="#dfeaff" font-weight="700" letter-spacing="1">Ministerio Público</text>
 
-        <circle cx="180" cy="102" r="38" fill="#dfefff" stroke="#ffffff" stroke-width="2" />
-        <text x="180" y="112" text-anchor="middle" font-size="20" font-weight="900" fill="#0f2444">MP</text>
+        <circle cx="180" cy="100" r="38" fill="#dfefff" stroke="#ffffff" stroke-width="2" />
+        <text x="180" y="110" text-anchor="middle" font-size="20" font-weight="900" fill="#0f2444">MP</text>
 
-        <rect x="86" y="146" width="188" height="188" rx="8" fill="#dfe7f3" stroke="#0f2444" stroke-width="3" />
+        <rect x="86" y="138" width="188" height="188" rx="8" fill="#dfe7f3" stroke="#0f2444" stroke-width="3" />
         ${avatarMarkup}
 
-        <g transform="translate(0 346)">
-          <text x="22" y="0" font-size="8" fill="#5d6b7a" font-weight="800" letter-spacing="1.8">NOMBRE FUNCIONARIO</text>
-          <text x="22" y="26" font-size="20" fill="#0f2444" font-weight="800">${nombre}</text>
+        <g>
+          <text x="22" y="356" font-size="8" fill="#5d6b7a" font-weight="800" letter-spacing="1.8">NOMBRE FUNCIONARIO</text>
+          <text x="22" y="382" font-size="20" fill="#0f2444" font-weight="800">${nombre}</text>
 
-          <text x="22" y="74" font-size="8" fill="#5d6b7a" font-weight="800" letter-spacing="1.8">RUT INSTITUCIONAL</text>
-          <text x="22" y="100" font-size="18" fill="#0f2444" font-weight="800">${rutFormateado}</text>
-
-          ${nif ? `<text x="22" y="146" font-size="8" fill="#5d6b7a" font-weight="800" letter-spacing="1.8">NIF</text>
-          <text x="22" y="170" font-size="16" fill="#0f2444" font-weight="800">${nifEscapado}</text>` : ""}
+          <text x="22" y="432" font-size="8" fill="#5d6b7a" font-weight="800" letter-spacing="1.8">RUT INSTITUCIONAL</text>
+          <text x="22" y="458" font-size="18" fill="#0f2444" font-weight="800">${rutFormateado}</text>
         </g>
 
-        <g transform="translate(0 0)">
-          <rect x="246" y="337" width="82" height="82" fill="#fff" stroke="#0f2444" stroke-width="2" />
+        <g>
+          <rect x="246" y="340" width="82" height="82" fill="#fff" stroke="#0f2444" stroke-width="2" />
           ${qrMarkup}
 
           <rect x="246" y="430" width="82" height="28" fill="#fff" stroke="#0f2444" stroke-width="1" />
           ${barcodeMarkup}
         </g>
 
-        <rect x="22" y="473" width="316" height="44" fill="#dbe8f6" stroke="#0f2444" stroke-width="1.5" />
+        <rect x="22" y="476" width="316" height="42" fill="#dbe8f6" stroke="#0f2444" stroke-width="1.5" />
         <text x="34" y="494" font-size="10" fill="#5d6b7a" font-weight="700" letter-spacing="1.5">CARGO OFICIAL</text>
-        <text x="34" y="517" font-size="16" fill="#0f2444" font-weight="800">${cargoEscapado}</text>
+        <text x="34" y="516" font-size="16" fill="#0f2444" font-weight="800">${cargoEscapado}</text>
 
         <rect x="0" y="520" width="360" height="40" fill="#0f2444" />
         <text x="18" y="548" font-size="9" fill="#dfeaff" font-weight="700" letter-spacing="3">|||| |||| ||||</text>
-        <text x="264" y="548" font-size="9" fill="#ffffff" font-weight="700" letter-spacing="2">DOCUMENTO INTERNO</text>
+        <text x="260" y="548" font-size="9" fill="#ffffff" font-weight="700" letter-spacing="2">DOCUMENTO INTERNO</text>
       </g>
     </svg>
   `;

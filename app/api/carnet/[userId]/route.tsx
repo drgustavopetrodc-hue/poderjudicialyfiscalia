@@ -237,20 +237,20 @@ export async function GET(req: NextRequest, { params }: { params: { userId: stri
                       justifyContent: "center",
                     }}
                   >
-                    <svg width="58" height="58" viewBox="0 0 21 21" xmlns="http://www.w3.org/2000/svg">
-                      {qrCells.map((cell) =>
-                        cell.bit ? (
-                          <rect
-                            key={`${cell.x}-${cell.y}`}
-                            x={cell.x}
-                            y={cell.y}
-                            width={1}
-                            height={1}
-                            fill="#111827"
-                          />
-                        ) : null
-                      )}
-                    </svg>
+                    <div style={{ width: 58, height: 58, display: "flex", flexDirection: "column" }}>
+                      {Array.from({ length: 21 }, (_, y) => (
+                        <div key={y} style={{ display: "flex", flexDirection: "row", flex: 1 }}>
+                          {qrCells
+                            .filter((cell) => cell.y === y)
+                            .map((cell) => (
+                              <div
+                                key={cell.x}
+                                style={{ flex: 1, background: cell.bit ? "#111827" : "transparent" }}
+                              />
+                            ))}
+                        </div>
+                      ))}
+                    </div>
                   </div>
 
                   <div style={{ marginTop: 10, width: 72, height: 24, background: "#fff", border: "1px solid #0f2444", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>

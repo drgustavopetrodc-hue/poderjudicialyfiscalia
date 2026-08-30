@@ -3,7 +3,7 @@ import { type NextAuthOptions } from "next-auth";
 import DiscordProvider from "next-auth/providers/discord";
 import { prisma } from "./prisma";
 import { obtenerRolDesdeDiscord } from "./discordRoles";
-import { esPresidenteCorteSuprema, generarNifFiscal } from "./identidad";
+import { esPresidenteCorteSuprema, esFiscalRegional, generarNifFiscal } from "./identidad";
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
@@ -62,6 +62,13 @@ export const authOptions: NextAuthOptions = {
         if (esPresidenteCorteSuprema(token.discordId as string) && token.rol !== "ADMIN") {
           token.rol = "ADMIN";
           await prisma.user.update({ where: { id: token.id as string }, data: { rol: "ADMIN" } });
+        }
+
+        // El Fiscal Regional siempre tiene rango FISCAL, sin importar lo que diga
+        // la sincronización de roles de Discord (cargo exclusivo, no un rol nuevo).
+        if (esFiscalRegional(token.discordId as string) && token.rol !== "FISCAL") {
+          token.rol = "FISCAL";
+          await prisma.user.update({ where: { id: token.id as string }, data: { rol: "FISCAL" } });
         }
 
         // Si el usuario ya es fiscal, genera un NIF único si todavía no lo tiene.

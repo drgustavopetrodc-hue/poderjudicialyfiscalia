@@ -7,6 +7,15 @@ export function esPresidenteCorteSuprema(discordId?: string | null): boolean {
   return discordId === DISCORD_ID_PRESIDENTE;
 }
 
+// ID de Discord con cargo exclusivo de Fiscal Regional dentro del Ministerio Público.
+// Conserva el rol FISCAL a nivel de permisos (mismos accesos que un fiscal adjunto),
+// pero se identifica y se muestra distinto en toda la interfaz (incluida la credencial).
+export const DISCORD_ID_FISCAL_REGIONAL = "821164300386435102";
+
+export function esFiscalRegional(discordId?: string | null): boolean {
+  return discordId === DISCORD_ID_FISCAL_REGIONAL;
+}
+
 type UsuarioConIdentidad = {
   name?: string | null;
   nombreIC?: string | null;

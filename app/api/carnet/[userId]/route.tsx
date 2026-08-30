@@ -8,6 +8,7 @@ import {
   INSTITUCION_POR_ROL,
   formatearRut,
   esPresidenteCorteSuprema,
+  generarNifFiscal,
 } from "@/lib/identidad";
 import { obtenerAvatarRobloxDataUri } from "@/lib/roblox";
 
@@ -44,6 +45,7 @@ export async function GET(req: NextRequest, { params }: { params: { userId: stri
   const institucion = usuario.institucion || INSTITUCION_POR_ROL[usuario.rol] || "Estado de Chile";
   const esPresidente = esPresidenteCorteSuprema(usuario.discordId);
   const cargo = esPresidente ? "Presidente de la Corte Suprema" : NOMBRE_ROL[usuario.rol] ?? usuario.rol;
+  const nif = (usuario as any).nif || (usuario.rol === "FISCAL" ? generarNifFiscal(usuario.id) : null);
 
   // La foto sale del avatar de Roblox si el usuario lo registró en su perfil;
   // se descarga como datos embebidos (no una URL externa) para que el render
@@ -79,118 +81,159 @@ export async function GET(req: NextRequest, { params }: { params: { userId: stri
     (
       <div
         style={{
-          width: "1012px",
-          height: "638px",
+          width: "640px",
+          height: "1000px",
           display: "flex",
-          fontFamily: "Inter",
-          background: "linear-gradient(135deg, #0b1526 0%, #16294a 60%, #0b1526 100%)",
-          position: "relative",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "#1d1f22",
+          fontFamily: "Arial, sans-serif",
         }}
       >
-        {/* Franja dorada lateral */}
-        <div style={{ position: "absolute", top: 0, left: 0, width: 14, height: "100%", background: "#c9a45c" }} />
-
-        <div style={{ display: "flex", flexDirection: "column", width: "100%", padding: "48px 56px", color: "#f5f8fc" }}>
-          {/* Cabecera */}
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-            <div style={{ display: "flex", flexDirection: "column" }}>
-              <div style={{ display: "flex", fontSize: 12, letterSpacing: 4, color: "#c9a45c", textTransform: "uppercase" }}>
-                República de Chile
-              </div>
-              <div style={{ display: "flex", fontSize: 30, fontWeight: 700, marginTop: 6 }}>{institucion}</div>
-              <div style={{ display: "flex", fontSize: 15, color: "rgba(245,248,252,0.55)", marginTop: 2 }}>
-                Identificación institucional
-              </div>
-            </div>
-            <div
-              style={{
-                display: "flex",
-                width: 58,
-                height: 58,
-                borderRadius: 999,
-                border: "2px solid rgba(201,164,92,0.6)",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: 26,
-              }}
-            >
-              {esPresidente ? "♛" : "⚖"}
+        <div
+          style={{
+            width: "360px",
+            height: "560px",
+            background: "linear-gradient(180deg, #0f2444 0%, #153c6f 22%, #f5f7fa 22%, #f5f7fa 100%)",
+            border: "3px solid #0f2444",
+            borderRadius: "16px",
+            overflow: "hidden",
+            position: "relative",
+            boxShadow: "0 16px 35px rgba(0,0,0,0.45)",
+          }}
+        >
+          <div style={{ textAlign: "center", color: "#fff", paddingTop: "14px" }}>
+            <div style={{ fontSize: 18, letterSpacing: 3, fontWeight: 800 }}>MINISTERIO PÚBLICO</div>
+            <div style={{ marginTop: 6, fontSize: 11, letterSpacing: 2, color: "#9fc6ff", textTransform: "uppercase" }}>
+              Fiscalía de Chile
             </div>
           </div>
 
-          {/* Cuerpo */}
-          <div style={{ display: "flex", flex: 1, alignItems: "center", gap: 40, marginTop: 30 }}>
+          <div
+            style={{
+              width: 68,
+              height: 68,
+              borderRadius: 999,
+              margin: "18px auto 14px",
+              border: "2px solid #fff",
+              background: "linear-gradient(135deg, #d7e8ff, #7aaef7)",
+              color: "#0f2444",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontWeight: 800,
+              fontSize: 16,
+            }}
+          >
+            MP
+          </div>
+
+          <div
+            style={{
+              width: 156,
+              height: 180,
+              margin: "0 auto",
+              background: "linear-gradient(180deg, #dfe7f3, #c7d2e6)",
+              border: "3px solid #0f2444",
+              borderRadius: "10px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              overflow: "hidden",
+              color: "#43546d",
+              fontSize: 12,
+              fontWeight: 800,
+              letterSpacing: 1,
+              textTransform: "uppercase",
+            }}
+          >
             {fotoFinal ? (
-              // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={fotoFinal}
-                width={168}
-                height={168}
-                style={{ borderRadius: 16, border: "3px solid rgba(201,164,92,0.5)", objectFit: "cover" }}
+                alt="Foto fiscal"
+                width={156}
+                height={180}
+                style={{ width: 156, height: 180, objectFit: "cover" }}
               />
             ) : (
-              <div
-                style={{
-                  display: "flex",
-                  width: 168,
-                  height: 168,
-                  borderRadius: 16,
-                  border: "3px solid rgba(201,164,92,0.5)",
-                  background: "rgba(245,248,252,0.06)",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: 56,
-                  fontWeight: 700,
-                  color: "#c9a45c",
-                }}
-              >
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
                 {(usuario.nombreIC ?? "?").charAt(0).toUpperCase()}
               </div>
             )}
+          </div>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: 14, flex: 1 }}>
-              <div style={{ display: "flex", flexDirection: "column" }}>
-                <span style={{ fontSize: 12, color: "#c9a45c", letterSpacing: 2, textTransform: "uppercase" }}>Nombre</span>
-                <span style={{ fontSize: 28, fontWeight: 700 }}>{usuario.nombreIC}</span>
+          <div style={{ padding: "18px 24px 0", color: "#1d2c42" }}>
+            <div style={{ marginBottom: 12 }}>
+              <div style={{ display: "block", textTransform: "uppercase", fontSize: 9, letterSpacing: 1.4, color: "#6b7d95", marginBottom: 4 }}>
+                Nombre funcionario
               </div>
-              <div style={{ display: "flex", gap: 60 }}>
-                <div style={{ display: "flex", flexDirection: "column" }}>
-                  <span style={{ fontSize: 12, color: "#c9a45c", letterSpacing: 2, textTransform: "uppercase" }}>RUT</span>
-                  <span style={{ fontSize: 20 }}>{formatearRut(usuario.rut)}</span>
+              <div style={{ fontSize: 18, fontWeight: 800, color: "#0f2444", lineHeight: 1.2, wordBreak: "break-word" }}>
+                {usuario.nombreIC}
+              </div>
+            </div>
+
+            <div style={{ marginBottom: 12 }}>
+              <div style={{ display: "block", textTransform: "uppercase", fontSize: 9, letterSpacing: 1.4, color: "#6b7d95", marginBottom: 4 }}>
+                RUT institucional
+              </div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: "#0f2444", lineHeight: 1.2 }}>
+                {formatearRut(usuario.rut)}
+              </div>
+            </div>
+
+            {nif && (
+              <div style={{ marginBottom: 12 }}>
+                <div style={{ display: "block", textTransform: "uppercase", fontSize: 9, letterSpacing: 1.4, color: "#6b7d95", marginBottom: 4 }}>
+                  NIF
                 </div>
-                <div style={{ display: "flex", flexDirection: "column" }}>
-                  <span style={{ fontSize: 12, color: "#c9a45c", letterSpacing: 2, textTransform: "uppercase" }}>Nacionalidad</span>
-                  <span style={{ fontSize: 20 }}>{usuario.nacionalidad ?? "—"}</span>
+                <div style={{ fontSize: 16, fontWeight: 800, color: "#0f2444", lineHeight: 1.2 }}>
+                  {nif}
                 </div>
               </div>
-              <div style={{ display: "flex", flexDirection: "column" }}>
-                <span style={{ fontSize: 12, color: "#c9a45c", letterSpacing: 2, textTransform: "uppercase" }}>Cargo</span>
-                <span style={{ fontSize: 20 }}>{cargo}</span>
+            )}
+
+            <div
+              style={{
+                background: "#edf4ff",
+                borderLeft: "4px solid #153c6f",
+                borderRadius: "8px",
+                padding: "10px 12px",
+                marginTop: 16,
+              }}
+            >
+              <div style={{ display: "block", textTransform: "uppercase", fontSize: 9, letterSpacing: 1.4, color: "#6b7d95", marginBottom: 4 }}>
+                Cargo oficial
+              </div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: "#b51f2a", lineHeight: 1.2 }}>
+                {cargo.toUpperCase()}
               </div>
             </div>
           </div>
 
-          {/* Pie */}
           <div
             style={{
+              position: "absolute",
+              left: 0,
+              right: 0,
+              bottom: 0,
+              height: 40,
+              background: "#0f2444",
+              color: "#fff",
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
-              borderTop: "1px solid rgba(245,248,252,0.15)",
-              paddingTop: 18,
-              marginTop: 10,
+              padding: "0 18px",
+              fontSize: 9,
+              letterSpacing: 2,
+              textTransform: "uppercase",
             }}
           >
-            <span style={{ fontSize: 12, color: "rgba(245,248,252,0.4)", letterSpacing: 1 }}>
-              N° {usuario.id.slice(-8).toUpperCase()}
-            </span>
-            <span style={{ fontSize: 12, color: "rgba(245,248,252,0.4)", letterSpacing: 1 }}>
-              Documento válido solo dentro del servidor de rol
-            </span>
+            <div style={{ color: "#dfeaff", letterSpacing: 3, fontWeight: 700 }}>|||| |||| ||||</div>
+            <div>Documento interno</div>
           </div>
         </div>
       </div>
     ),
-    { width: 1012, height: 638 }
+    { width: 640, height: 1000 }
   );
 }

@@ -1,3 +1,4 @@
+import { ImageResponse } from "next/og";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -19,88 +20,6 @@ const NOMBRE_ROL: Record<string, string> = {
   FISCAL: "Fiscal",
   FUNCIONARIO: "Funcionario",
 };
-
-function escapeXml(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/\"/g, "&quot;")
-    .replace(/'/g, "&apos;");
-}
-
-function buildCarnetSvg({
-  nombreIC,
-  rut,
-  cargo,
-  nif,
-  institucion,
-  fotoDataUri,
-}: {
-  nombreIC: string;
-  rut: string;
-  cargo: string;
-  nif?: string | null;
-  institucion: string;
-  fotoDataUri?: string | null;
-}): string {
-  const nombre = escapeXml(nombreIC);
-  const rutFormateado = escapeXml(formatearRut(rut));
-  const cargoEscapado = escapeXml(cargo);
-  const nifEscapado = nif ? escapeXml(nif) : "";
-  const institucionEscapada = escapeXml(institucion);
-  const iniciales = escapeXml((nombreIC || "?").trim().slice(0, 2).toUpperCase() || "MP");
-  const fotoNode = fotoDataUri
-    ? `<image href="${escapeXml(fotoDataUri)}" x="142" y="178" width="156" height="180" preserveAspectRatio="xMidYMid slice" />`
-    : `<text x="220" y="280" font-size="44" font-weight="700" text-anchor="middle" fill="#0f2444">${iniciales}</text>`;
-
-  return `
-    <svg width="640" height="1000" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Carnet institucional">
-      <defs>
-        <linearGradient id="bgHeader" x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0%" stop-color="#0f2444" />
-          <stop offset="100%" stop-color="#153c6f" />
-        </linearGradient>
-        <linearGradient id="bgBody" x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0%" stop-color="#f7f9fc" />
-          <stop offset="100%" stop-color="#eef3fb" />
-        </linearGradient>
-      </defs>
-      <rect width="640" height="1000" fill="#1d1f22" />
-      <g transform="translate(140 150)">
-        <rect width="360" height="560" rx="18" fill="url(#bgBody)" stroke="#0f2444" stroke-width="3" />
-        <rect x="0" y="0" width="360" height="120" fill="url(#bgHeader)" rx="18" />
-        <text x="180" y="34" text-anchor="middle" font-size="18" font-weight="800" fill="#ffffff" letter-spacing="3">MINISTERIO PÚBLICO</text>
-        <text x="180" y="60" text-anchor="middle" font-size="11" font-weight="700" fill="#9fc6ff" letter-spacing="2">${institucionEscapada}</text>
-
-        <circle cx="180" cy="112" r="34" fill="#d7e8ff" stroke="#ffffff" stroke-width="2" />
-        <text x="180" y="121" text-anchor="middle" font-size="18" font-weight="800" fill="#0f2444">MP</text>
-
-        <rect x="102" y="158" width="156" height="180" rx="10" fill="#dfe7f3" stroke="#0f2444" stroke-width="3" overflow="hidden"/>
-        ${fotoNode}
-
-        <text x="22" y="370" font-size="9" fill="#6b7d95" font-weight="700" letter-spacing="1.4">NOMBRE FUNCIONARIO</text>
-        <text x="22" y="395" font-size="18" font-weight="800" fill="#0f2444">${nombre}</text>
-
-        <text x="22" y="440" font-size="9" fill="#6b7d95" font-weight="700" letter-spacing="1.4">RUT INSTITUCIONAL</text>
-        <text x="22" y="465" font-size="18" font-weight="800" fill="#0f2444">${rutFormateado}</text>
-
-        ${nif ? `
-          <text x="22" y="510" font-size="9" fill="#6b7d95" font-weight="700" letter-spacing="1.4">NIF</text>
-          <text x="22" y="535" font-size="16" font-weight="800" fill="#0f2444">${nifEscapado}</text>
-        ` : ""}
-
-        <rect x="22" y="550" width="316" height="52" rx="8" fill="#edf4ff" stroke="#153c6f" stroke-width="2" />
-        <text x="34" y="575" font-size="9" fill="#6b7d95" font-weight="700" letter-spacing="1.4">CARGO OFICIAL</text>
-        <text x="34" y="596" font-size="18" font-weight="800" fill="#b51f2a">${cargoEscapado}</text>
-
-        <rect width="360" height="40" y="520" fill="#0f2444" rx="0" />
-        <text x="20" y="547" font-size="9" fill="#dfeaff" font-weight="700" letter-spacing="3">|||| |||| ||||</text>
-        <text x="290" y="547" font-size="9" fill="#ffffff" font-weight="700" letter-spacing="2">DOCUMENTO INTERNO</text>
-      </g>
-    </svg>
-  `;
-}
 
 export async function GET(req: NextRequest, { params }: { params: { userId: string } }) {
   try {
@@ -149,22 +68,256 @@ export async function GET(req: NextRequest, { params }: { params: { userId: stri
       fotoFinal = null;
     }
 
-    const svg = buildCarnetSvg({
-      nombreIC: usuario.nombreIC,
-      rut: usuario.rut,
-      cargo,
-      nif,
-      institucion,
-      fotoDataUri: fotoFinal,
+    const qrCells = Array.from({ length: 21 }, (_, y) =>
+      Array.from({ length: 21 }, (_, x) => {
+        const finderA = x < 7 && y < 7;
+        const finderB = x > 13 && y < 7;
+        const finderC = x < 7 && y > 13;
+        const isFinder = finderA || finderB || finderC;
+        const seed = (x * 17 + y * 11 + usuario.id.length * 3) % 13;
+        const bit = isFinder ? true : (seed % 3 === 0 || ((x + y) % 5 === 0 && x > 9 && y > 7));
+        return { x, y, bit };
+      })
+    ).flat();
+
+    const barcodeBlocks = Array.from({ length: 40 }, (_, i) => {
+      const active = i % 2 === 0 || (i % 7 === 0 && i > 10) || (i % 11 === 0 && i > 18);
+      return { i, active };
     });
 
-    return new NextResponse(svg, {
-      status: 200,
-      headers: {
-        "Content-Type": "image/svg+xml; charset=utf-8",
-        "Cache-Control": "no-store, no-cache, must-revalidate",
-      },
-    });
+    return new ImageResponse(
+      (
+        <div
+          style={{
+            width: "100%",
+            height: "100%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "#1f232b",
+            fontFamily: "Arial, sans-serif",
+            padding: "24px",
+          }}
+        >
+          <div
+            style={{
+              width: "360px",
+              height: "560px",
+              background: "#edf2f5",
+              borderRadius: "12px",
+              overflow: "hidden",
+              border: "2px solid #0f2444",
+              boxShadow: "0 16px 30px rgba(0,0,0,0.35)",
+            }}
+          >
+            <div
+              style={{
+                width: "100%",
+                height: "120px",
+                background: "linear-gradient(180deg, #0d2d4d 0%, #0d3d66 100%)",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "flex-start",
+                color: "#fff",
+                paddingTop: "12px",
+                boxSizing: "border-box",
+              }}
+            >
+              <div style={{ fontSize: 22, fontWeight: 900, letterSpacing: 2, textTransform: "uppercase" }}>
+                MINISTERIO PÚBLICO
+              </div>
+              <div style={{ marginTop: 4, fontSize: 11, color: "#dfeaff", letterSpacing: 1, textTransform: "uppercase" }}>
+                {institucion}
+              </div>
+              <div
+                style={{
+                  width: 72,
+                  height: 72,
+                  borderRadius: "50%",
+                  background: "#dfefff",
+                  border: "2px solid #fff",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginTop: 14,
+                  color: "#0f2444",
+                  fontWeight: 900,
+                  fontSize: 20,
+                }}
+              >
+                MP
+              </div>
+            </div>
+
+            <div
+              style={{
+                background: "#f3f6f9",
+                height: "430px",
+                padding: "20px 18px 0",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+              }}
+            >
+              <div
+                style={{
+                  width: 188,
+                  height: 188,
+                  border: "3px solid #0f2444",
+                  borderRadius: 8,
+                  background: "#dfe7f3",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  overflow: "hidden",
+                  ...(fotoFinal
+                    ? {
+                        backgroundImage: `url(${fotoFinal})`,
+                        backgroundSize: "cover",
+                        backgroundPosition: "center",
+                      }
+                    : {}),
+                }}
+              >
+                {!fotoFinal && (
+                  <div
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: 48,
+                      fontWeight: 800,
+                      color: "#0f2444",
+                    }}
+                  >
+                    {(usuario.nombreIC || "?").slice(0, 2).toUpperCase()}
+                  </div>
+                )}
+              </div>
+
+              <div style={{ width: "100%", display: "flex", marginTop: 18, alignItems: "flex-start" }}>
+                <div style={{ flex: 1, paddingRight: 14 }}>
+                  <div style={{ fontSize: 9, color: "#5d6b7a", letterSpacing: 1.8, textTransform: "uppercase", fontWeight: 800 }}>
+                    Nombre funcionario
+                  </div>
+                  <div style={{ marginTop: 6, fontSize: 20, letterSpacing: 0.3, fontWeight: 800, color: "#0f2444", lineHeight: 1.3 }}>
+                    {usuario.nombreIC}
+                  </div>
+
+                  <div style={{ marginTop: 14, fontSize: 9, color: "#5d6b7a", letterSpacing: 1.8, textTransform: "uppercase", fontWeight: 800 }}>
+                    Rut institucional
+                  </div>
+                  <div style={{ marginTop: 6, fontSize: 18, fontWeight: 800, color: "#0f2444" }}>
+                    {formatearRut(usuario.rut)}
+                  </div>
+
+                  {nif && (
+                    <div style={{ marginTop: 14 }}>
+                      <div style={{ fontSize: 9, color: "#5d6b7a", letterSpacing: 1.8, textTransform: "uppercase", fontWeight: 800 }}>
+                        NIF
+                      </div>
+                      <div style={{ marginTop: 6, fontSize: 16, fontWeight: 800, color: "#0f2444" }}>{nif}</div>
+                    </div>
+                  )}
+                </div>
+
+                <div style={{ width: 72, display: "flex", flexDirection: "column", alignItems: "center" }}>
+                  <div
+                    style={{
+                      width: 64,
+                      height: 64,
+                      background: "#fff",
+                      border: "2px solid #0f2444",
+                      padding: 3,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <svg width="58" height="58" viewBox="0 0 21 21" xmlns="http://www.w3.org/2000/svg">
+                      {qrCells.map((cell) =>
+                        cell.bit ? (
+                          <rect
+                            key={`${cell.x}-${cell.y}`}
+                            x={cell.x}
+                            y={cell.y}
+                            width={1}
+                            height={1}
+                            fill="#111827"
+                          />
+                        ) : null
+                      )}
+                    </svg>
+                  </div>
+
+                  <div style={{ marginTop: 10, width: 72, height: 24, background: "#fff", border: "1px solid #0f2444", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      {barcodeBlocks.map((block) => (
+                        <div
+                          key={block.i}
+                          style={{
+                            width: 2,
+                            height: 18,
+                            background: block.active ? "#111827" : "transparent",
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div
+              style={{
+                height: 42,
+                background: "#0f2444",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "0 14px",
+                color: "#fff",
+                fontSize: 9,
+                fontWeight: 700,
+                letterSpacing: 2,
+                textTransform: "uppercase",
+              }}
+            >
+              <div style={{ color: "#dfeaff", letterSpacing: 3 }}>|||| |||| ||||</div>
+              <div>Documento interno</div>
+            </div>
+
+            <div
+              style={{
+                background: "#dbe8f6",
+                height: 72,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "#0f2444",
+                fontWeight: 800,
+                fontSize: 18,
+              }}
+            >
+              <div style={{ fontSize: 10, letterSpacing: 1.6, textTransform: "uppercase", color: "#5d6b7a", marginRight: 10 }}>
+                Cargo oficial
+              </div>
+              <div style={{ fontSize: 16, fontWeight: 800, color: "#0f2444" }}>{cargo}</div>
+            </div>
+          </div>
+        </div>
+      ),
+      {
+        width: 640,
+        height: 1000,
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate",
+        },
+      }
+    );
   } catch (error) {
     console.error("Error generando carnet:", error);
     return NextResponse.json(

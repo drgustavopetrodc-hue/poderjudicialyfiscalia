@@ -2,7 +2,9 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
-import { createCanvas, loadImage } from "canvas";
+import { createCanvas, loadImage, registerFont } from "canvas";
+import path from "path";
+import fs from "fs";
 import {
   ROLES_FUNCIONARIOS,
   formatearRut,
@@ -19,6 +21,44 @@ const NOMBRE_ROL: Record<string, string> = {
   FISCAL: "Fiscal Adjunto",
   FUNCIONARIO: "Funcionario Judicial",
 };
+
+// ========================================================
+// DESCARGA AUTOMÁTICA Y REGISTRO DE FUENTE (ROBOTO/ARIAL)
+// ========================================================
+const dirFuentes = path.join(process.cwd(), "public", "fonts");
+const rutaFuente = path.join(dirFuentes, "Arial.ttf");
+
+// Función asíncrona interna para garantizar que la fuente exista físicamente en el hosting antes de dibujar
+async function asegurarFuenteTipografica() {
+  if (fs.existsSync(rutaFuente)) {
+    return;
+  }
+
+  try {
+    // Si no existen las carpetas dentro de /public, las creamos automáticamente
+    if (!fs.existsSync(dirFuentes)) {
+      fs.mkdirSync(dirFuentes, { recursive: true });
+    }
+
+    console.log("[INFO] Descargando tipografía oficial desde Google Fonts para evitar censura...");
+    // Descargamos Roboto Bold (que es idéntica a Arial y de uso libre absoluto)
+    const urlFuenteEstandar = "https://github.com";
+    const respuesta = await fetch(urlFuenteEstandar);
+    
+    if (!respuesta.ok) throw new Error("Fallo la descarga del servidor de Google");
+    
+    const bufferArray = await respuesta.arrayBuffer();
+    fs.writeFileSync(rutaFuente, Buffer.from(bufferArray));
+    console.log("[SUCCESS] Fuente guardada exitosamente en public/fonts/Arial.ttf");
+  } catch (error) {
+    console.error("[ERROR] No se pudo descargar la fuente de manera automática:", error);
+  }
+}
+
+// Intentamos registrarla si ya está en disco al compilar
+if (fs.existsSync(rutaFuente)) {
+  registerFont(rutaFuente, { family: "CustomArial", weight: "bold" });
+}
 
 function drawRoundRect(ctx: any, x: number, y: number, w: number, h: number, r: number) {
   if (w < 2 * r) r = w / 2;
@@ -45,6 +85,15 @@ async function generarPlacaPng({
   rol: string;
   fotoDataUri?: string | null;
 }): Promise<Buffer> {
+  // Nos aseguramos que la fuente esté lista antes de inicializar el lienzo
+  await asegurarFuenteTipografica();
+  
+  // Si se descargó correctamente usamos el alias, si no, usamos la genérica por seguridad
+  if (fs.existsSync(rutaFuente)) {
+    registerFont(rutaFuente, { family: "CustomArial", weight: "bold" });
+  }
+  const FUENTE_GLOBAL = fs.existsSync(rutaFuente) ? "CustomArial" : "sans-serif";
+
   const width = 360;
   const height = 560;
   const canvas = createCanvas(width, height);
@@ -70,13 +119,12 @@ async function generarPlacaPng({
   ctx.fillRect(0, 0, width, 118);
 
   ctx.fillStyle = "#ffffff";
-  // CORRECCIÓN DE FUENTE: Cambiado a sans-serif universal
-  ctx.font = "900 14px sans-serif";
+  ctx.font = `bold 14px ${FUENTE_GLOBAL}`;
   ctx.textAlign = "center";
   ctx.fillText(tituloEntidad, width / 2, 38);
 
   ctx.fillStyle = colorDetalle;
-  ctx.font = "bold 9px sans-serif";
+  ctx.font = `bold 9px ${FUENTE_GLOBAL}`;
   ctx.fillText(subtituloEntidad, width / 2, 56);
 
   ctx.beginPath();
@@ -88,7 +136,7 @@ async function generarPlacaPng({
   ctx.stroke();
 
   ctx.fillStyle = colorDetalle;
-  ctx.font = "900 11px sans-serif";
+  ctx.font = `bold 11px ${FUENTE_GLOBAL}`;
   ctx.textBaseline = "middle";
   ctx.fillText(siglasSello, width / 2, 94);
 
@@ -112,7 +160,7 @@ async function generarPlacaPng({
     }
   } else {
     ctx.fillStyle = colorPrimario;
-    ctx.font = "900 42px sans-serif";
+    ctx.font = `bold 42px ${FUENTE_GLOBAL}`;
     ctx.fillText((nombreIC || "?").trim().slice(0, 2).toUpperCase(), width / 2, boxY + (boxH / 2));
   }
 
@@ -120,17 +168,17 @@ async function generarPlacaPng({
   ctx.textBaseline = "alphabetic";
 
   ctx.fillStyle = "#6b7280";
-  ctx.font = "bold 8px sans-serif";
+  ctx.font = `bold 8px ${FUENTE_GLOBAL}`;
   ctx.fillText("FUNCIONARIO / MAGISTRADO", 24, 344);
   ctx.fillStyle = "#111827";
-  ctx.font = "900 14px sans-serif";
+  ctx.font = `bold 14px ${FUENTE_GLOBAL}`;
   ctx.fillText(nombreIC, 24, 364);
 
   ctx.fillStyle = "#6b7280";
-  ctx.font = "bold 8px sans-serif";
+  ctx.font = `bold 8px ${FUENTE_GLOBAL}`;
   ctx.fillText("RUN / RUT NACIONAL", 24, 404);
   ctx.fillStyle = "#111827";
-  ctx.font = "900 14px sans-serif";
+  ctx.font = `bold 14px ${FUENTE_GLOBAL}`;
   ctx.fillText(formatearRut(rut), 24, 424);
 
   ctx.strokeStyle = "#e5e7eb";
@@ -164,10 +212,10 @@ async function generarPlacaPng({
   ctx.fillRect(22, 462, 4, 42);
 
   ctx.fillStyle = "#6b7280";
-  ctx.font = "bold 8px sans-serif";
+  ctx.font = `bold 8px ${FUENTE_GLOBAL}`;
   ctx.fillText("CARGO INSTITUCIONAL", 34, 478);
   ctx.fillStyle = colorTextoCargo;
-  ctx.font = "900 13px sans-serif";
+  ctx.font = `bold 13px ${FUENTE_GLOBAL}`;
   ctx.fillText(cargo, 34, 496);
 
   ctx.fillStyle = colorPrimario;
@@ -177,12 +225,11 @@ async function generarPlacaPng({
   ctx.fillRect(0, 524, width, 2);
 
   ctx.fillStyle = "#ffffff";
-  // Cambiado a monoespaciada estándar para las barras estéticas
   ctx.font = "11px monospace";
   ctx.fillText("|||| |||| ||||", 20, 546);
 
   ctx.textAlign = "right";
-  ctx.font = "bold 8px sans-serif";
+  ctx.font = `bold 8px ${FUENTE_GLOBAL}`;
   ctx.fillText(textoFooter, width - 20, 546);
 
   ctx.globalCompositeOperation = "destination-in";

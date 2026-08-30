@@ -20,7 +20,6 @@ const NOMBRE_ROL: Record<string, string> = {
   FUNCIONARIO: "Funcionario Judicial",
 };
 
-// Función auxiliar para dibujar rectángulos con bordes redondeados en Canvas
 function drawRoundRect(ctx: any, x: number, y: number, w: number, h: number, r: number) {
   if (w < 2 * r) r = w / 2;
   if (h < 2 * r) r = h / 2;
@@ -46,7 +45,6 @@ async function generarPlacaPng({
   rol: string;
   fotoDataUri?: string | null;
 }): Promise<Buffer> {
-  // Dimensiones del lienzo de la credencial (Ancho x Alto)
   const width = 360;
   const height = 560;
   const canvas = createCanvas(width, height);
@@ -62,28 +60,25 @@ async function generarPlacaPng({
   const colorTextoCargo = esFiscalia ? "#dc2626" : "#0a192f";
   const textoFooter = esFiscalia ? "DOCUMENTO INTERNO" : "MINISTERIO DE JUSTICIA";
 
-  // Fondo total blanco limpio de la tarjeta
   ctx.fillStyle = "#ffffff";
   ctx.fillRect(0, 0, width, height);
 
-  // 1. Cabecera con degradado institucional
   const gradient = ctx.createLinearGradient(0, 0, 0, 118);
   gradient.addColorStop(0, colorPrimario);
   gradient.addColorStop(1, colorSecundario);
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, width, 118);
 
-  // Textos de la cabecera
   ctx.fillStyle = "#ffffff";
-  ctx.font = "bold 15px Arial";
+  // CORRECCIÓN DE FUENTE: Cambiado a sans-serif universal
+  ctx.font = "900 14px sans-serif";
   ctx.textAlign = "center";
   ctx.fillText(tituloEntidad, width / 2, 38);
 
   ctx.fillStyle = colorDetalle;
-  ctx.font = "bold 9px Arial";
+  ctx.font = "bold 9px sans-serif";
   ctx.fillText(subtituloEntidad, width / 2, 56);
 
-  // 2. Escudo / Emblema circular central
   ctx.beginPath();
   ctx.arc(width / 2, 94, 24, 0, Math.PI * 2);
   ctx.fillStyle = colorPrimario;
@@ -93,11 +88,10 @@ async function generarPlacaPng({
   ctx.stroke();
 
   ctx.fillStyle = colorDetalle;
-  ctx.font = "bold 11px Arial";
+  ctx.font = "900 11px sans-serif";
   ctx.textBaseline = "middle";
   ctx.fillText(siglasSello, width / 2, 94);
 
-  // 3. Renderizado del Avatar del Personaje (Roblox o Imagen de Perfil)
   const boxX = 86;
   const boxY = 138;
   const boxW = 188;
@@ -114,73 +108,68 @@ async function generarPlacaPng({
       const img = await loadImage(fotoDataUri);
       ctx.drawImage(img, boxX + 1, boxY + 1, boxW - 2, boxH - 2);
     } catch (e) {
-      console.error("Fallo al pintar avatar en el lienzo canvas:", e);
+      console.error(e);
     }
   } else {
     ctx.fillStyle = colorPrimario;
-    ctx.font = "bold 42px Arial";
+    ctx.font = "900 42px sans-serif";
     ctx.fillText((nombreIC || "?").trim().slice(0, 2).toUpperCase(), width / 2, boxY + (boxH / 2));
   }
 
-  // 4. Datos del Funcionario (Textos alineados a la izquierda)
   ctx.textAlign = "left";
   ctx.textBaseline = "alphabetic";
 
   ctx.fillStyle = "#6b7280";
-  ctx.font = "bold 8px Arial";
-  ctx.fillText("FUNCIONARIO / MAGISTRADO", 24, 356);
+  ctx.font = "bold 8px sans-serif";
+  ctx.fillText("FUNCIONARIO / MAGISTRADO", 24, 344);
   ctx.fillStyle = "#111827";
-  ctx.font = "bold 15px Arial";
-  ctx.fillText(nombreIC, 24, 378);
+  ctx.font = "900 14px sans-serif";
+  ctx.fillText(nombreIC, 24, 364);
 
   ctx.fillStyle = "#6b7280";
-  ctx.font = "bold 8px Arial";
-  ctx.fillText("RUN / RUT NACIONAL", 24, 416);
+  ctx.font = "bold 8px sans-serif";
+  ctx.fillText("RUN / RUT NACIONAL", 24, 404);
   ctx.fillStyle = "#111827";
-  ctx.font = "bold 15px Arial";
-  ctx.fillText(formatearRut(rut), 24, 438);
+  ctx.font = "900 14px sans-serif";
+  ctx.fillText(formatearRut(rut), 24, 424);
 
-  // 5. Simulación gráfica del Código QR y de Barras (Cajas con líneas)
   ctx.strokeStyle = "#e5e7eb";
   ctx.lineWidth = 1;
   ctx.fillStyle = "#ffffff";
-  ctx.fillRect(246, 340, 82, 82);
-  ctx.strokeRect(246, 340, 82, 82);
+  ctx.fillRect(246, 330, 82, 82);
+  ctx.strokeRect(246, 330, 82, 82);
 
-  // Dibujamos líneas cruzadas para simular el patrón del QR de forma limpia
   ctx.fillStyle = "#111827";
   for (let i = 0; i < 4; i++) {
-    ctx.fillRect(252 + i * 18, 346, 10, 10);
-    ctx.fillRect(252 + i * 18, 404, 10, 10);
+    ctx.fillRect(252 + i * 18, 336, 10, 10);
+    ctx.fillRect(252 + i * 18, 394, 10, 10);
   }
 
-  ctx.fillRect(246, 430, 82, 28);
-  ctx.strokeRect(246, 430, 82, 28);
+  ctx.fillRect(246, 422, 82, 28);
+  ctx.strokeRect(246, 422, 82, 28);
   ctx.fillStyle = "#ffffff";
-  ctx.fillRect(247, 431, 80, 26);
+  ctx.fillRect(247, 423, 80, 26);
   ctx.fillStyle = "#111827";
   for (let i = 0; i < 20; i++) {
     const barWidth = i % 3 === 0 ? 3 : 1;
-    ctx.fillRect(252 + i * 3.5, 434, barWidth, 20);
+    ctx.fillRect(252 + i * 3.5, 426, barWidth, 20);
   }
 
-  // 6. Recuadro de Cargo Institucional
   ctx.fillStyle = "#f9fafb";
-  ctx.fillRect(22, 468, 316, 42);
+  ctx.fillRect(22, 462, 316, 42);
   ctx.strokeStyle = "#e5e7eb";
-  ctx.strokeRect(22, 468, 316, 42);
+  ctx.strokeRect(22, 462, 316, 42);
   
   ctx.fillStyle = colorDetalle;
-  ctx.fillRect(22, 468, 4, 42);
+  ctx.fillRect(22, 462, 4, 42);
 
   ctx.fillStyle = "#6b7280";
-  ctx.font = "bold 8px Arial";
-  ctx.fillText("CARGO INSTITUCIONAL", 34, 484);
+  ctx.font = "bold 8px sans-serif";
+  ctx.fillText("CARGO INSTITUCIONAL", 34, 478);
   ctx.fillStyle = colorTextoCargo;
-  ctx.font = "bold 13px Arial";
-  ctx.fillText(cargo, 34, 504);
+  ctx.font = "900 13px sans-serif";
+  ctx.fillText(cargo, 34, 496);
 
-  // 7. Franja Inferior del Footer institucional
   ctx.fillStyle = colorPrimario;
   ctx.fillRect(0, 524, width, 36);
 
@@ -188,14 +177,14 @@ async function generarPlacaPng({
   ctx.fillRect(0, 524, width, 2);
 
   ctx.fillStyle = "#ffffff";
-  ctx.font = "11px Courier New";
+  // Cambiado a monoespaciada estándar para las barras estéticas
+  ctx.font = "11px monospace";
   ctx.fillText("|||| |||| ||||", 20, 546);
 
   ctx.textAlign = "right";
-  ctx.font = "bold 8px Arial";
+  ctx.font = "bold 8px sans-serif";
   ctx.fillText(textoFooter, width - 20, 546);
 
-  // Bordes redondeados exteriores para la tarjeta completa
   ctx.globalCompositeOperation = "destination-in";
   ctx.fillStyle = "#ffffff";
   drawRoundRect(ctx, 0, 0, width, height, 16);
@@ -249,7 +238,6 @@ export async function GET(req: NextRequest, { params }: { params: { userId: stri
       fotoFinal = null;
     }
 
-    // Generamos el buffer binario nativo de la imagen PNG
     const pngBuffer = await generarPlacaPng({
       nombreIC: usuario.nombreIC,
       rut: usuario.rut,

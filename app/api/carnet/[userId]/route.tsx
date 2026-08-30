@@ -16,9 +16,9 @@ export const runtime = "nodejs";
 
 const NOMBRE_ROL: Record<string, string> = {
   ADMIN: "Ministro de Corte Suprema",
-  JUEZ: "Juez",
-  FISCAL: "Fiscal",
-  FUNCIONARIO: "Funcionario",
+  JUEZ: "Juez de la República",
+  FISCAL: "Fiscal Adjunto",
+  FUNCIONARIO: "Funcionario Judicial",
 };
 
 function escapeXml(value: string): string {
@@ -26,7 +26,7 @@ function escapeXml(value: string): string {
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
-    .replace(/\"/g, "&quot;")
+    .replace(/"/g, "&quot;")
     .replace(/'/g, "&apos;");
 }
 
@@ -58,86 +58,105 @@ function buildBarcodePattern(): boolean[] {
 function buildCarnetSvg({
   nombreIC,
   rut,
-  nif,
   cargo,
-  institucion,
+  rol,
   fotoDataUri,
 }: {
   nombreIC: string;
   rut: string;
-  nif?: string | null;
   cargo: string;
-  institucion: string;
+  rol: string;
   fotoDataUri?: string | null;
 }): string {
   const nombre = escapeXml(nombreIC);
   const rutFormateado = escapeXml(formatearRut(rut));
   const cargoEscapado = escapeXml(cargo);
-  const nifEscapado = nif ? escapeXml(nif) : "";
-  const institucionEscapada = escapeXml(institucion);
-  const initials = escapeXml((nombreIC || "?").trim().slice(0, 2).toUpperCase() || "MP");
+  const initials = escapeXml((nombreIC || "?").trim().slice(0, 2).toUpperCase() || "PJ");
+
+  // Configuración de Estilo e Identidad según la institución (PJUD vs Fiscalía)
+  const esFiscalia = rol === "FISCAL";
+  const colorPrimario = esFiscalia ? "#0f2e5c" : "#0a192f";
+  const colorSecundario = esFiscalia ? "#174785" : "#112240";
+  const colorDetalle = esFiscalia ? "#79b2fc" : "#b3924b";
+  const tituloEntidad = esFiscalia ? "MINISTERIO PÚBLICO" : "PODER JUDICIAL";
+  const subtituloEntidad = esFiscalia ? "FISCALÍA DE CHILE" : "REPÚBLICA DE CHILE";
+  const siglasSello = esFiscalia ? "MP" : "PJUD";
+  const colorTextoCargo = esFiscalia ? "#dc2626" : "#0a192f"; // Rojo para fiscales, Azul para jueces
+  const textoFooter = esFiscalia ? "DOCUMENTO INTERNO" : "MINISTERIO DE JUSTICIA";
 
   const avatarMarkup = fotoDataUri
-    ? `<image href="${escapeXml(fotoDataUri)}" x="87" y="155" width="186" height="186" preserveAspectRatio="xMidYMid slice" />`
-    : `<text x="180" y="258" text-anchor="middle" font-size="58" font-weight="800" fill="#0f2444">${initials}</text>`;
+    ? `<image href="${escapeXml(fotoDataUri)}" x="88" y="140" width="184" height="184" preserveAspectRatio="xMidYMid slice" />`
+    : `<text x="180" y="250" text-anchor="middle" font-size="52" font-weight="800" fill="${colorPrimario}">${initials}</text>`;
 
+  // Coordenadas calculadas relativas al contenedor transformado g (translate(140 150))
   const qrCells = buildQrPattern();
   const qrMarkup = qrCells
-    .map((cell) => (cell.active ? `<rect x="${cell.x * 2 + 248}" y="${cell.y * 2 + 300}" width="2" height="2" fill="#111827" />` : ""))
+    .map((cell) => (cell.active ? `<rect x="${cell.x * 2.2 + 248}" y="${cell.y * 2.2 + 342}" width="2.2" height="2.2" fill="#111827" />` : ""))
     .join("");
 
   const barcode = buildBarcodePattern();
   const barcodeMarkup = barcode
-    .map((active, idx) => (active ? `<rect x="${246 + idx * 1.35}" y="422" width="1.1" height="28" fill="#111827" />` : ""))
+    .map((active, idx) => (active ? `<rect x="${246 + idx * 1.35}" y="432" width="1.1" height="28" fill="#111827" />` : ""))
     .join("");
 
   return `
     <svg width="640" height="1000" viewBox="0 0 640 1000" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Credencial institucional">
       <defs>
         <linearGradient id="headerGradient" x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0%" stop-color="#0d2d4d" />
-          <stop offset="100%" stop-color="#0d3d66" />
+          <stop offset="0%" stop-color="${colorPrimario}" />
+          <stop offset="100%" stop-color="${colorSecundario}" />
         </linearGradient>
       </defs>
 
+      {/* Fondo de Canvas */}
       <rect width="640" height="1000" fill="#1f232b" />
 
+      {/* Tarjeta Centrada */}
       <g transform="translate(140 150)">
-        <rect width="360" height="560" rx="16" fill="#edf2f5" stroke="#0f2444" stroke-width="2" />
+        <rect width="360" height="560" rx="16" fill="#ffffff" stroke="${colorDetalle}" stroke-width="2" />
         <rect x="0" y="0" width="360" height="118" rx="16" fill="url(#headerGradient)" />
 
-        <text x="180" y="36" text-anchor="middle" font-size="22" font-weight="900" fill="#ffffff" letter-spacing="2">MINISTERIO PÚBLICO</text>
-        <text x="180" y="58" text-anchor="middle" font-size="11" fill="#dfeaff" font-weight="700" letter-spacing="1">Ministerio Público</text>
+        <text x="180" y="38" text-anchor="middle" font-size="16" font-family="Arial, sans-serif" font-weight="900" fill="#ffffff" letter-spacing="1.5">${tituloEntidad}</text>
+        <text x="180" y="56" text-anchor="middle" font-size="9" font-family="Arial, sans-serif" fill="${colorDetalle}" font-weight="700" letter-spacing="2">${subtituloEntidad}</text>
 
-        <circle cx="180" cy="100" r="38" fill="#dfefff" stroke="#ffffff" stroke-width="2" />
-        <text x="180" y="110" text-anchor="middle" font-size="20" font-weight="900" fill="#0f2444">MP</text>
+        {/* Emblema Circular */}
+        <circle cx="180" cy="94" r="26" fill="${colorPrimario}" stroke="${colorDetalle}" stroke-width="2" />
+        <text x="180" y="98" text-anchor="middle" font-size="11" font-family="Arial, sans-serif" font-weight="900" fill="${colorDetalle}">${siglasSello}</text>
 
-        <rect x="86" y="138" width="188" height="188" rx="8" fill="#dfe7f3" stroke="#0f2444" stroke-width="3" />
+        {/* Recuadro de la Fotografía */}
+        <rect x="86" y="138" width="188" height="188" rx="6" fill="#f3f4f6" stroke="${colorPrimario}" stroke-width="2" />
         ${avatarMarkup}
 
-        <g>
-          <text x="22" y="356" font-size="8" fill="#5d6b7a" font-weight="800" letter-spacing="1.8">NOMBRE FUNCIONARIO</text>
-          <text x="22" y="382" font-size="20" fill="#0f2444" font-weight="800">${nombre}</text>
+        {/* Datos Personaje */}
+        <g font-family="Arial, sans-serif">
+          <text x="24" y="356" font-size="8" fill="#6b7280" font-weight="700" letter-spacing="1">FUNCIONARIO / MAGISTRADO</text>
+          <text x="24" y="378" font-size="15" fill="#111827" font-weight="800">${nombre}</text>
 
-          <text x="22" y="432" font-size="8" fill="#5d6b7a" font-weight="800" letter-spacing="1.8">RUT INSTITUCIONAL</text>
-          <text x="22" y="458" font-size="18" fill="#0f2444" font-weight="800">${rutFormateado}</text>
+          <text x="24" y="416" font-size="8" fill="#6b7280" font-weight="700" letter-spacing="1">RUN / RUT NACIONAL</text>
+          <text x="24" y="438" font-size="15" fill="#111827" font-weight="800">${rutFormateado}</text>
         </g>
 
+        {/* Códigos Dinámicos */}
         <g>
-          <rect x="246" y="340" width="82" height="82" fill="#fff" stroke="#0f2444" stroke-width="2" />
+          <rect x="246" y="340" width="82" height="82" fill="#ffffff" stroke="#e5e7eb" stroke-width="1" />
           ${qrMarkup}
 
-          <rect x="246" y="430" width="82" height="28" fill="#fff" stroke="#0f2444" stroke-width="1" />
+          <rect x="246" y="430" width="82" height="28" fill="#ffffff" stroke="#e5e7eb" stroke-width="1" />
           ${barcodeMarkup}
         </g>
 
-        <rect x="22" y="476" width="316" height="42" fill="#dbe8f6" stroke="#0f2444" stroke-width="1.5" />
-        <text x="34" y="494" font-size="10" fill="#5d6b7a" font-weight="700" letter-spacing="1.5">CARGO OFICIAL</text>
-        <text x="34" y="516" font-size="16" fill="#0f2444" font-weight="800">${cargoEscapado}</text>
+        {/* Caja de Rango */}
+        <rect x="22" y="468" width="316" height="42" fill="#f9fafb" stroke="#e5e7eb" stroke-width="1" stroke-dasharray="0" />
+        <line x1="22" y1="468" x2="22" y2="510" stroke="${colorDetalle}" stroke-width="4" />
+        
+        <text x="34" y="484" font-family="Arial, sans-serif" font-size="8" fill="#6b7280" font-weight="700" letter-spacing="1">CARGO INSTITUCIONAL</text>
+        <text x="34" y="504" font-family="Arial, sans-serif" font-size="14" fill="${colorTextoCargo}" font-weight="900">${cargoEscapado}</text>
 
-        <rect x="0" y="520" width="360" height="40" fill="#0f2444" />
-        <text x="18" y="548" font-size="9" fill="#dfeaff" font-weight="700" letter-spacing="3">|||| |||| ||||</text>
-        <text x="260" y="548" font-size="9" fill="#ffffff" font-weight="700" letter-spacing="2">DOCUMENTO INTERNO</text>
+        {/* Franja de Cierre */}
+        <rect x="0" y="524" width="360" height="36" fill="${colorPrimario}" rx="0" />
+        <line x1="0" y1="524" x2="360" y2="524" stroke="${colorDetalle}" stroke-width="2" />
+        <text x="20" y="546" font-family="monospace" font-size="8" fill="#ffffff" letter-spacing="4">|||| |||| ||||</text>
+        <text x="340" y="546" text-anchor="end" font-family="Arial, sans-serif" font-size="8" fill="#ffffff" font-weight="700" letter-spacing="1">${textoFooter}</text>
       </g>
     </svg>
   `;
@@ -167,7 +186,6 @@ export async function GET(req: NextRequest, { params }: { params: { userId: stri
     const institucion = usuario.institucion || INSTITUCION_POR_ROL[usuario.rol] || "Estado de Chile";
     const esPresidente = esPresidenteCorteSuprema(usuario.discordId);
     const cargo = esPresidente ? "Presidente de la Corte Suprema" : NOMBRE_ROL[usuario.rol] ?? usuario.rol;
-    const nif = (usuario as any).nif || (usuario.rol === "FISCAL" ? generarNifFiscal(usuario.id) : null);
 
     let fotoFinal: string | null = null;
     try {
@@ -193,9 +211,8 @@ export async function GET(req: NextRequest, { params }: { params: { userId: stri
     const svg = buildCarnetSvg({
       nombreIC: usuario.nombreIC,
       rut: usuario.rut,
-      nif,
       cargo,
-      institucion,
+      rol: usuario.rol,
       fotoDataUri: fotoFinal,
     });
 
@@ -203,14 +220,11 @@ export async function GET(req: NextRequest, { params }: { params: { userId: stri
       status: 200,
       headers: {
         "Content-Type": "image/svg+xml; charset=utf-8",
-        "Cache-Control": "no-store, no-cache, must-revalidate",
+        "Cache-Control": "no-store, max-age=0, must-revalidate",
       },
     });
   } catch (error) {
-    console.error("Error generando carnet:", error);
-    return NextResponse.json(
-      { error: "No se pudo generar la identificación institucional" },
-      { status: 500 }
-    );
+    console.error("Error crítico en endpoint de carnet:", error);
+    return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
   }
 }

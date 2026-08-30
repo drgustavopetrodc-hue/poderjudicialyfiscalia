@@ -2,9 +2,9 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
+import { createCanvas, loadImage } from "canvas";
 import {
   ROLES_FUNCIONARIOS,
-  INSTITUCION_POR_ROL,
   formatearRut,
   esPresidenteCorteSuprema,
 } from "@/lib/identidad";
@@ -20,41 +20,20 @@ const NOMBRE_ROL: Record<string, string> = {
   FUNCIONARIO: "Funcionario Judicial",
 };
 
-function escapeXml(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&apos;");
+// Función auxiliar para dibujar rectángulos con bordes redondeados en Canvas
+function drawRoundRect(ctx: any, x: number, y: number, w: number, h: number, r: number) {
+  if (w < 2 * r) r = w / 2;
+  if (h < 2 * r) r = h / 2;
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
 }
 
-function buildQrPattern(size = 21): { x: number; y: number; active: boolean }[] {
-  const cells: { x: number; y: number; active: boolean }[] = [];
-  for (let y = 0; y < size; y += 1) {
-    for (let x = 0; x < size; x += 1) {
-      const finderA = x < 7 && y < 7;
-      const finderB = x > 13 && y < 7;
-      const finderC = x < 7 && y > 13;
-      const isFinder = finderA || finderB || finderC;
-      const seed = (x * 17 + y * 11) % 13;
-      const active = isFinder ? true : seed % 3 === 0 || ((x + y) % 5 === 0 && x > 9 && y > 7);
-      cells.push({ x, y, active });
-    }
-  }
-  return cells;
-}
-
-function buildBarcodePattern(): boolean[] {
-  const bars: boolean[] = [];
-  for (let i = 0; i < 60; i += 1) {
-    const active = i % 3 === 0 || (i % 7 === 0 && i > 10) || (i % 11 === 0 && i > 18) || (i % 5 === 0 && i < 8);
-    bars.push(active);
-  }
-  return bars;
-}
-
-function buildCarnetSvg({
+async function generarPlacaPng({
   nombreIC,
   rut,
   cargo,
@@ -66,11 +45,12 @@ function buildCarnetSvg({
   cargo: string;
   rol: string;
   fotoDataUri?: string | null;
-}): string {
-  const nombre = escapeXml(nombreIC);
-  const rutFormateado = escapeXml(formatearRut(rut));
-  const cargoEscapado = escapeXml(cargo);
-  const initials = escapeXml((nombreIC || "?").trim().slice(0, 2).toUpperCase() || "PJ");
+}): Promise<Buffer> {
+  // Dimensiones del lienzo de la credencial (Ancho x Alto)
+  const width = 360;
+  const height = 560;
+  const canvas = createCanvas(width, height);
+  const ctx = canvas.getContext("2d");
 
   const esFiscalia = rol === "FISCAL";
   const colorPrimario = esFiscalia ? "#0f2e5c" : "#0a192f";
@@ -82,73 +62,146 @@ function buildCarnetSvg({
   const colorTextoCargo = esFiscalia ? "#dc2626" : "#0a192f";
   const textoFooter = esFiscalia ? "DOCUMENTO INTERNO" : "MINISTERIO DE JUSTICIA";
 
-  const avatarMarkup = fotoDataUri
-    ? `<image href="${escapeXml(fotoDataUri)}" x="88" y="140" width="184" height="184" preserveAspectRatio="xMidYMid slice" />`
-    : `<text x="180" y="250" text-anchor="middle" font-size="52" font-weight="800" fill="${colorPrimario}">${initials}</text>`;
+  // Fondo total blanco limpio de la tarjeta
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, width, height);
 
-  const qrCells = buildQrPattern();
-  const qrMarkup = qrCells
-    .map((cell) => (cell.active ? `<rect x="${cell.x * 1.75 + 253}" y="${cell.y * 1.75 + 345}" width="1.8" height="1.8" fill="#111827" />` : ""))
-    .join("");
+  // 1. Cabecera con degradado institucional
+  const gradient = ctx.createLinearGradient(0, 0, 0, 118);
+  gradient.addColorStop(0, colorPrimario);
+  gradient.addColorStop(1, colorSecundario);
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, width, 118);
 
-  const barcode = buildBarcodePattern();
-  const barcodeMarkup = barcode
-    .map((active, idx) => (active ? `<rect x="${251 + idx * 1.2}" y="435" width="1.0" height="20" fill="#111827" />` : ""))
-    .join("");
+  // Textos de la cabecera
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "bold 15px Arial";
+  ctx.textAlign = "center";
+  ctx.fillText(tituloEntidad, width / 2, 38);
 
-  return `<?xml version="1.0" encoding="utf-8"?>
-    <svg width="640" height="1000" viewBox="0 0 640 1000" xmlns="http://w3.org" role="img" aria-label="Credencial institucional">
-      <defs>
-        <linearGradient id="headerGradient" x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0%" stop-color="${colorPrimario}" />
-          <stop offset="100%" stop-color="${colorSecundario}" />
-        </linearGradient>
-      </defs>
+  ctx.fillStyle = colorDetalle;
+  ctx.font = "bold 9px Arial";
+  ctx.fillText(subtituloEntidad, width / 2, 56);
 
-      <rect width="640" height="1000" fill="#1f232b" />
+  // 2. Escudo / Emblema circular central
+  ctx.beginPath();
+  ctx.arc(width / 2, 94, 24, 0, Math.PI * 2);
+  ctx.fillStyle = colorPrimario;
+  ctx.fill();
+  ctx.strokeStyle = colorDetalle;
+  ctx.lineWidth = 2;
+  ctx.stroke();
 
-      <g transform="translate(140 150)">
-        <rect width="360" height="560" rx="16" fill="#ffffff" stroke="${colorDetalle}" stroke-width="2" />
-        <rect x="0" y="0" width="360" height="118" rx="16" fill="url(#headerGradient)" />
+  ctx.fillStyle = colorDetalle;
+  ctx.font = "bold 11px Arial";
+  ctx.textBaseline = "middle";
+  ctx.fillText(siglasSello, width / 2, 94);
 
-        <text x="180" y="38" text-anchor="middle" font-size="16" font-family="Arial, sans-serif" font-weight="900" fill="#ffffff" letter-spacing="1.5">${tituloEntidad}</text>
-        <text x="180" y="56" text-anchor="middle" font-size="9" font-family="Arial, sans-serif" fill="${colorDetalle}" font-weight="700" letter-spacing="2">${subtituloEntidad}</text>
+  // 3. Renderizado del Avatar del Personaje (Roblox o Imagen de Perfil)
+  const boxX = 86;
+  const boxY = 138;
+  const boxW = 188;
+  const boxH = 188;
 
-        <circle cx="180" cy="94" r="26" fill="${colorPrimario}" stroke="${colorDetalle}" stroke-width="2" />
-        <text x="180" y="98" text-anchor="middle" font-size="11" font-family="Arial, sans-serif" font-weight="900" fill="${colorDetalle}">${siglasSello}</text>
+  ctx.fillStyle = "#f3f4f6";
+  ctx.fillRect(boxX, boxY, boxW, boxH);
+  ctx.strokeStyle = colorPrimario;
+  ctx.lineWidth = 2;
+  ctx.strokeRect(boxX, boxY, boxW, boxH);
 
-        <rect x="86" y="138" width="188" height="188" rx="6" fill="#f3f4f6" stroke="${colorPrimario}" stroke-width="2" />
-        ${avatarMarkup}
+  if (fotoDataUri) {
+    try {
+      const img = await loadImage(fotoDataUri);
+      ctx.drawImage(img, boxX + 1, boxY + 1, boxW - 2, boxH - 2);
+    } catch (e) {
+      console.error("Fallo al pintar avatar en el lienzo canvas:", e);
+    }
+  } else {
+    ctx.fillStyle = colorPrimario;
+    ctx.font = "bold 42px Arial";
+    ctx.fillText((nombreIC || "?").trim().slice(0, 2).toUpperCase(), width / 2, boxY + (boxH / 2));
+  }
 
-        <g font-family="Arial, sans-serif">
-          <text x="24" y="356" font-size="8" fill="#6b7280" font-weight="700" letter-spacing="1">FUNCIONARIO / MAGISTRADO</text>
-          <text x="24" y="378" font-size="15" fill="#111827" font-weight="800">${nombre}</text>
+  // 4. Datos del Funcionario (Textos alineados a la izquierda)
+  ctx.textAlign = "left";
+  ctx.textBaseline = "alphabetic";
 
-          <text x="24" y="416" font-size="8" fill="#6b7280" font-weight="700" letter-spacing="1">RUN / RUT NACIONAL</text>
-          <text x="24" y="438" font-size="15" fill="#111827" font-weight="800">${rutFormateado}</text>
-        </g>
+  ctx.fillStyle = "#6b7280";
+  ctx.font = "bold 8px Arial";
+  ctx.fillText("FUNCIONARIO / MAGISTRADO", 24, 356);
+  ctx.fillStyle = "#111827";
+  ctx.font = "bold 15px Arial";
+  ctx.fillText(nombreIC, 24, 378);
 
-        <g>
-          <rect x="246" y="340" width="82" height="82" fill="#ffffff" stroke="#e5e7eb" stroke-width="1" />
-          ${qrMarkup}
+  ctx.fillStyle = "#6b7280";
+  ctx.font = "bold 8px Arial";
+  ctx.fillText("RUN / RUT NACIONAL", 24, 416);
+  ctx.fillStyle = "#111827";
+  ctx.font = "bold 15px Arial";
+  ctx.fillText(formatearRut(rut), 24, 438);
 
-          <rect x="246" y="430" width="82" height="28" fill="#ffffff" stroke="#e5e7eb" stroke-width="1" />
-          ${barcodeMarkup}
-        </g>
+  // 5. Simulación gráfica del Código QR y de Barras (Cajas con líneas)
+  ctx.strokeStyle = "#e5e7eb";
+  ctx.lineWidth = 1;
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(246, 340, 82, 82);
+  ctx.strokeRect(246, 340, 82, 82);
 
-        <rect x="22" y="468" width="316" height="42" fill="#f9fafb" stroke="#e5e7eb" stroke-width="1" />
-        <line x1="22" y1="468" x2="22" y2="510" stroke="${colorDetalle}" stroke-width="4" />
-        
-        <text x="34" y="484" font-family="Arial, sans-serif" font-size="8" fill="#6b7280" font-weight="700" letter-spacing="1">CARGO INSTITUCIONAL</text>
-        <text x="34" y="504" font-family="Arial, sans-serif" font-size="14" fill="${colorTextoCargo}" font-weight="900">${cargoEscapado}</text>
+  // Dibujamos líneas cruzadas para simular el patrón del QR de forma limpia
+  ctx.fillStyle = "#111827";
+  for (let i = 0; i < 4; i++) {
+    ctx.fillRect(252 + i * 18, 346, 10, 10);
+    ctx.fillRect(252 + i * 18, 404, 10, 10);
+  }
 
-        <rect x="0" y="524" width="360" height="36" fill="${colorPrimario}" rx="0" />
-        <line x1="0" y1="524" x2="360" y2="524" stroke="${colorDetalle}" stroke-width="2" />
-        <text x="20" y="546" font-family="monospace" font-size="8" fill="#ffffff" letter-spacing="4">|||| |||| ||||</text>
-        <text x="340" y="546" text-anchor="end" font-family="Arial, sans-serif" font-size="8" fill="#ffffff" font-weight="700" letter-spacing="1">${textoFooter}</text>
-      </g>
-    </svg>
-  `;
+  ctx.fillRect(246, 430, 82, 28);
+  ctx.strokeRect(246, 430, 82, 28);
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(247, 431, 80, 26);
+  ctx.fillStyle = "#111827";
+  for (let i = 0; i < 20; i++) {
+    const barWidth = i % 3 === 0 ? 3 : 1;
+    ctx.fillRect(252 + i * 3.5, 434, barWidth, 20);
+  }
+
+  // 6. Recuadro de Cargo Institucional
+  ctx.fillStyle = "#f9fafb";
+  ctx.fillRect(22, 468, 316, 42);
+  ctx.strokeStyle = "#e5e7eb";
+  ctx.strokeRect(22, 468, 316, 42);
+  
+  ctx.fillStyle = colorDetalle;
+  ctx.fillRect(22, 468, 4, 42);
+
+  ctx.fillStyle = "#6b7280";
+  ctx.font = "bold 8px Arial";
+  ctx.fillText("CARGO INSTITUCIONAL", 34, 484);
+  ctx.fillStyle = colorTextoCargo;
+  ctx.font = "bold 13px Arial";
+  ctx.fillText(cargo, 34, 504);
+
+  // 7. Franja Inferior del Footer institucional
+  ctx.fillStyle = colorPrimario;
+  ctx.fillRect(0, 524, width, 36);
+
+  ctx.fillStyle = colorDetalle;
+  ctx.fillRect(0, 524, width, 2);
+
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "11px Courier New";
+  ctx.fillText("|||| |||| ||||", 20, 546);
+
+  ctx.textAlign = "right";
+  ctx.font = "bold 8px Arial";
+  ctx.fillText(textoFooter, width - 20, 546);
+
+  // Bordes redondeados exteriores para la tarjeta completa
+  ctx.globalCompositeOperation = "destination-in";
+  ctx.fillStyle = "#ffffff";
+  drawRoundRect(ctx, 0, 0, width, height, 16);
+  ctx.fill();
+
+  return canvas.toBuffer("image/png");
 }
 
 export async function GET(req: NextRequest, { params }: { params: { userId: string } }) {
@@ -192,11 +245,12 @@ export async function GET(req: NextRequest, { params }: { params: { userId: stri
         }
       }
     } catch (error) {
-      console.warn("No se pudo resolver la foto del usuario:", error);
+      console.warn("No se pudo mapear la imagen de perfil:", error);
       fotoFinal = null;
     }
 
-    const svg = buildCarnetSvg({
+    // Generamos el buffer binario nativo de la imagen PNG
+    const pngBuffer = await generarPlacaPng({
       nombreIC: usuario.nombreIC,
       rut: usuario.rut,
       cargo,
@@ -204,12 +258,12 @@ export async function GET(req: NextRequest, { params }: { params: { userId: stri
       fotoDataUri: fotoFinal,
     });
 
-    const filename = `credencial_${usuario.nombreIC.toLowerCase().replace(/\s+/g, "_")}.svg`;
+    const filename = `credencial_${usuario.nombreIC.toLowerCase().replace(/\s+/g, "_")}.png`;
 
-    return new NextResponse(svg, {
+    return new NextResponse(new Uint8Array(pngBuffer), {
       status: 200,
       headers: {
-        "Content-Type": "image/svg+xml; charset=utf-8",
+        "Content-Type": "image/png",
         "Content-Disposition": `attachment; filename="${filename}"`,
         "Cache-Control": "no-store, max-age=0, must-revalidate",
       },

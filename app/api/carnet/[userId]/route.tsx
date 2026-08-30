@@ -86,19 +86,17 @@ function buildCarnetSvg({
     ? `<image href="${escapeXml(fotoDataUri)}" x="88" y="140" width="184" height="184" preserveAspectRatio="xMidYMid slice" />`
     : `<text x="180" y="250" text-anchor="middle" font-size="52" font-weight="800" fill="${colorPrimario}">${initials}</text>`;
 
-  // AJUSTE QR: Escala reducida a 1.75 y desfases X/Y recalculados para centrar perfectamente en la caja blanca
   const qrCells = buildQrPattern();
   const qrMarkup = qrCells
     .map((cell) => (cell.active ? `<rect x="${cell.x * 1.75 + 253}" y="${cell.y * 1.75 + 345}" width="1.8" height="1.8" fill="#111827" />` : ""))
     .join("");
 
-  // AJUSTE BARRAS: Espaciador horizontal controlado para evitar desbordamientos en el extremo derecho
   const barcode = buildBarcodePattern();
   const barcodeMarkup = barcode
     .map((active, idx) => (active ? `<rect x="${251 + idx * 1.2}" y="435" width="1.0" height="20" fill="#111827" />` : ""))
     .join("");
 
-  return `
+  return `<?xml version="1.0" encoding="utf-8"?>
     <svg width="640" height="1000" viewBox="0 0 640 1000" xmlns="http://w3.org" role="img" aria-label="Credencial institucional">
       <defs>
         <linearGradient id="headerGradient" x1="0" x2="0" y1="0" y2="1">
@@ -206,10 +204,14 @@ export async function GET(req: NextRequest, { params }: { params: { userId: stri
       fotoDataUri: fotoFinal,
     });
 
+    const filename = `credencial_${usuario.nombreIC.toLowerCase().replace(/\s+/g, "_")}.svg`;
+
     return new NextResponse(svg, {
       status: 200,
       headers: {
         "Content-Type": "image/svg+xml; charset=utf-8",
+        // CORRECCIÓN: Forzamos la descarga del archivo binario con un nombre limpio en vez de renderizarlo en pantalla
+        "Content-Disposition": `attachment; filename="${filename}"`,
         "Cache-Control": "no-store, max-age=0, must-revalidate",
       },
     });

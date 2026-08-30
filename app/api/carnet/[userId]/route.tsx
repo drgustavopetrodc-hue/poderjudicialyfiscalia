@@ -23,10 +23,40 @@ const NOMBRE_ROL: Record<string, string> = {
 };
 
 // ========================================================
-// DESCARGA AUTOMÁTICA Y REGISTRO DE FUENTE (ROBOTO/ARIAL)
+// MANEJO DE FUENTES - ESTRATEGIA ROBUSTA
 // ========================================================
 const dirFuentes = path.join(process.cwd(), "public", "fonts");
 const rutaFuente = path.join(dirFuentes, "Arial.ttf");
+
+let fontsRegistered: { [key: string]: boolean } = {};
+
+function ensureFont() {
+  // Intentar registrar la fuente local si existe
+  if (!fontsRegistered["Arial"] && fs.existsSync(rutaFuente)) {
+    try {
+      registerFont(rutaFuente, { family: "Arial" });
+      fontsRegistered["Arial"] = true;
+      console.log("[FONT] Registró Arial custom");
+      return "Arial";
+    } catch (err) {
+      console.error("[FONT] Error al registrar Arial custom:", err);
+    }
+  }
+
+  // Fallback a fuentes del sistema (disponibles en Linux/Vercel)
+  const fontFamilies = ["Liberation Sans", "DejaVu Sans", "Arial", "sans-serif"];
+  
+  for (const fontFamily of fontFamilies) {
+    if (!fontsRegistered[fontFamily]) {
+      // Intentar fuentes del sistema
+      console.log("[FONT] Intentando usar fuente del sistema:", fontFamily);
+      fontsRegistered[fontFamily] = true;
+      return fontFamily;
+    }
+  }
+
+  return "sans-serif";
+}
 
 function drawRoundRect(ctx: any, x: number, y: number, w: number, h: number, r: number) {
   if (w < 2 * r) r = w / 2;
@@ -53,17 +83,8 @@ async function generarPlacaPng({
   rol: string;
   fotoDataUri?: string | null;
 }): Promise<Buffer> {
-  // Registrar la fuente en cada request (fallback seguro para Vercel)
-  if (fs.existsSync(rutaFuente)) {
-    try {
-      registerFont(rutaFuente, { family: "CustomArial", weight: "bold" });
-    } catch (e) {
-      // La fuente ya podría estar registrada, ignorar
-    }
-  }
-  
-  // Siempre usar CustomArial - es la única forma de evitar caracteres censurados
-  const FUENTE_GLOBAL = "CustomArial";
+  // Asegurar que la fuente esté registrada
+  const FUENTE_GLOBAL = ensureFont();
 
   const width = 360;
   const height = 560;

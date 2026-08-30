@@ -1,4 +1,3 @@
-import { ImageResponse } from "next/og";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -13,6 +12,7 @@ import {
 import { obtenerAvatarRobloxDataUri } from "@/lib/roblox";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 const NOMBRE_ROL: Record<string, string> = {
   ADMIN: "Ministro de Corte Suprema",
@@ -20,6 +20,144 @@ const NOMBRE_ROL: Record<string, string> = {
   FISCAL: "Fiscal",
   FUNCIONARIO: "Funcionario",
 };
+
+function escapeXml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+}
+
+function buildQrPattern(size = 21): { x: number; y: number; active: boolean }[] {
+  const cells: { x: number; y: number; active: boolean }[] = [];
+
+  for (let y = 0; y < size; y += 1) {
+    for (let x = 0; x < size; x += 1) {
+      const inFinderA = x < 7 && y < 7;
+      const inFinderB = x > 13 && y < 7;
+      const inFinderC = x < 7 && y > 13;
+      const isFinder = inFinderA || inFinderB || inFinderC;
+      const seed = (x * 17 + y * 11) % 13;
+      const active = isFinder ? true : seed % 3 === 0 || ((x + y) % 5 === 0 && x > 9 && y > 7);
+      cells.push({ x, y, active });
+    }
+  }
+
+  return cells;
+}
+
+function buildBarcodePattern(): boolean[] {
+  const bars: boolean[] = [];
+  for (let i = 0; i < 40; i += 1) {
+    const active = i % 2 === 0 || (i % 7 === 0 && i > 10) || (i % 11 === 0 && i > 18);
+    bars.push(active);
+  }
+  return bars;
+}
+
+function buildCarnetSvg({
+  nombreIC,
+  rut,
+  nif,
+  cargo,
+  institucion,
+  fotoDataUri,
+}: {
+  nombreIC: string;
+  rut: string;
+  nif?: string | null;
+  cargo: string;
+  institucion: string;
+  fotoDataUri?: string | null;
+}): string {
+  const nombre = escapeXml(nombreIC);
+  const rutFormateado = escapeXml(formatearRut(rut));
+  const cargoEscapado = escapeXml(cargo);
+  const nifEscapado = nif ? escapeXml(nif) : "";
+  const institucionEscapada = escapeXml(institucion);
+  const qr = buildQrPattern();
+  const barcode = buildBarcodePattern();
+  const initials = escapeXml((nombreIC || "?").trim().slice(0, 2).toUpperCase() || "MP");
+
+  const avatarMarkup = fotoDataUri
+    ? `<image href="${escapeXml(fotoDataUri)}" x="32" y="70" width="188" height="188" preserveAspectRatio="xMidYMid slice" />`
+    : `<text x="126" y="185" font-size="56" font-weight="800" text-anchor="middle" fill="#0f2444">${initials}</text>`;
+
+  const qrMarkup = qr
+    .map((cell) =>
+      cell.active
+        ? `<rect x="${cell.x * 2 + 2}" y="${cell.y * 2 + 2}" width="2" height="2" fill="#111827" />`
+        : ""
+    )
+    .join("");
+
+  const barcodeMarkup = barcode
+    .map((active, idx) =>
+      active
+        ? `<rect x="${idx * 2}" y="0" width="1.5" height="24" fill="#111827" />`
+        : ""
+    )
+    .join("");
+
+  return `
+    <svg width="640" height="1000" viewBox="0 0 640 1000" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Credencial institucional">
+      <rect width="640" height="1000" fill="#1e242b" />
+      <g transform="translate(140 180)">
+        <rect width="360" height="560" rx="14" fill="#edf2f5" stroke="#0f2444" stroke-width="2"/>
+
+        <rect x="0" y="0" width="360" height="120" fill="url(#headerGradient)" rx="14"/>
+        <defs>
+          <linearGradient id="headerGradient" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0%" stop-color="#0d2d4d" />
+            <stop offset="100%" stop-color="#0d3d66" />
+          </linearGradient>
+        </defs>
+
+        <text x="180" y="36" text-anchor="middle" font-size="22" font-weight="900" fill="#ffffff" letter-spacing="2">MINISTERIO PÚBLICO</text>
+        <text x="180" y="60" text-anchor="middle" font-size="11" font-weight="700" fill="#dfeaff" letter-spacing="1">${institucionEscapada}</text>
+
+        <circle cx="180" cy="110" r="36" fill="#dfefff" stroke="#ffffff" stroke-width="2" />
+        <text x="180" y="120" text-anchor="middle" font-size="20" font-weight="900" fill="#0f2444">MP</text>
+
+        <rect x="86" y="146" width="188" height="188" rx="8" fill="#dfe7f3" stroke="#0f2444" stroke-width="3" />
+        ${avatarMarkup}
+
+        <g transform="translate(20 344)">
+          <text x="0" y="0" font-size="9" fill="#5d6b7a" font-weight="800" letter-spacing="1.8">NOMBRE FUNCIONARIO</text>
+          <text x="0" y="26" font-size="20" fill="#0f2444" font-weight="800">${nombre}</text>
+
+          <text x="0" y="72" font-size="9" fill="#5d6b7a" font-weight="800" letter-spacing="1.8">RUT INSTITUCIONAL</text>
+          <text x="0" y="98" font-size="18" fill="#0f2444" font-weight="800">${rutFormateado}</text>
+
+          ${nif ? `<text x="0" y="142" font-size="9" fill="#5d6b7a" font-weight="800" letter-spacing="1.8">NIF</text>
+          <text x="0" y="166" font-size="16" fill="#0f2444" font-weight="800">${nifEscapado}</text>` : ""}
+        </g>
+
+        <g transform="translate(242 320)">
+          <rect x="0" y="0" width="80" height="80" fill="#fff" stroke="#0f2444" stroke-width="2"/>
+          <g transform="translate(8 8)">
+            ${qrMarkup}
+          </g>
+
+          <rect x="0" y="92" width="80" height="26" fill="#fff" stroke="#0f2444" stroke-width="1"/>
+          <g transform="translate(4 97)">
+            ${barcodeMarkup}
+          </g>
+        </g>
+
+        <rect x="0" y="520" width="360" height="40" fill="#0f2444"/>
+        <text x="18" y="546" font-size="9" fill="#dfeaff" font-weight="700" letter-spacing="3">|||| |||| ||||</text>
+        <text x="260" y="546" font-size="9" fill="#ffffff" font-weight="700" letter-spacing="2">DOCUMENTO INTERNO</text>
+
+        <rect x="22" y="474" width="316" height="44" fill="#dbe8f6" stroke="#0f2444" stroke-width="1.5"/>
+        <text x="34" y="498" font-size="10" fill="#5d6b7a" font-weight="700" letter-spacing="1.5">CARGO OFICIAL</text>
+        <text x="34" y="520" font-size="16" fill="#0f2444" font-weight="800">${cargoEscapado}</text>
+      </g>
+    </svg>
+  `;
+}
 
 export async function GET(req: NextRequest, { params }: { params: { userId: string } }) {
   try {
@@ -85,239 +223,22 @@ export async function GET(req: NextRequest, { params }: { params: { userId: stri
       return { i, active };
     });
 
-    return new ImageResponse(
-      (
-        <div
-          style={{
-            width: "100%",
-            height: "100%",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            background: "#1f232b",
-            fontFamily: "Arial, sans-serif",
-            padding: "24px",
-          }}
-        >
-          <div
-            style={{
-              width: "360px",
-              height: "560px",
-              background: "#edf2f5",
-              borderRadius: "12px",
-              overflow: "hidden",
-              border: "2px solid #0f2444",
-              boxShadow: "0 16px 30px rgba(0,0,0,0.35)",
-            }}
-          >
-            <div
-              style={{
-                width: "100%",
-                height: "120px",
-                background: "linear-gradient(180deg, #0d2d4d 0%, #0d3d66 100%)",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "flex-start",
-                color: "#fff",
-                paddingTop: "12px",
-                boxSizing: "border-box",
-              }}
-            >
-              <div style={{ fontSize: 22, fontWeight: 900, letterSpacing: 2, textTransform: "uppercase" }}>
-                MINISTERIO PÚBLICO
-              </div>
-              <div style={{ marginTop: 4, fontSize: 11, color: "#dfeaff", letterSpacing: 1, textTransform: "uppercase" }}>
-                {institucion}
-              </div>
-              <div
-                style={{
-                  width: 72,
-                  height: 72,
-                  borderRadius: "50%",
-                  background: "#dfefff",
-                  border: "2px solid #fff",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  marginTop: 14,
-                  color: "#0f2444",
-                  fontWeight: 900,
-                  fontSize: 20,
-                }}
-              >
-                MP
-              </div>
-            </div>
+    const svg = buildCarnetSvg({
+      nombreIC: usuario.nombreIC,
+      rut: usuario.rut,
+      nif,
+      cargo,
+      institucion,
+      fotoDataUri: fotoFinal,
+    });
 
-            <div
-              style={{
-                background: "#f3f6f9",
-                height: "430px",
-                padding: "20px 18px 0",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-              }}
-            >
-              <div
-                style={{
-                  width: 188,
-                  height: 188,
-                  border: "3px solid #0f2444",
-                  borderRadius: 8,
-                  background: "#dfe7f3",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  overflow: "hidden",
-                  ...(fotoFinal
-                    ? {
-                        backgroundImage: `url(${fotoFinal})`,
-                        backgroundSize: "cover",
-                        backgroundPosition: "center",
-                      }
-                    : {}),
-                }}
-              >
-                {!fotoFinal && (
-                  <div
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      fontSize: 48,
-                      fontWeight: 800,
-                      color: "#0f2444",
-                    }}
-                  >
-                    {(usuario.nombreIC || "?").slice(0, 2).toUpperCase()}
-                  </div>
-                )}
-              </div>
-
-              <div style={{ width: "100%", display: "flex", marginTop: 18, alignItems: "flex-start" }}>
-                <div style={{ flex: 1, paddingRight: 14 }}>
-                  <div style={{ fontSize: 9, color: "#5d6b7a", letterSpacing: 1.8, textTransform: "uppercase", fontWeight: 800 }}>
-                    Nombre funcionario
-                  </div>
-                  <div style={{ marginTop: 6, fontSize: 20, letterSpacing: 0.3, fontWeight: 800, color: "#0f2444", lineHeight: 1.3 }}>
-                    {usuario.nombreIC}
-                  </div>
-
-                  <div style={{ marginTop: 14, fontSize: 9, color: "#5d6b7a", letterSpacing: 1.8, textTransform: "uppercase", fontWeight: 800 }}>
-                    Rut institucional
-                  </div>
-                  <div style={{ marginTop: 6, fontSize: 18, fontWeight: 800, color: "#0f2444" }}>
-                    {formatearRut(usuario.rut)}
-                  </div>
-
-                  {nif && (
-                    <div style={{ marginTop: 14 }}>
-                      <div style={{ fontSize: 9, color: "#5d6b7a", letterSpacing: 1.8, textTransform: "uppercase", fontWeight: 800 }}>
-                        NIF
-                      </div>
-                      <div style={{ marginTop: 6, fontSize: 16, fontWeight: 800, color: "#0f2444" }}>{nif}</div>
-                    </div>
-                  )}
-                </div>
-
-                <div style={{ width: 72, display: "flex", flexDirection: "column", alignItems: "center" }}>
-                  <div
-                    style={{
-                      width: 64,
-                      height: 64,
-                      background: "#fff",
-                      border: "2px solid #0f2444",
-                      padding: 3,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <div style={{ width: 58, height: 58, display: "flex", flexDirection: "column" }}>
-                      {Array.from({ length: 21 }, (_, y) => (
-                        <div key={y} style={{ display: "flex", flexDirection: "row", flex: 1 }}>
-                          {qrCells
-                            .filter((cell) => cell.y === y)
-                            .map((cell) => (
-                              <div
-                                key={cell.x}
-                                style={{ flex: 1, background: cell.bit ? "#111827" : "transparent" }}
-                              />
-                            ))}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div style={{ marginTop: 10, width: 72, height: 24, background: "#fff", border: "1px solid #0f2444", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 1 }}>
-                      {barcodeBlocks.map((block) => (
-                        <div
-                          key={block.i}
-                          style={{
-                            width: 2,
-                            height: 18,
-                            background: block.active ? "#111827" : "transparent",
-                          }}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div
-              style={{
-                height: 42,
-                background: "#0f2444",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                padding: "0 14px",
-                color: "#fff",
-                fontSize: 9,
-                fontWeight: 700,
-                letterSpacing: 2,
-                textTransform: "uppercase",
-              }}
-            >
-              <div style={{ color: "#dfeaff", letterSpacing: 3 }}>|||| |||| ||||</div>
-              <div>Documento interno</div>
-            </div>
-
-            <div
-              style={{
-                background: "#dbe8f6",
-                height: 72,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "#0f2444",
-                fontWeight: 800,
-                fontSize: 18,
-              }}
-            >
-              <div style={{ fontSize: 10, letterSpacing: 1.6, textTransform: "uppercase", color: "#5d6b7a", marginRight: 10 }}>
-                Cargo oficial
-              </div>
-              <div style={{ fontSize: 16, fontWeight: 800, color: "#0f2444" }}>{cargo}</div>
-            </div>
-          </div>
-        </div>
-      ),
-      {
-        width: 640,
-        height: 1000,
-        headers: {
-          "Cache-Control": "no-store, no-cache, must-revalidate",
-        },
-      }
-    );
+    return new NextResponse(svg, {
+      status: 200,
+      headers: {
+        "Content-Type": "image/svg+xml; charset=utf-8",
+        "Cache-Control": "no-store, no-cache, must-revalidate",
+      },
+    });
   } catch (error) {
     console.error("Error generando carnet:", error);
     return NextResponse.json(

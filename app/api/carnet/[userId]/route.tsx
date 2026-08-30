@@ -210,7 +210,6 @@ export async function GET(req: NextRequest, { params }: { params: { userId: stri
       status: 200,
       headers: {
         "Content-Type": "image/svg+xml; charset=utf-8",
-        // CORRECCIÓN: Forzamos la descarga del archivo binario con un nombre limpio en vez de renderizarlo en pantalla
         "Content-Disposition": `attachment; filename="${filename}"`,
         "Cache-Control": "no-store, max-age=0, must-revalidate",
       },

@@ -1,4 +1,3 @@
-import { ImageResponse } from "next/og";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -20,6 +19,88 @@ const NOMBRE_ROL: Record<string, string> = {
   FISCAL: "Fiscal",
   FUNCIONARIO: "Funcionario",
 };
+
+function escapeXml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+}
+
+function buildCarnetSvg({
+  nombreIC,
+  rut,
+  cargo,
+  nif,
+  institucion,
+  fotoDataUri,
+}: {
+  nombreIC: string;
+  rut: string;
+  cargo: string;
+  nif?: string | null;
+  institucion: string;
+  fotoDataUri?: string | null;
+}): string {
+  const nombre = escapeXml(nombreIC);
+  const rutFormateado = escapeXml(formatearRut(rut));
+  const cargoEscapado = escapeXml(cargo);
+  const nifEscapado = nif ? escapeXml(nif) : "";
+  const institucionEscapada = escapeXml(institucion);
+  const iniciales = escapeXml((nombreIC || "?").trim().slice(0, 2).toUpperCase() || "MP");
+  const fotoNode = fotoDataUri
+    ? `<image href="${escapeXml(fotoDataUri)}" x="142" y="178" width="156" height="180" preserveAspectRatio="xMidYMid slice" />`
+    : `<text x="220" y="280" font-size="44" font-weight="700" text-anchor="middle" fill="#0f2444">${iniciales}</text>`;
+
+  return `
+    <svg width="640" height="1000" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Carnet institucional">
+      <defs>
+        <linearGradient id="bgHeader" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0%" stop-color="#0f2444" />
+          <stop offset="100%" stop-color="#153c6f" />
+        </linearGradient>
+        <linearGradient id="bgBody" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0%" stop-color="#f7f9fc" />
+          <stop offset="100%" stop-color="#eef3fb" />
+        </linearGradient>
+      </defs>
+      <rect width="640" height="1000" fill="#1d1f22" />
+      <g transform="translate(140 150)">
+        <rect width="360" height="560" rx="18" fill="url(#bgBody)" stroke="#0f2444" stroke-width="3" />
+        <rect x="0" y="0" width="360" height="120" fill="url(#bgHeader)" rx="18" />
+        <text x="180" y="34" text-anchor="middle" font-size="18" font-weight="800" fill="#ffffff" letter-spacing="3">MINISTERIO PÚBLICO</text>
+        <text x="180" y="60" text-anchor="middle" font-size="11" font-weight="700" fill="#9fc6ff" letter-spacing="2">${institucionEscapada}</text>
+
+        <circle cx="180" cy="112" r="34" fill="#d7e8ff" stroke="#ffffff" stroke-width="2" />
+        <text x="180" y="121" text-anchor="middle" font-size="18" font-weight="800" fill="#0f2444">MP</text>
+
+        <rect x="102" y="158" width="156" height="180" rx="10" fill="#dfe7f3" stroke="#0f2444" stroke-width="3" overflow="hidden"/>
+        ${fotoNode}
+
+        <text x="22" y="370" font-size="9" fill="#6b7d95" font-weight="700" letter-spacing="1.4">NOMBRE FUNCIONARIO</text>
+        <text x="22" y="395" font-size="18" font-weight="800" fill="#0f2444">${nombre}</text>
+
+        <text x="22" y="440" font-size="9" fill="#6b7d95" font-weight="700" letter-spacing="1.4">RUT INSTITUCIONAL</text>
+        <text x="22" y="465" font-size="18" font-weight="800" fill="#0f2444">${rutFormateado}</text>
+
+        ${nif ? `
+          <text x="22" y="510" font-size="9" fill="#6b7d95" font-weight="700" letter-spacing="1.4">NIF</text>
+          <text x="22" y="535" font-size="16" font-weight="800" fill="#0f2444">${nifEscapado}</text>
+        ` : ""}
+
+        <rect x="22" y="550" width="316" height="52" rx="8" fill="#edf4ff" stroke="#153c6f" stroke-width="2" />
+        <text x="34" y="575" font-size="9" fill="#6b7d95" font-weight="700" letter-spacing="1.4">CARGO OFICIAL</text>
+        <text x="34" y="596" font-size="18" font-weight="800" fill="#b51f2a">${cargoEscapado}</text>
+
+        <rect width="360" height="40" y="520" fill="#0f2444" rx="0" />
+        <text x="20" y="547" font-size="9" fill="#dfeaff" font-weight="700" letter-spacing="3">|||| |||| ||||</text>
+        <text x="290" y="547" font-size="9" fill="#ffffff" font-weight="700" letter-spacing="2">DOCUMENTO INTERNO</text>
+      </g>
+    </svg>
+  `;
+}
 
 export async function GET(req: NextRequest, { params }: { params: { userId: string } }) {
   try {
@@ -68,160 +149,22 @@ export async function GET(req: NextRequest, { params }: { params: { userId: stri
       fotoFinal = null;
     }
 
-    return new ImageResponse(
-      (
-        <div
-          style={{
-            width: "640px",
-            height: "1000px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            background: "#1d1f22",
-            fontFamily: "Arial, sans-serif",
-          }}
-        >
-          <div
-            style={{
-              width: "360px",
-              height: "560px",
-              background: "linear-gradient(180deg, #0f2444 0%, #153c6f 22%, #f5f7fa 22%, #f5f7fa 100%)",
-              border: "3px solid #0f2444",
-              borderRadius: "16px",
-              overflow: "hidden",
-              position: "relative",
-              boxShadow: "0 16px 35px rgba(0,0,0,0.45)",
-            }}
-          >
-            <div style={{ textAlign: "center", color: "#fff", paddingTop: "14px" }}>
-              <div style={{ fontSize: 18, letterSpacing: 3, fontWeight: 800 }}>MINISTERIO PÚBLICO</div>
-              <div style={{ marginTop: 6, fontSize: 11, letterSpacing: 2, color: "#9fc6ff", textTransform: "uppercase" }}>
-                Fiscalía de Chile
-              </div>
-            </div>
+    const svg = buildCarnetSvg({
+      nombreIC: usuario.nombreIC,
+      rut: usuario.rut,
+      cargo,
+      nif,
+      institucion,
+      fotoDataUri: fotoFinal,
+    });
 
-            <div
-              style={{
-                width: 68,
-                height: 68,
-                borderRadius: 999,
-                margin: "18px auto 14px",
-                border: "2px solid #fff",
-                background: "linear-gradient(135deg, #d7e8ff, #7aaef7)",
-                color: "#0f2444",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontWeight: 800,
-                fontSize: 16,
-              }}
-            >
-              MP
-            </div>
-
-            <div
-              style={{
-                width: 156,
-                height: 180,
-                margin: "0 auto",
-                background: "linear-gradient(180deg, #dfe7f3, #c7d2e6)",
-                border: "3px solid #0f2444",
-                borderRadius: "10px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                overflow: "hidden",
-                color: "#43546d",
-                fontSize: 12,
-                fontWeight: 800,
-                letterSpacing: 1,
-                textTransform: "uppercase",
-                ...(fotoFinal
-                  ? { backgroundImage: `url(${fotoFinal})`, backgroundSize: "cover", backgroundPosition: "center" }
-                  : {}),
-              }}
-            >
-              {!fotoFinal && (
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  {(usuario.nombreIC ?? "?").charAt(0).toUpperCase()}
-                </div>
-              )}
-            </div>
-
-            <div style={{ padding: "18px 24px 0", color: "#1d2c42" }}>
-              <div style={{ marginBottom: 12 }}>
-                <div style={{ display: "block", textTransform: "uppercase", fontSize: 9, letterSpacing: 1.4, color: "#6b7d95", marginBottom: 4 }}>
-                  Nombre funcionario
-                </div>
-                <div style={{ fontSize: 18, fontWeight: 800, color: "#0f2444", lineHeight: 1.2, wordBreak: "break-word" }}>
-                  {usuario.nombreIC}
-                </div>
-              </div>
-
-              <div style={{ marginBottom: 12 }}>
-                <div style={{ display: "block", textTransform: "uppercase", fontSize: 9, letterSpacing: 1.4, color: "#6b7d95", marginBottom: 4 }}>
-                  RUT institucional
-                </div>
-                <div style={{ fontSize: 18, fontWeight: 800, color: "#0f2444", lineHeight: 1.2 }}>
-                  {formatearRut(usuario.rut)}
-                </div>
-              </div>
-
-              {nif && (
-                <div style={{ marginBottom: 12 }}>
-                  <div style={{ display: "block", textTransform: "uppercase", fontSize: 9, letterSpacing: 1.4, color: "#6b7d95", marginBottom: 4 }}>
-                    NIF
-                  </div>
-                  <div style={{ fontSize: 16, fontWeight: 800, color: "#0f2444", lineHeight: 1.2 }}>
-                    {nif}
-                  </div>
-                </div>
-              )}
-
-              <div
-                style={{
-                  background: "#edf4ff",
-                  borderLeft: "4px solid #153c6f",
-                  borderRadius: "8px",
-                  padding: "10px 12px",
-                  marginTop: 16,
-                }}
-              >
-                <div style={{ display: "block", textTransform: "uppercase", fontSize: 9, letterSpacing: 1.4, color: "#6b7d95", marginBottom: 4 }}>
-                  Cargo oficial
-                </div>
-                <div style={{ fontSize: 18, fontWeight: 800, color: "#b51f2a", lineHeight: 1.2 }}>
-                  {cargo.toUpperCase()}
-                </div>
-              </div>
-            </div>
-
-            <div
-              style={{
-                position: "absolute",
-                left: 0,
-                right: 0,
-                bottom: 0,
-                height: 40,
-                background: "#0f2444",
-                color: "#fff",
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                padding: "0 18px",
-                fontSize: 9,
-                letterSpacing: 2,
-                textTransform: "uppercase",
-              }}
-            >
-              <div style={{ color: "#dfeaff", letterSpacing: 3, fontWeight: 700 }}>|||| |||| ||||</div>
-              <div>Documento interno</div>
-            </div>
-          </div>
-        </div>
-      ),
-      { width: 640, height: 1000 }
-    );
+    return new NextResponse(svg, {
+      status: 200,
+      headers: {
+        "Content-Type": "image/svg+xml; charset=utf-8",
+        "Cache-Control": "no-store, no-cache, must-revalidate",
+      },
+    });
   } catch (error) {
     console.error("Error generando carnet:", error);
     return NextResponse.json(

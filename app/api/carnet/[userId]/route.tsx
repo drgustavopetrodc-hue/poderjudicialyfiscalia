@@ -20,6 +20,31 @@ const NOMBRE_ROL: Record<string, string> = {
   FUNCIONARIO: "Funcionario Judicial",
 };
 
+// El logo de Fiscalía original es un .svg — Satori (el motor de next/og) no
+// soporta SVG embebido, así que lo pasamos por un conversor a PNG antes de
+// descargarlo. El de Poder Judicial ya es .png, se usa directo.
+const LOGO_PODER_JUDICIAL_URL = "https://upload.wikimedia.org/wikipedia/commons/0/05/Poderjudicial.png";
+const LOGO_FISCALIA_URL =
+  "https://wsrv.nl/?url=" +
+  encodeURIComponent(
+    "https://upload.wikimedia.org/wikipedia/commons/d/d7/Logotipo_Fiscal%C3%ADa_-_Ministerio_P%C3%BAblico_de_Chile.svg"
+  ) +
+  "&output=png&w=300";
+
+/** Descarga una imagen y la convierte a data URI, para no depender de que Satori cargue URLs externas en vivo. */
+async function obtenerImagenComoDataUri(url: string): Promise<string | null> {
+  try {
+    const res = await fetch(url, { cache: "no-store" });
+    if (!res.ok) return null;
+    const bytes = Buffer.from(await res.arrayBuffer());
+    const contentType = res.headers.get("content-type") ?? "image/png";
+    return `data:${contentType};base64,${bytes.toString("base64")}`;
+  } catch (error) {
+    console.warn("No se pudo obtener el logo institucional:", error);
+    return null;
+  }
+}
+
 const ANCHO_CREDENCIAL = 380;
 const ALTO_CREDENCIAL = 600;
 
@@ -81,12 +106,14 @@ function Credencial({
   cargo,
   rol,
   fotoDataUri,
+  logoDataUri,
 }: {
   nombreIC: string;
   rut: string;
   cargo: string;
   rol: string;
   fotoDataUri?: string | null;
+  logoDataUri?: string | null;
 }) {
   const esFiscalia = rol === "FISCAL";
   const colorPrimario = esFiscalia ? "#0f2e5c" : "#0a192f";
@@ -155,14 +182,20 @@ function Credencial({
             width: 52,
             height: 52,
             borderRadius: 999,
-            backgroundColor: colorPrimario,
+            backgroundColor: "#ffffff",
             border: `3px solid ${colorDetalle}`,
             alignItems: "center",
             justifyContent: "center",
             boxShadow: "0 4px 10px rgba(0,0,0,0.25)",
+            overflow: "hidden",
           }}
         >
-          <div style={{ display: "flex", fontSize: 15, fontWeight: 800, color: colorDetalle }}>{siglasSello}</div>
+          {logoDataUri ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={logoDataUri} width={40} height={40} style={{ objectFit: "contain" }} />
+          ) : (
+            <div style={{ display: "flex", fontSize: 15, fontWeight: 800, color: colorPrimario }}>{siglasSello}</div>
+          )}
         </div>
       </div>
 
@@ -375,6 +408,9 @@ export async function GET(req: NextRequest, { params }: { params: { userId: stri
 
     const filename = `credencial_${usuario.nombreIC.toLowerCase().replace(/\s+/g, "_")}.png`;
 
+    const logoUrl = usuario.rol === "FISCAL" ? LOGO_FISCALIA_URL : LOGO_PODER_JUDICIAL_URL;
+    const logoFinal = await obtenerImagenComoDataUri(logoUrl);
+
     return new ImageResponse(
       (
         <Credencial
@@ -383,6 +419,7 @@ export async function GET(req: NextRequest, { params }: { params: { userId: stri
           cargo={cargo}
           rol={usuario.rol}
           fotoDataUri={fotoFinal}
+          logoDataUri={logoFinal}
         />
       ),
       {

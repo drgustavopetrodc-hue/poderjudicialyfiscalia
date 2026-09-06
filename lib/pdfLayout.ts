@@ -90,7 +90,12 @@ export async function crearConstructorPdf(pdf: PDFDocument) {
       page.drawText(linea, { x: MARGIN + colCampo, y, size, font: regular, color: COLORES.navy });
       y -= size + 6;
     }
-    page.drawLine({ start: { x: MARGIN, y: y - 2 }, end: { x: width - MARGIN, y: y - 2 }, thickness: 0.4, color: COLORES.paleLine });
+    // La línea va a medio camino del espacio en blanco entre esta fila y la
+    // siguiente, no pegada a la fila siguiente: con size+6=16 de interlineado
+    // y mayúsculas que suben ~7.2pt sobre su línea base, dibujarla a -2 (como
+    // antes) la dejaba dentro de la altura de las mayúsculas de la fila
+    // siguiente, cortándolas por arriba.
+    page.drawLine({ start: { x: MARGIN, y: y + 4 }, end: { x: width - MARGIN, y: y + 4 }, thickness: 0.4, color: COLORES.paleLine });
     y -= 8;
   }
 

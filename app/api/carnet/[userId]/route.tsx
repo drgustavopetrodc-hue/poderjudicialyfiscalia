@@ -340,8 +340,8 @@ function Credencial({
                 flexDirection: "column",
                 alignItems: "center",
                 width: "100%",
-                marginTop: "auto",
-                paddingTop: 10,
+                paddingTop: 4,
+                transform: "translateY(18px)",
                 color: "#111827",
               }}
             >

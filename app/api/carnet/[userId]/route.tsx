@@ -281,6 +281,30 @@ function Credencial({
             <div style={{ display: "flex", fontSize: 16, fontWeight: 800, color: colorTextoCargo }}>{cargo}</div>
           </div>
 
+          {esFiscalia && (
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                padding: "8px 10px",
+                border: "1px solid #bfdbfe",
+                borderRadius: 6,
+                backgroundColor: "#eff6ff",
+                color: "#1e3a5f",
+                fontSize: 8,
+                fontWeight: 600,
+                lineHeight: 1.35,
+              }}
+            >
+              <div style={{ display: "flex" }}>
+                El portador de la presente credencial es funcionario del Ministerio Público de Chile
+              </div>
+              <div style={{ display: "flex" }}>
+                y está facultado para el ejercicio de las funciones que la ley le confiere.
+              </div>
+            </div>
+          )}
+
           {/* QR + código de verificación */}
           <div
             style={{

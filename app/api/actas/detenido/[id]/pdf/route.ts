@@ -30,11 +30,12 @@ const CAUSALES: Record<string, string> = {
 
 const ejercicio = (valor: boolean) => (valor ? "Sí" : "No");
 
+type SessionUser = { id?: string; rol?: string };
+
 export async function GET(_request: Request, { params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions);
-  const sessionUserId = (session?.user as any)?.id as string | undefined;
-  const sessionRol = (session?.user as any)?.rol as string | undefined;
-  if (!sessionUserId || !sessionRol || !["FUNCIONARIO", "ADMIN"].includes(sessionRol)) {
+  const user = session?.user as SessionUser | undefined;
+  if (!user?.id || !user.rol || !["FUNCIONARIO", "ADMIN"].includes(user.rol)) {
     return NextResponse.json({ error: "No autorizado" }, { status: 403 });
   }
 
@@ -43,7 +44,7 @@ export async function GET(_request: Request, { params }: { params: { id: string 
     include: { funcionario: true },
   });
   if (!acta) return NextResponse.json({ error: "Acta no encontrada" }, { status: 404 });
-  if (sessionRol !== "ADMIN" && acta.funcionarioId !== sessionUserId) {
+  if (user.rol !== "ADMIN" && acta.funcionarioId !== user.id) {
     return NextResponse.json({ error: "No autorizado" }, { status: 403 });
   }
 
@@ -100,13 +101,18 @@ export async function GET(_request: Request, { params }: { params: { id: string 
   doc.tituloSeccion("VII", "Observaciones adicionales");
   doc.parrafo(acta.observaciones || "Sin observaciones adicionales.", 10);
 
+  // VIII. Firmas — antes se armaba a mano con lineaDeFirma + filaTabla y la
+  // segunda fila (testigo) quedaba pisada por "Hora de término", porque
+  // lineaDeFirma no avanza `y` por sí sola y filaTabla siempre dibuja en la
+  // columna izquierda. bloqueFirmas resuelve la grilla de firmas por fila,
+  // dejando la columna 2 de la fila del testigo vacía (no requiere firma), y
+  // "Hora de término" se agrega después como campo normal, ya en su propio `y`.
   doc.tituloSeccion("VIII", "Firmas");
-  doc.espacioDisponible(105);
-  const colAncho = (doc.width - 48 * 2 - 24) / 2;
-  doc.lineaDeFirma(48, colAncho, acta.funcionarioNombre, "Funcionario que informa los derechos");
-  doc.lineaDeFirma(48 + colAncho + 24, colAncho, acta.detenidoFirma || null, "Detenido/a o constancia de negativa a firmar");
-  doc.fijarY(doc.obtenerY() - 48);
-  doc.lineaDeFirma(48, colAncho, acta.testigoFirma || null, "Testigo actuante (si aplica)");
+  doc.bloqueFirmas([
+    { nombre: acta.funcionarioNombre, etiqueta: "Funcionario que informa los derechos" },
+    { nombre: acta.detenidoFirma || null, etiqueta: "Detenido/a o constancia de negativa a firmar" },
+    { nombre: acta.testigoFirma || null, etiqueta: "Testigo actuante (si aplica)" },
+  ]);
   doc.filaTabla("Hora de término del acta", acta.horaTermino);
 
   doc.piePagina(`ID de acta: ${acta.id} · Funcionario: ${nombreLegal(acta.funcionario)}`);

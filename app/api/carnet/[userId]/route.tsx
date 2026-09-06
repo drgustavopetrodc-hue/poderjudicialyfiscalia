@@ -341,7 +341,7 @@ function Credencial({
               justifyContent: "space-between",
               alignItems: "flex-end",
               marginTop: "auto",
-              paddingTop: 14,
+              paddingTop: 10,
             }}
           >
             <div

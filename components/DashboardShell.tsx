@@ -68,6 +68,7 @@ const NAV_POR_ROL: Record<string, NavItem[]> = {
   FUNCIONARIO: [
     { href: "/dashboard/funcionario", label: "Panel funcionario", icon: <LayoutDashboard size={15} /> },
     { href: "/ordenes-captura", label: "Órdenes de captura", icon: <Gavel size={15} /> },
+    { href: "/actas/detenido", label: "Acta de derechos", icon: <FilePlus2 size={15} /> },
     { href: "/consulta", label: "Consulta pública", icon: <Scale size={15} /> },
     { href: "/perfil", label: "Mi perfil", icon: <Fingerprint size={15} /> },
   ],

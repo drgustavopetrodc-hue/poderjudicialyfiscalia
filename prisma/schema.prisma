@@ -153,6 +153,7 @@ model User {
   testimoniosRegistrados Testimonio[]       @relation("TestimoniosUsuario")
   denunciasPresentadas Denuncia[]
   denunciaAdjuntos DenunciaAdjunto[]
+  actasDerechosInformadas ActaDerechosDetenido[] @relation("ActasDerechosFuncionario")
 }
 
 // ---------- Certificación de abogados ----------
@@ -406,4 +407,46 @@ model DenunciaAdjunto {
   datos        Bytes?
   url          String?
   creadoEn     DateTime @default(now())
+}
+
+// ---------- Acta de información de derechos al detenido ----------
+model ActaDerechosDetenido {
+  id                    String   @id @default(cuid())
+  funcionarioId         String
+  funcionario           User     @relation("ActasDerechosFuncionario", fields: [funcionarioId], references: [id])
+  unidadPolicial        String
+  fechaDiligencia       String
+  horaDetencion         String
+  horaLectura           String
+  lugarDetencion        String
+  funcionarioNombre     String
+  funcionarioPlaca      String
+  ruc                   String?
+  detenidoNombre        String
+  detenidoRunPasaporte  String
+  detenidoNacionalidad  String
+  detenidoNacimientoEdad String
+  detenidoDomicilio     String
+  esMenor               Boolean  @default(false)
+  requiereInterprete    Boolean  @default(false)
+  interpreteDetalle     String?
+  delitosImputados      String   @db.Text
+  causalDetencion       String
+  ordenNumero           String?
+  derechosInformados    String[] @default([])
+  silencioEjercido      Boolean  @default(false)
+  silencioObservaciones String?
+  avisoFamiliar         Boolean  @default(false)
+  avisoDetalle          String?
+  entrevistaAbogado     Boolean  @default(false)
+  abogadoDetalle        String?
+  defensorPublico       Boolean  @default(false)
+  comunicacionConsular  String   @default("NA")
+  lesionesDetalle       String?
+  sinLesionesAparentes  Boolean  @default(false)
+  observaciones         String?  @db.Text
+  detenidoFirma         String?
+  testigoFirma          String?
+  horaTermino           String
+  creadoEn              DateTime @default(now())
 }

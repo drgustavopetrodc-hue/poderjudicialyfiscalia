@@ -7,6 +7,7 @@ import {
   ROLES_FUNCIONARIOS,
   formatearRut,
   esPresidenteCorteSuprema,
+  esFiscalRegional,
 } from "@/lib/identidad";
 import { obtenerAvatarRobloxDataUri } from "@/lib/roblox";
 
@@ -383,7 +384,12 @@ export async function GET(req: NextRequest, { params }: { params: { userId: stri
     }
 
     const esPresidente = esPresidenteCorteSuprema(usuario.discordId);
-    const cargo = esPresidente ? "Presidente de la Corte Suprema" : NOMBRE_ROL[usuario.rol] ?? usuario.rol;
+    const esRegional = esFiscalRegional(usuario.discordId);
+    const cargo = esPresidente
+      ? "Presidente de la Corte Suprema"
+      : esRegional && usuario.rol === "FISCAL"
+        ? "Fiscal Regional"
+        : NOMBRE_ROL[usuario.rol] ?? usuario.rol;
 
     let fotoFinal: string | null = null;
     try {

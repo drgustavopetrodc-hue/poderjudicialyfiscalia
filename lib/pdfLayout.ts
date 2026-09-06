@@ -133,6 +133,30 @@ export async function crearConstructorPdf(pdf: PDFDocument) {
     page.drawText(etiqueta, { x: xInicio, y: yFirma - (nombre ? 27 : 14), size: 8.5, font: regular, color: COLORES.lightGray });
   }
 
+  /**
+   * Bloque de firmas en grilla de N columnas (por defecto 2). Encapsula el
+   * cálculo de X por columna y el avance de Y por fila para evitar el error
+   * más común al armar esta sección a mano: reutilizar el mismo X para dos
+   * columnas distintas, o decrementar Y por cada firma en vez de por fila
+   * completa (lo que apila todas las firmas en una sola columna).
+   *
+   * Todas las firmas de una misma fila comparten el mismo Y — igual que
+   * `lineaDeFirma` sola —, y solo se avanza Y una vez que la fila se completa.
+   */
+  function bloqueFirmas(firmas: { nombre: string | null; etiqueta: string }[], columnas = 2) {
+    const gap = 24;
+    const anchoColumna = (width - MARGIN * 2 - gap * (columnas - 1)) / columnas;
+    const altoFila = 40; // línea + nombre (si existe) + etiqueta, con margen
+
+    firmas.forEach((firma, i) => {
+      const col = i % columnas;
+      if (col === 0) espacioDisponible(altoFila);
+      const xInicio = MARGIN + col * (anchoColumna + gap);
+      lineaDeFirma(xInicio, anchoColumna, firma.nombre, firma.etiqueta);
+      if (col === columnas - 1 || i === firmas.length - 1) y -= altoFila;
+    });
+  }
+
   function piePagina(idTexto: string) {
     const paginas = pdf.getPages();
     paginas.forEach((p, i) => {
@@ -158,6 +182,7 @@ export async function crearConstructorPdf(pdf: PDFDocument) {
     casilla,
     encabezado,
     lineaDeFirma,
+    bloqueFirmas,
     piePagina,
   };
 }

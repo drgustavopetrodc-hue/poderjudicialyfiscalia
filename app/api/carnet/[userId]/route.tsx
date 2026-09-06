@@ -342,6 +342,7 @@ function Credencial({
               alignItems: "flex-end",
               marginTop: "auto",
               paddingTop: 10,
+              transform: "translateY(-20px)",
             }}
           >
             <div

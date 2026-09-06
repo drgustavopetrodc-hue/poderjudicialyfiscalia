@@ -18,7 +18,7 @@ const NOMBRE_ROL: Record<string, string> = {
   ADMIN: "Ministro de Corte Suprema",
   JUEZ: "Juez de la República",
   FISCAL: "Fiscal Adjunto",
-  FUNCIONARIO: "Funcionario Judicial",
+  FUNCIONARIO: "Policía Judicial",
 };
 
 // El logo de Fiscalía original es un .svg — Satori (el motor de next/og) no
@@ -104,6 +104,7 @@ function generarBarras(semillaTexto: string, cantidad = 26) {
 function Credencial({
   nombreIC,
   rut,
+  nif,
   cargo,
   rol,
   fotoDataUri,
@@ -111,6 +112,7 @@ function Credencial({
 }: {
   nombreIC: string;
   rut: string;
+  nif?: string | null;
   cargo: string;
   rol: string;
   fotoDataUri?: string | null;
@@ -248,6 +250,16 @@ function Credencial({
                   {formatearRut(rut)}
                 </div>
               </div>
+              {esFiscalia && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                  <div style={{ display: "flex", fontSize: 9, fontWeight: 800, color: "#6b7280", letterSpacing: 1 }}>
+                    NIF FISCAL
+                  </div>
+                  <div style={{ display: "flex", fontSize: 15, fontWeight: 800, color: "#111827" }}>
+                    {nif || "No asignado"}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -422,6 +434,7 @@ export async function GET(req: NextRequest, { params }: { params: { userId: stri
         <Credencial
           nombreIC={usuario.nombreIC}
           rut={usuario.rut}
+          nif={usuario.nif}
           cargo={cargo}
           rol={usuario.rol}
           fotoDataUri={fotoFinal}

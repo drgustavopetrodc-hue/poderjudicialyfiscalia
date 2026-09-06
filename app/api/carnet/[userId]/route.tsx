@@ -47,7 +47,7 @@ async function obtenerImagenComoDataUri(url: string): Promise<string | null> {
 }
 
 const ANCHO_CREDENCIAL = 380;
-const ALTO_CREDENCIAL = 600;
+const ALTO_CREDENCIAL = 720;
 
 /** Hash determinístico simple (djb2/fnv-like) para sembrar los patrones de QR y código de barras. */
 function semillaDesdeTexto(texto: string): number {
@@ -286,6 +286,7 @@ function Credencial({
               style={{
                 display: "flex",
                 flexDirection: "column",
+                width: "100%",
                 padding: "8px 10px",
                 border: "1px solid #bfdbfe",
                 borderRadius: 6,
@@ -313,6 +314,7 @@ function Credencial({
               justifyContent: "space-between",
               alignItems: "flex-end",
               marginTop: "auto",
+              paddingTop: 18,
             }}
           >
             <div

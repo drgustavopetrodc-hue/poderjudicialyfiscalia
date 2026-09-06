@@ -294,7 +294,7 @@ function Credencial({
                 borderRadius: 6,
                 backgroundColor: "#eff6ff",
                 color: "#1e3a5f",
-                fontSize: 8,
+                fontSize: 10,
                 fontWeight: 600,
                 lineHeight: 1.35,
               }}
@@ -319,7 +319,7 @@ function Credencial({
                 borderRadius: 6,
                 backgroundColor: "#fffaf0",
                 color: "#493b1d",
-                fontSize: 8,
+                fontSize: 10,
                 fontWeight: 600,
                 lineHeight: 1.35,
               }}
@@ -342,7 +342,7 @@ function Credencial({
               alignItems: "flex-end",
               marginTop: "auto",
               paddingTop: 10,
-              transform: "translateY(-20px)",
+              transform: "translateY(-25px)",
             }}
           >
             <div

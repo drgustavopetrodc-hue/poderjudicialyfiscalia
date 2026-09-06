@@ -107,6 +107,7 @@ function Credencial({
   nif,
   cargo,
   rol,
+  esPresidente,
   fotoDataUri,
   logoDataUri,
 }: {
@@ -115,6 +116,7 @@ function Credencial({
   nif?: string | null;
   cargo: string;
   rol: string;
+  esPresidente: boolean;
   fotoDataUri?: string | null;
   logoDataUri?: string | null;
 }) {
@@ -306,6 +308,31 @@ function Credencial({
             </div>
           )}
 
+          {(rol === "JUEZ" || esPresidente) && (
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                width: "100%",
+                padding: "8px 10px",
+                border: "1px solid #d8c28a",
+                borderRadius: 6,
+                backgroundColor: "#fffaf0",
+                color: "#493b1d",
+                fontSize: 8,
+                fontWeight: 600,
+                lineHeight: 1.35,
+              }}
+            >
+              <div style={{ display: "flex" }}>
+                El portador de la presente credencial es miembro oficial del Escalafón Primario del Poder Judicial de Chile.
+              </div>
+              <div style={{ display: "flex" }}>
+                Se solicita a las autoridades civiles y policiales brindar las facilidades necesarias para el correcto desempeño de sus funciones jurisdiccionales.
+              </div>
+            </div>
+          )}
+
           {/* QR + código de verificación */}
           <div
             style={{
@@ -314,7 +341,7 @@ function Credencial({
               justifyContent: "space-between",
               alignItems: "flex-end",
               marginTop: "auto",
-              paddingTop: 18,
+              paddingTop: 14,
             }}
           >
             <div
@@ -463,6 +490,7 @@ export async function GET(req: NextRequest, { params }: { params: { userId: stri
           nif={usuario.nif}
           cargo={cargo}
           rol={usuario.rol}
+          esPresidente={esPresidente}
           fotoDataUri={fotoFinal}
           logoDataUri={logoFinal}
         />

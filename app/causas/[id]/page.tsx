@@ -196,6 +196,7 @@ export default async function CausaDetallePage({ params }: { params: { id: strin
       sentencia: true,
       adjuntosFiscales: { orderBy: { creadoEn: "desc" } },
       testimonios: { orderBy: { creadoEn: "desc" } },
+      actasDerechos: { orderBy: { creadoEn: "desc" }, include: { funcionario: true } },
     },
   });
 
@@ -285,6 +286,22 @@ export default async function CausaDetallePage({ params }: { params: { id: strin
           <a href={`/api/ordenes-investigar/${causa.id}/pdf`} target="_blank" className="button-secondary">
             Descargar Orden de Investigar (PDF)
           </a>
+        </div>
+      </section>
+
+      <section className="panel-card p-6 mb-6">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div><h2 className="font-display text-xl">Actas de derechos al detenido</h2><p className="mt-1 text-sm text-grafito/50">Constancias de derechos informados incorporadas por fiscalía.</p></div>
+          <span className="rounded-full bg-blue-50 px-3 py-1 font-mono text-xs text-blue-700">{causa.actasDerechos.length} actas</span>
+        </div>
+        <div className="mt-4 space-y-2">
+          {causa.actasDerechos.map((acta) => (
+            <div key={acta.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-blue-100 bg-blue-50/40 px-3 py-2 text-sm">
+              <span>{acta.detenidoNombre} · {acta.fechaDiligencia} · Informó: {acta.funcionarioNombre}</span>
+              <a href={`/api/actas/detenido/${acta.id}/pdf`} target="_blank" className="button-primary">Descargar acta PDF</a>
+            </div>
+          ))}
+          {!causa.actasDerechos.length && <p className="text-sm text-grafito/40">Sin actas de derechos adjuntas.</p>}
         </div>
       </section>
 

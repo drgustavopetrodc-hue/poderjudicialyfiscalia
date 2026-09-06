@@ -50,6 +50,7 @@ const NAV_POR_ROL: Record<string, NavItem[]> = {
     { href: "/dashboard/fiscal", label: "Mi fiscalía", icon: <Users size={15} /> },
     { href: "/causas", label: "Todas las causas", icon: <Scale size={15} /> },
     { href: "/causas/nueva", label: "Registrar causa", icon: <FilePlus2 size={15} /> },
+    { href: "/actas/detenido", label: "Adjuntar acta de derechos", icon: <FilePlus2 size={15} /> },
     { href: "/denuncias", label: "Denuncias", icon: <FilePlus2 size={15} /> },
     { href: "/escritos", label: "Escritos", icon: <ScrollText size={15} /> },
     { href: "/abogados", label: "Abogados certificados", icon: <Award size={15} /> },

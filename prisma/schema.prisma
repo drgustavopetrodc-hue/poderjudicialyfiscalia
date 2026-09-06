@@ -197,6 +197,7 @@ model Causa {
   ordenInvestigar OrdenInvestigar?
   adjuntosFiscales AdjuntoFiscal[]
   testimonios Testimonio[]
+  actasDerechos ActaDerechosDetenido[]
 }
 
 // ---------- Orden de investigar (Ministerio Público → policía) ----------
@@ -412,6 +413,8 @@ model DenunciaAdjunto {
 // ---------- Acta de información de derechos al detenido ----------
 model ActaDerechosDetenido {
   id                    String   @id @default(cuid())
+  causaId               String?
+  causa                 Causa?   @relation(fields: [causaId], references: [id], onDelete: SetNull)
   funcionarioId         String
   funcionario           User     @relation("ActasDerechosFuncionario", fields: [funcionarioId], references: [id])
   unidadPolicial        String

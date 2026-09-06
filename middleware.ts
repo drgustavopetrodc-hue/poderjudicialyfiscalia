@@ -7,6 +7,7 @@ const rutasPorRol: Record<string, string[]> = {
   "/dashboard/juez": ["ADMIN", "JUEZ"],
   "/dashboard/fiscal": ["ADMIN", "FISCAL"],
   "/dashboard/abogado": ["ADMIN", "ABOGADO"],
+  "/dashboard/funcionario": ["ADMIN", "FUNCIONARIO"],
   "/dashboard/parte": ["ADMIN", "CIUDADANO", "JUEZ", "FISCAL", "ABOGADO", "FUNCIONARIO"],
 };
 

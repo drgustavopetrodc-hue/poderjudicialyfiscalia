@@ -65,6 +65,12 @@ const NAV_POR_ROL: Record<string, NavItem[]> = {
     { href: "/perfil", label: "Mi perfil", icon: <Fingerprint size={15} /> },
     { href: "/denuncias/nueva", label: "Presentar denuncia", icon: <FilePlus2 size={15} /> },
   ],
+  FUNCIONARIO: [
+    { href: "/dashboard/funcionario", label: "Panel funcionario", icon: <LayoutDashboard size={15} /> },
+    { href: "/ordenes-captura", label: "Órdenes de captura", icon: <Gavel size={15} /> },
+    { href: "/consulta", label: "Consulta pública", icon: <Scale size={15} /> },
+    { href: "/perfil", label: "Mi perfil", icon: <Fingerprint size={15} /> },
+  ],
   CIUDADANO: [
     { href: "/dashboard/parte", label: "Mis causas", icon: <Scale size={15} /> },
     { href: "/abogados", label: "Abogados certificados", icon: <Award size={15} /> },

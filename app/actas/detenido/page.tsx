@@ -19,6 +19,12 @@ const DERECHOS = [
   "Derecho a comunicarse con su consulado si es extranjero",
 ];
 
+type ActaResumen = {
+  id: string;
+  detenidoNombre: string;
+  fechaDiligencia: string;
+};
+
 async function crearActa(formData: FormData) {
   "use server";
   const session = await getServerSession(authOptions);
@@ -45,7 +51,7 @@ async function crearActa(formData: FormData) {
 
   if (!unidadPolicial || !fechaDiligencia || !horaDetencion || !horaLectura || !lugarDetencion || !funcionarioNombre || !funcionarioPlaca || !detenidoNombre || !detenidoRunPasaporte || !detenidoNacionalidad || !detenidoNacimientoEdad || !detenidoDomicilio || !delitosImputados || !causalDetencion || !horaTermino) return;
 
-  const acta = await prisma.actaDerechosDetenido.create({
+  const acta = await (prisma as any).actaDerechosDetenido.create({
     data: {
       funcionarioId: userId,
       unidadPolicial,
@@ -107,7 +113,7 @@ export default async function ActaDetenidoPage({ searchParams }: { searchParams?
   const rol = (session?.user as any)?.rol as string | undefined;
   if (!userId || !rol || !["FUNCIONARIO", "ADMIN"].includes(rol)) redirect("/login");
 
-  const actas = await prisma.actaDerechosDetenido.findMany({ where: { funcionarioId: userId }, orderBy: { creadoEn: "desc" }, take: 10 });
+  const actas: ActaResumen[] = await (prisma as any).actaDerechosDetenido.findMany({ where: { funcionarioId: userId }, orderBy: { creadoEn: "desc" }, take: 10 });
 
   return (
     <DashboardShell rol={rol} titulo="Acta de derechos al detenido">

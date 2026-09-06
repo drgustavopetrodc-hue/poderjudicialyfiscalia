@@ -333,6 +333,36 @@ function Credencial({
             </div>
           )}
 
+          {(esFiscalia || rol === "JUEZ" || esPresidente) && (
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                width: "100%",
+                paddingTop: 4,
+                color: "#111827",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  fontFamily: "cursive",
+                  fontSize: 20,
+                  fontStyle: "italic",
+                  fontWeight: 700,
+                  lineHeight: 1,
+                }}
+              >
+                {esFiscalia ? "Frederick Arnaud Borghese Dupond" : "Gabriel Boric Font"}
+              </div>
+              <div style={{ display: "flex", width: "72%", borderTop: "1px solid #374151", marginTop: 3 }} />
+              <div style={{ display: "flex", marginTop: 3, fontSize: 8, fontWeight: 700, color: "#6b7280", letterSpacing: 0.8 }}>
+                {esFiscalia ? "FISCAL REGIONAL" : "PRESIDENTE DE LA CORTE SUPREMA"}
+              </div>
+            </div>
+          )}
+
           {/* QR + código de verificación */}
           <div
             style={{

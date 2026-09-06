@@ -341,7 +341,7 @@ function Credencial({
                 alignItems: "center",
                 width: "100%",
                 paddingTop: 4,
-                transform: "translateY(90px)",
+                transform: "translateY(95px)",
                 color: "#111827",
               }}
             >
@@ -373,7 +373,7 @@ function Credencial({
               alignItems: "flex-end",
               marginTop: "auto",
               paddingTop: 10,
-              transform: "translateY(-100px)",
+              transform: "translateY(-105px)",
             }}
           >
             <div

@@ -319,7 +319,7 @@ function Credencial({
                 borderRadius: 6,
                 backgroundColor: "#fffaf0",
                 color: "#493b1d",
-                fontSize: 13,
+                fontSize: 12,
                 fontWeight: 600,
                 lineHeight: 1.35,
               }}

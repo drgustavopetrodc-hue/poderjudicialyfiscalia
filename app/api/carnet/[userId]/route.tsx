@@ -11,6 +11,7 @@ import {
   esFiscalRegional,
 } from "@/lib/identidad";
 import { obtenerAvatarRobloxDataUri } from "@/lib/roblox";
+import { firmarCredencial } from "@/lib/credencial";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -477,7 +478,8 @@ export async function GET(req: NextRequest, { params }: { params: { userId: stri
     }
 
     const filename = `credencial_${usuario.nombreIC.toLowerCase().replace(/\s+/g, "_")}.png`;
-    const verificationUrl = `${new URL(req.url).origin}/verificar/credencial/${usuario.id}`;
+    const firma = firmarCredencial(usuario.id);
+    const verificationUrl = `${new URL(req.url).origin}/verificar/credencial/${usuario.id}?firma=${encodeURIComponent(firma)}`;
     const qrDataUri = await QRCode.toDataURL(verificationUrl, {
       errorCorrectionLevel: "M",
       margin: 1,

@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { esFiscalRegional, esPresidenteCorteSuprema, formatearRut, ROLES_FUNCIONARIOS } from "@/lib/identidad";
 import { notFound } from "next/navigation";
+import { credencialValida } from "@/lib/credencial";
 
 export const dynamic = "force-dynamic";
 
@@ -11,7 +12,20 @@ const NOMBRE_ROL: Record<string, string> = {
   FUNCIONARIO: "Policía Judicial",
 };
 
-export default async function VerificarCredencialPage({ params }: { params: { userId: string } }) {
+export default async function VerificarCredencialPage({ params, searchParams }: { params: { userId: string }; searchParams?: { firma?: string } }) {
+  const firmaValida = Boolean(searchParams?.firma && credencialValida(params.userId, searchParams.firma));
+  if (!firmaValida) {
+    return (
+      <main className="min-h-screen bg-hueso px-5 py-10 text-grafito">
+        <section className="mx-auto max-w-xl rounded-2xl border border-red-200 bg-white p-8 text-center shadow-xl">
+          <p className="font-mono text-sm font-bold uppercase tracking-widest text-red-700">Credencial no válida</p>
+          <h1 className="mt-3 font-display text-3xl">No se pudo autenticar</h1>
+          <p className="mt-3 text-sm text-grafito/60">El código no contiene una firma institucional válida. Solicita una credencial emitida nuevamente por el sistema oficial.</p>
+        </section>
+      </main>
+    );
+  }
+
   const usuario = await prisma.user.findUnique({
     where: { id: params.userId },
     select: {

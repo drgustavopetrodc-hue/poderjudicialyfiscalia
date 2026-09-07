@@ -3,6 +3,7 @@ import { ImageResponse } from "next/og";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
+import QRCode from "qrcode";
 import {
   ROLES_FUNCIONARIOS,
   formatearRut,
@@ -71,27 +72,6 @@ function generarRng(semilla: number) {
   };
 }
 
-/** Patrón tipo QR (decorativo, no escaneable) con los 3 "ojos" de posición típicos de un QR real. */
-function generarPatronQr(semillaTexto: string, tamano = 7): boolean[][] {
-  const rng = generarRng(semillaDesdeTexto(semillaTexto));
-  const grid: boolean[][] = Array.from({ length: tamano }, () =>
-    Array.from({ length: tamano }, () => rng() > 0.55)
-  );
-
-  const marcarOjo = (oy: number, ox: number) => {
-    for (let y = 0; y < 3; y++) {
-      for (let x = 0; x < 3; x++) {
-        grid[oy + y][ox + x] = y === 0 || y === 2 || x === 0 || x === 2;
-      }
-    }
-  };
-  marcarOjo(0, 0);
-  marcarOjo(0, tamano - 3);
-  marcarOjo(tamano - 3, 0);
-
-  return grid;
-}
-
 /** Barras de ancho variable (decorativo, no un código real) para simular un código de verificación. */
 function generarBarras(semillaTexto: string, cantidad = 26) {
   const rng = generarRng(semillaDesdeTexto(semillaTexto + "-barras"));
@@ -110,6 +90,7 @@ function Credencial({
   esPresidente,
   fotoDataUri,
   logoDataUri,
+  qrDataUri,
 }: {
   nombreIC: string;
   rut: string;
@@ -119,6 +100,7 @@ function Credencial({
   esPresidente: boolean;
   fotoDataUri?: string | null;
   logoDataUri?: string | null;
+  qrDataUri: string;
 }) {
   const esFiscalia = rol === "FISCAL";
   const colorPrimario = esFiscalia ? "#0f2e5c" : "#0a192f";
@@ -132,10 +114,8 @@ function Credencial({
   const textoFooter = esFiscalia ? "DOCUMENTO INTERNO" : "MINISTERIO DE JUSTICIA";
 
   const semilla = `${nombreIC}-${rut}`;
-  const qr = generarPatronQr(semilla);
   const barras = generarBarras(semilla);
   const iniciales = (nombreIC || "?").trim().slice(0, 2).toUpperCase();
-  const CELDA = 9;
 
   return (
     <div
@@ -386,21 +366,8 @@ function Credencial({
                 borderRadius: 4,
               }}
             >
-              {qr.map((fila, y) => (
-                <div key={y} style={{ display: "flex", flexDirection: "row" }}>
-                  {fila.map((activa, x) => (
-                    <div
-                      key={x}
-                      style={{
-                        display: "flex",
-                        width: CELDA,
-                        height: CELDA,
-                        backgroundColor: activa ? colorPrimario : "#ffffff",
-                      }}
-                    />
-                  ))}
-                </div>
-              ))}
+              {/* QR real: contiene la URL pública de verificación de la credencial. */}
+              <img src={qrDataUri} width={81} height={81} style={{ objectFit: "contain" }} />
             </div>
 
             <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "flex-end" }}>
@@ -510,6 +477,13 @@ export async function GET(req: NextRequest, { params }: { params: { userId: stri
     }
 
     const filename = `credencial_${usuario.nombreIC.toLowerCase().replace(/\s+/g, "_")}.png`;
+    const verificationUrl = `${new URL(req.url).origin}/verificar/credencial/${usuario.id}`;
+    const qrDataUri = await QRCode.toDataURL(verificationUrl, {
+      errorCorrectionLevel: "M",
+      margin: 1,
+      width: 180,
+      color: { dark: "#0a192f", light: "#ffffff" },
+    });
 
     const logoUrl = usuario.rol === "FISCAL" ? LOGO_FISCALIA_URL : LOGO_PODER_JUDICIAL_URL;
     const logoFinal = await obtenerImagenComoDataUri(logoUrl);
@@ -525,6 +499,7 @@ export async function GET(req: NextRequest, { params }: { params: { userId: stri
           esPresidente={esPresidente}
           fotoDataUri={fotoFinal}
           logoDataUri={logoFinal}
+          qrDataUri={qrDataUri}
         />
       ),
       {

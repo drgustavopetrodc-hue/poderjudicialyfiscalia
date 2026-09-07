@@ -112,7 +112,7 @@ function Credencial({
   const siglasSello = esFiscalia ? "MP" : "PJUD";
   const colorTextoCargo = esFiscalia ? "#b91c1c" : "#0a192f";
   const fondoCargo = esFiscalia ? "#fde3e3" : "#dbe8f6";
-  const textoFooter = esFiscalia ? "DOCUMENTO INTERNO" : "MINISTERIO DE JUSTICIA";
+  const textoFooter = esFiscalia ? "DOCUMENTO INTERNO" : "PODER JUDICIAL DE CHILE - USO EXCLUSIVO DE FUNCIONARIOS Y MAGISTRADOS";
 
   const semilla = `${nombreIC}-${rut}`;
   const barras = generarBarras(semilla);

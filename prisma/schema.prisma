@@ -141,6 +141,7 @@ model User {
 
   certificacion      CertificacionAbogado?
   causasComoFiscal   Causa[]                @relation("FiscalACargo")
+  causasComoFiscalAuxiliar Causa[]          @relation("FiscalAuxiliar")
   causasComoJuez     Causa[]                @relation("JuezACargo")
   defensas           Defensa[]
   escritosPresentados Escrito[]
@@ -184,6 +185,8 @@ model Causa {
 
   fiscalId String
   fiscal   User   @relation("FiscalACargo", fields: [fiscalId], references: [id])
+  fiscalAuxiliarId String?
+  fiscalAuxiliar   User?  @relation("FiscalAuxiliar", fields: [fiscalAuxiliarId], references: [id], onDelete: SetNull)
 
   juezId String?
   juez   User?   @relation("JuezACargo", fields: [juezId], references: [id])

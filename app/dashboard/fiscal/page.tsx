@@ -22,7 +22,13 @@ async function validarFiscalDeCausa(causaId: string) {
   const userId = (session?.user as any)?.id as string | undefined;
   const rol = (session?.user as any)?.rol;
   if (!userId || (rol !== "FISCAL" && rol !== "ADMIN")) return null;
-  const causa = await prisma.causa.findFirst({ where: { id: causaId, ...(rol === "ADMIN" ? {} : { fiscalId: userId }) }, select: { id: true } });
+  const causa = await prisma.causa.findFirst({
+    where: {
+      id: causaId,
+      ...(rol === "ADMIN" ? {} : { OR: [{ fiscalId: userId }, { fiscalAuxiliarId: userId }] }),
+    },
+    select: { id: true },
+  });
   return causa ? { userId, rol } : null;
 }
 
@@ -70,7 +76,7 @@ export default async function FiscalDashboard() {
 
   const [causas, usuarioActual] = await Promise.all([
     prisma.causa.findMany({
-      where: { fiscalId: userId },
+      where: rol === "ADMIN" ? undefined : { OR: [{ fiscalId: userId }, { fiscalAuxiliarId: userId }] },
       orderBy: { actualizadaEn: "desc" },
       include: {
         juez: true,

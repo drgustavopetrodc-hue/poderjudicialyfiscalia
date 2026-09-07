@@ -1,5 +1,5 @@
 import { getServerSession } from "next-auth";
-import { nombreLegal } from "@/lib/identidad";
+import { esFiscalRegional, nombreLegal } from "@/lib/identidad";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
@@ -179,6 +179,34 @@ async function eliminarCausa(causaId: string) {
   redirect("/causas");
 }
 
+async function actualizarFiscales(causaId: string, formData: FormData) {
+  "use server";
+  const sessionUserId = (await getServerSession(authOptions))?.user as any;
+  const userId = sessionUserId?.id as string | undefined;
+  if (!userId) return;
+
+  const usuario = await prisma.user.findUnique({ where: { id: userId }, select: { rol: true, discordId: true } });
+  const causa = await prisma.causa.findUnique({ where: { id: causaId }, select: { fiscalId: true } });
+  if (!usuario || !causa) return;
+
+  const puedeAdministrar = usuario.rol === "ADMIN" || (usuario.rol === "FISCAL" && (causa.fiscalId === userId || esFiscalRegional(usuario.discordId)));
+  if (!puedeAdministrar) return;
+
+  const fiscalId = String(formData.get("fiscalId") ?? "");
+  const fiscalAuxiliarId = String(formData.get("fiscalAuxiliarId") ?? "");
+  const fiscales = await prisma.user.findMany({ where: { rol: "FISCAL", activo: true }, select: { id: true } });
+  const idsValidos = new Set(fiscales.map((fiscal) => fiscal.id));
+  if (!idsValidos.has(fiscalId) || (fiscalAuxiliarId && !idsValidos.has(fiscalAuxiliarId))) return;
+  if (fiscalId === fiscalAuxiliarId) return;
+
+  await prisma.causa.update({
+    where: { id: causaId },
+    data: { fiscalId, fiscalAuxiliarId: fiscalAuxiliarId || null },
+  });
+  await publicarCausaEnDiscord(causaId, "Equipo fiscal actualizado");
+  revalidatePath(`/causas/${causaId}`);
+}
+
 export default async function CausaDetallePage({ params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions);
   const userId = (session?.user as any)?.id as string;
@@ -188,6 +216,7 @@ export default async function CausaDetallePage({ params }: { params: { id: strin
     where: { id: params.id },
     include: {
       fiscal: true,
+      fiscalAuxiliar: true,
       juez: true,
       partes: { include: { user: true } },
       defensas: { where: { activa: true }, include: { abogado: true } },
@@ -223,6 +252,11 @@ export default async function CausaDetallePage({ params }: { params: { id: strin
   const puedeTomarCausa = (rol === "JUEZ" || rol === "ADMIN") && !esJuezDeLaCausa;
   const puedeProgramarAudiencia = actuaComoJuez || esFiscalDeLaCausa;
   const puedeEditarEstado = rol === "ADMIN" || esFiscalDeLaCausa || esJuezDeLaCausa;
+  const esFiscalRegionalActual = rol === "FISCAL" && esFiscalRegional((session?.user as any)?.discordId);
+  const puedeAdministrarFiscales = rol === "ADMIN" || esFiscalDeLaCausa || esFiscalRegionalActual;
+  const fiscalesDisponibles = puedeAdministrarFiscales
+    ? await prisma.user.findMany({ where: { rol: "FISCAL", activo: true }, select: { id: true, nombreIC: true, name: true }, orderBy: { nombreIC: "asc" } })
+    : [];
   const estadosCausa = [
     ["EN_INVESTIGACION", "En investigación"],
     ["EN_ESPERA_JUICIO", "En espera de juicio"],
@@ -275,8 +309,15 @@ export default async function CausaDetallePage({ params }: { params: { id: strin
         <p className="text-sm text-grafito/50 mb-1">Descripción</p>
         <p className="mb-4 whitespace-pre-wrap">{causa.descripcion}</p>
         <p className="text-sm text-grafito/50">
-          Fiscal: {nombreLegal(causa.fiscal)} · Juez: {causa.juez ? nombreLegal(causa.juez) : "Sin asignar"}
+          Fiscal: {nombreLegal(causa.fiscal)}{causa.fiscalAuxiliar ? ` · Fiscal auxiliar: ${nombreLegal(causa.fiscalAuxiliar)}` : ""} · Juez: {causa.juez ? nombreLegal(causa.juez) : "Sin asignar"}
         </p>
+        {puedeAdministrarFiscales && (
+          <form action={actualizarFiscales.bind(null, causa.id)} className="mt-4 grid gap-3 rounded-lg border border-blue-100 bg-blue-50/40 p-4 md:grid-cols-3 md:items-end">
+            <label className="text-sm text-grafito/70">Fiscal principal<select name="fiscalId" required defaultValue={causa.fiscalId} className="mt-1 w-full rounded-lg border border-grafito/15 bg-white px-3 py-2"><option value="">Seleccionar fiscal</option>{fiscalesDisponibles.map((fiscal) => <option key={fiscal.id} value={fiscal.id}>{fiscal.nombreIC || fiscal.name || "Fiscal sin nombre"}</option>)}</select></label>
+            <label className="text-sm text-grafito/70">Fiscal auxiliar<select name="fiscalAuxiliarId" defaultValue={causa.fiscalAuxiliarId ?? ""} className="mt-1 w-full rounded-lg border border-grafito/15 bg-white px-3 py-2"><option value="">Sin fiscal auxiliar</option>{fiscalesDisponibles.map((fiscal) => <option key={fiscal.id} value={fiscal.id}>{fiscal.nombreIC || fiscal.name || "Fiscal sin nombre"}</option>)}</select></label>
+            <button className="button-primary" type="submit">Guardar asignación fiscal</button>
+          </form>
+        )}
         <div className="flex flex-wrap gap-2 mt-4">
           {puedeTomarCausa && (
             <form action={tomarCausaComoJuez.bind(null, causa.id)}>

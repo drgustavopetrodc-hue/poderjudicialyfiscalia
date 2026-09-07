@@ -146,6 +146,7 @@ export const CODIGO_PENAL: ArticuloPenal[] = [
   { numero: 153, delito: "Desacato", pena: PENA.N2, titulo: T_XII },
   { numero: 154, delito: "Denuncia o acusación calumniosa", pena: PENA.N2, titulo: T_XII },
   { numero: 155, delito: "Obstrucción al ejercicio de la defensa", pena: PENA.N2, titulo: T_XII },
+  { numero: 155.1, delito: "Violación del debido proceso", pena: PENA.N1, titulo: T_XII },
 
   { numero: 156, delito: "Incendio", pena: PENA.M1, titulo: T_XIII },
   { numero: 157, delito: "Estragos", pena: PENA.M1, titulo: T_XIII },

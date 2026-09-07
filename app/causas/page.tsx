@@ -46,6 +46,7 @@ export default async function CausasPage() {
   if (!rol || !ROLES_CON_ACCESO.includes(rol)) redirect("/dashboard?error=sin-permiso");
 
   const causas = await prisma.causa.findMany({
+    where: rol === "FISCAL" ? { OR: [{ fiscalId: userId }, { fiscalAuxiliarId: userId }] } : undefined,
     orderBy: { creadaEn: "desc" },
     include: {
       fiscal: true,

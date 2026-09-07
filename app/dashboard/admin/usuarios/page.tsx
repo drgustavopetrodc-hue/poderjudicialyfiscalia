@@ -3,6 +3,7 @@ import DashboardShell from "@/components/DashboardShell";
 import { revalidatePath } from "next/cache";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { registrarAuditoria } from "@/lib/auditoria";
 
 
 export const dynamic = "force-dynamic";
@@ -16,6 +17,32 @@ async function cambiarRol(formData: FormData) {
   const rol = String(formData.get("rol"));
   if (!userId || !ROLES.includes(rol)) return;
   await prisma.user.update({ where: { id: userId }, data: { rol: rol as any } });
+  await registrarAuditoria({ actorId: (session?.user as any)?.id, accion: "CAMBIAR_ROL", entidad: "User", entidadId: userId, detalle: `Nuevo rol: ${rol}` });
+  revalidatePath("/dashboard/admin/usuarios");
+}
+
+async function revocarCredencial(formData: FormData) {
+  "use server";
+  const session = await getServerSession(authOptions);
+  const actorId = (session?.user as any)?.id as string | undefined;
+  if ((session?.user as any)?.rol !== "ADMIN" || !actorId) return;
+  const userId = String(formData.get("userId") ?? "");
+  const motivo = String(formData.get("motivo") ?? "").trim() || "Credencial revocada por administración";
+  if (!userId) return;
+  await prisma.user.update({ where: { id: userId }, data: { credencialRevocadaEn: new Date(), credencialRevocacionMotivo: motivo } });
+  await registrarAuditoria({ actorId, accion: "REVOCAR_CREDENCIAL", entidad: "User", entidadId: userId, detalle: motivo });
+  revalidatePath("/dashboard/admin/usuarios");
+}
+
+async function reemitirCredencial(formData: FormData) {
+  "use server";
+  const session = await getServerSession(authOptions);
+  const actorId = (session?.user as any)?.id as string | undefined;
+  if ((session?.user as any)?.rol !== "ADMIN" || !actorId) return;
+  const userId = String(formData.get("userId") ?? "");
+  if (!userId) return;
+  const usuario = await prisma.user.update({ where: { id: userId }, data: { credencialVersion: { increment: 1 }, credencialRevocadaEn: null, credencialRevocacionMotivo: null }, select: { credencialVersion: true } });
+  await registrarAuditoria({ actorId, accion: "REEMITIR_CREDENCIAL", entidad: "User", entidadId: userId, detalle: `Nueva versión: ${usuario.credencialVersion}` });
   revalidatePath("/dashboard/admin/usuarios");
 }
 
@@ -87,6 +114,7 @@ export default async function UsuariosAdminPage() {
               <th className="px-4 py-3 font-mono text-xs uppercase">Rol actual</th>
               <th className="px-4 py-3 font-mono text-xs uppercase">Cambiar rol</th>
               <th className="px-4 py-3 font-mono text-xs uppercase">Certificación</th>
+              <th className="px-4 py-3 font-mono text-xs uppercase">Credencial</th>
             </tr>
           </thead>
           <tbody>
@@ -97,6 +125,12 @@ export default async function UsuariosAdminPage() {
                   <span className="badge bg-hueso border border-grafito/10 text-grafito/70">
                     {u.rol}
                   </span>
+                </td>
+                <td className="px-4 py-3">
+                  <div className="min-w-[190px] space-y-2">
+                    <span className={`text-xs ${u.credencialRevocadaEn ? "text-red-700" : "text-emerald-700"}`}>{u.credencialRevocadaEn ? "Revocada" : `Vigente · v${u.credencialVersion}`}</span>
+                    {u.credencialRevocadaEn ? <form action={reemitirCredencial}><input type="hidden" name="userId" value={u.id} /><button className="rounded-lg bg-emerald-700 px-2 py-1 text-xs text-white">Reemitir</button></form> : <form action={revocarCredencial} className="flex gap-1"><input type="hidden" name="userId" value={u.id} /><input name="motivo" placeholder="Motivo" className="w-24 rounded border px-1 text-xs" /><button className="rounded-lg border border-red-200 px-2 py-1 text-xs text-red-700">Revocar</button></form>}
+                  </div>
                 </td>
                 <td className="px-4 py-3">
                   <form action={cambiarRol} className="flex gap-2">

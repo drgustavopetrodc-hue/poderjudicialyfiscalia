@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { esFiscalRegional, esPresidenteCorteSuprema, formatearRut, ROLES_FUNCIONARIOS } from "@/lib/identidad";
 import { notFound } from "next/navigation";
 import { credencialValida } from "@/lib/credencial";
+import { registrarAuditoria } from "@/lib/auditoria";
 
 export const dynamic = "force-dynamic";
 
@@ -12,20 +13,7 @@ const NOMBRE_ROL: Record<string, string> = {
   FUNCIONARIO: "Policía Judicial",
 };
 
-export default async function VerificarCredencialPage({ params, searchParams }: { params: { userId: string }; searchParams?: { firma?: string } }) {
-  const firmaValida = Boolean(searchParams?.firma && credencialValida(params.userId, searchParams.firma));
-  if (!firmaValida) {
-    return (
-      <main className="min-h-screen bg-hueso px-5 py-10 text-grafito">
-        <section className="mx-auto max-w-xl rounded-2xl border border-red-200 bg-white p-8 text-center shadow-xl">
-          <p className="font-mono text-sm font-bold uppercase tracking-widest text-red-700">Credencial no válida</p>
-          <h1 className="mt-3 font-display text-3xl">No se pudo autenticar</h1>
-          <p className="mt-3 text-sm text-grafito/60">El código no contiene una firma institucional válida. Solicita una credencial emitida nuevamente por el sistema oficial.</p>
-        </section>
-      </main>
-    );
-  }
-
+export default async function VerificarCredencialPage({ params, searchParams }: { params: { userId: string }; searchParams?: { firma?: string; v?: string } }) {
   const usuario = await prisma.user.findUnique({
     where: { id: params.userId },
     select: {
@@ -39,10 +27,28 @@ export default async function VerificarCredencialPage({ params, searchParams }: 
       institucion: true,
       creadoEn: true,
       discordId: true,
+      credencialVersion: true,
+      credencialRevocadaEn: true,
+      credencialRevocacionMotivo: true,
     },
   });
 
+  const version = Number(searchParams?.v ?? "");
+  const firmaValida = Boolean(usuario && searchParams?.firma && Number.isInteger(version) && version === usuario.credencialVersion && credencialValida(params.userId, searchParams.firma, version));
   if (!usuario || !ROLES_FUNCIONARIOS.includes(usuario.rol)) notFound();
+  if (!firmaValida) {
+    return (
+      <main className="min-h-screen bg-hueso px-5 py-10 text-grafito">
+        <section className="mx-auto max-w-xl rounded-2xl border border-red-200 bg-white p-8 text-center shadow-xl">
+          <p className="font-mono text-sm font-bold uppercase tracking-widest text-red-700">Credencial no válida</p>
+          <h1 className="mt-3 font-display text-3xl">No se pudo autenticar</h1>
+          <p className="mt-3 text-sm text-grafito/60">El código no contiene una firma institucional válida o pertenece a una versión anterior.</p>
+        </section>
+      </main>
+    );
+  }
+
+  await registrarAuditoria({ accion: "VERIFICAR_CREDENCIAL", entidad: "User", entidadId: usuario.id, detalle: `Versión ${version}; vigente: ${usuario.activo && !usuario.credencialRevocadaEn}` });
 
   const esPresidente = esPresidenteCorteSuprema(usuario.discordId);
   const cargo = esPresidente
@@ -50,7 +56,7 @@ export default async function VerificarCredencialPage({ params, searchParams }: 
     : esFiscalRegional(usuario.discordId) && usuario.rol === "FISCAL"
       ? "Fiscal Regional"
       : NOMBRE_ROL[usuario.rol] ?? usuario.rol;
-  const vigente = usuario.activo;
+  const vigente = usuario.activo && !usuario.credencialRevocadaEn;
   const institucion = usuario.rol === "FISCAL" ? "Ministerio Público de Chile" : "Poder Judicial de Chile";
 
   return (
@@ -68,7 +74,7 @@ export default async function VerificarCredencialPage({ params, searchParams }: 
               {vigente ? "Credencial vigente" : "Credencial no vigente"}
             </p>
             <p className="mt-1 text-sm text-grafito/65">
-              {vigente ? "La identidad consultada se encuentra activa en el registro institucional." : "La identidad consultada está desactivada y esta credencial no debe considerarse válida."}
+              {vigente ? "La identidad consultada se encuentra activa en el registro institucional." : usuario.credencialRevocacionMotivo || "La identidad consultada está desactivada y esta credencial no debe considerarse válida."}
             </p>
           </div>
 
@@ -79,6 +85,7 @@ export default async function VerificarCredencialPage({ params, searchParams }: 
             <div className="grid gap-1 py-3 sm:grid-cols-[170px_1fr]"><dt className="text-sm text-grafito/50">RUT</dt><dd>{usuario.rut ? formatearRut(usuario.rut) : "No registrado"}</dd></div>
             {usuario.rol === "FISCAL" && <div className="grid gap-1 py-3 sm:grid-cols-[170px_1fr]"><dt className="text-sm text-grafito/50">NIF fiscal</dt><dd>{usuario.nif || "No asignado"}</dd></div>}
             <div className="grid gap-1 py-3 sm:grid-cols-[170px_1fr]"><dt className="text-sm text-grafito/50">Registro desde</dt><dd>{usuario.creadoEn.toLocaleDateString("es-CL")}</dd></div>
+            <div className="grid gap-1 py-3 sm:grid-cols-[170px_1fr]"><dt className="text-sm text-grafito/50">Versión verificada</dt><dd>{usuario.credencialVersion}</dd></div>
           </dl>
 
           <p className="mt-6 text-center text-xs leading-5 text-grafito/45">

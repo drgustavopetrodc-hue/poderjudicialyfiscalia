@@ -10,6 +10,7 @@ import DashboardShell from "@/components/DashboardShell";
 import Link from "next/link";
 import { publicarCausaEnDiscord } from "@/lib/discordForum";
 import { ESTILO_ESTADO_CAUSA, ESTILO_ESTADO_ORDEN, etiquetaEstado } from "@/lib/estilos";
+import { registrarAuditoria } from "@/lib/auditoria";
 
 
 export const dynamic = "force-dynamic";
@@ -186,10 +187,10 @@ async function actualizarFiscales(causaId: string, formData: FormData) {
   if (!userId) return;
 
   const usuario = await prisma.user.findUnique({ where: { id: userId }, select: { rol: true, discordId: true } });
-  const causa = await prisma.causa.findUnique({ where: { id: causaId }, select: { fiscalId: true } });
+  const causa = await prisma.causa.findUnique({ where: { id: causaId }, select: { fiscalId: true, fiscalAuxiliarId: true } });
   if (!usuario || !causa) return;
 
-  const puedeAdministrar = usuario.rol === "ADMIN" || (usuario.rol === "FISCAL" && (causa.fiscalId === userId || esFiscalRegional(usuario.discordId)));
+  const puedeAdministrar = usuario.rol === "ADMIN" || (usuario.rol === "FISCAL" && (causa.fiscalId === userId || causa.fiscalAuxiliarId === userId || esFiscalRegional(usuario.discordId)));
   if (!puedeAdministrar) return;
 
   const fiscalId = String(formData.get("fiscalId") ?? "");
@@ -199,10 +200,24 @@ async function actualizarFiscales(causaId: string, formData: FormData) {
   if (!idsValidos.has(fiscalId) || (fiscalAuxiliarId && !idsValidos.has(fiscalAuxiliarId))) return;
   if (fiscalId === fiscalAuxiliarId) return;
 
-  await prisma.causa.update({
+  await prisma.$transaction([
+    prisma.historialAsignacionFiscal.create({
+      data: {
+        causaId,
+        realizadoPorId: userId,
+        fiscalAnteriorId: causa.fiscalId,
+        fiscalNuevoId: fiscalId,
+        fiscalAuxiliarAnteriorId: causa.fiscalAuxiliarId,
+        fiscalAuxiliarNuevoId: fiscalAuxiliarId || null,
+        motivo: String(formData.get("motivo") ?? "").trim() || null,
+      },
+    }),
+    prisma.causa.update({
     where: { id: causaId },
     data: { fiscalId, fiscalAuxiliarId: fiscalAuxiliarId || null },
-  });
+    }),
+  ]);
+  await registrarAuditoria({ actorId: userId, accion: "ACTUALIZAR_EQUIPO_FISCAL", entidad: "Causa", entidadId: causaId, detalle: `Fiscal principal: ${fiscalId}; auxiliar: ${fiscalAuxiliarId || "ninguno"}` });
   await publicarCausaEnDiscord(causaId, "Equipo fiscal actualizado");
   revalidatePath(`/causas/${causaId}`);
 }
@@ -230,6 +245,7 @@ export default async function CausaDetallePage({ params }: { params: { id: strin
   });
 
   if (!causa) notFound();
+  if (rol === "FISCAL" && causa.fiscalId !== userId && causa.fiscalAuxiliarId !== userId) redirect("/causas?error=sin-permiso");
   // Permite seguir abriendo expedientes mientras una instalación existente
   // termina de aplicar la tabla nueva de órdenes de captura.
   let ordenesCaptura: any[] = [];
@@ -244,7 +260,7 @@ export default async function CausaDetallePage({ params }: { params: { id: strin
   }
 
   const esJuezDeLaCausa = causa.juezId === userId;
-  const esFiscalDeLaCausa = causa.fiscalId === userId;
+  const esFiscalDeLaCausa = causa.fiscalId === userId || causa.fiscalAuxiliarId === userId;
   // Los ADMIN representan a la Corte Suprema: tienen todas las facultades de un juez sobre cualquier causa.
   const actuaComoJuez = esJuezDeLaCausa || rol === "ADMIN";
   const puedeDictarSentencia = actuaComoJuez && causa.estado === "EN_JUICIO" && !causa.sentencia;

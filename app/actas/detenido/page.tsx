@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import DashboardShell from "@/components/DashboardShell";
 import { ToggleDetailField, ToggleNote } from "./FormToggles";
 import { CausalDetencionField, LesionesField } from "./CamposCondicionales";
+import { registrarAuditoria } from "@/lib/auditoria";
 
 export const dynamic = "force-dynamic";
 
@@ -59,6 +60,7 @@ async function adjuntarActa(formData: FormData) {
 
   try {
     await (prisma as any).actaDerechosDetenido.update({ where: { id: actaId }, data: { causaId } });
+    await registrarAuditoria({ actorId: user!.id, accion: "ADJUNTAR_ACTA_CAUSA", entidad: "ActaDerechosDetenido", entidadId: actaId, detalle: `Causa: ${causaId}` });
   } catch (err) {
     console.error("Error al adjuntar acta:", err);
     redirect("/actas/detenido?error=servidor");
@@ -190,6 +192,8 @@ async function crearActa(formData: FormData) {
     console.error("Error al crear acta:", err);
     redirect("/actas/detenido?error=servidor");
   }
+
+  await registrarAuditoria({ actorId: user!.id, accion: "CREAR_ACTA_DERECHOS", entidad: "ActaDerechosDetenido", entidadId: acta.id, detalle: `Detenido: ${detenidoNombre}` });
 
   revalidatePath("/actas/detenido");
   redirect(`/actas/detenido?creada=${acta.id}`);

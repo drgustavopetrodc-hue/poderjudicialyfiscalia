@@ -12,6 +12,7 @@ import {
 } from "@/lib/identidad";
 import { obtenerAvatarRobloxDataUri } from "@/lib/roblox";
 import { firmarCredencial } from "@/lib/credencial";
+import { registrarAuditoria } from "@/lib/auditoria";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -437,12 +438,29 @@ export async function GET(req: NextRequest, { params }: { params: { userId: stri
       return NextResponse.json({ error: "No autorizado" }, { status: 403 });
     }
 
-    const usuario = await prisma.user.findUnique({ where: { id: params.userId } });
+    const usuario = await prisma.user.findUnique({
+      where: { id: params.userId },
+      select: {
+        id: true,
+        nombreIC: true,
+        rut: true,
+        nif: true,
+        rol: true,
+        discordId: true,
+        robloxUsername: true,
+        image: true,
+        credencialVersion: true,
+        credencialRevocadaEn: true,
+      },
+    });
     if (!usuario) {
       return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 });
     }
     if (!ROLES_FUNCIONARIOS.includes(usuario.rol)) {
       return NextResponse.json({ error: "Este rol no emite identificación institucional" }, { status: 400 });
+    }
+    if (usuario.credencialRevocadaEn) {
+      return NextResponse.json({ error: "Esta credencial fue revocada" }, { status: 409 });
     }
     if (!usuario.nombreIC || !usuario.rut) {
       return NextResponse.json({ error: "Faltan datos de identidad (nombre o RUT)" }, { status: 400 });
@@ -478,8 +496,8 @@ export async function GET(req: NextRequest, { params }: { params: { userId: stri
     }
 
     const filename = `credencial_${usuario.nombreIC.toLowerCase().replace(/\s+/g, "_")}.png`;
-    const firma = firmarCredencial(usuario.id);
-    const verificationUrl = `${new URL(req.url).origin}/verificar/credencial/${usuario.id}?firma=${encodeURIComponent(firma)}`;
+    const firma = firmarCredencial(usuario.id, usuario.credencialVersion);
+    const verificationUrl = `${new URL(req.url).origin}/verificar/credencial/${usuario.id}?v=${usuario.credencialVersion}&firma=${encodeURIComponent(firma)}`;
     const qrDataUri = await QRCode.toDataURL(verificationUrl, {
       errorCorrectionLevel: "M",
       margin: 1,
@@ -489,6 +507,7 @@ export async function GET(req: NextRequest, { params }: { params: { userId: stri
 
     const logoUrl = usuario.rol === "FISCAL" ? LOGO_FISCALIA_URL : LOGO_PODER_JUDICIAL_URL;
     const logoFinal = await obtenerImagenComoDataUri(logoUrl);
+    await registrarAuditoria({ actorId: sessionUserId, accion: "EMITIR_CREDENCIAL", entidad: "User", entidadId: usuario.id, detalle: `Versión ${usuario.credencialVersion}` });
 
     return new ImageResponse(
       (

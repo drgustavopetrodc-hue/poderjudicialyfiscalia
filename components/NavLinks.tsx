@@ -23,14 +23,14 @@ export default function NavLinks({ items }: { items: NavItem[] }) {
             href={item.href}
             className={`group flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-[13px] transition-colors ${
               activo
-                ? "bg-hueso/10 text-hueso font-medium"
+                ? "judicial-nav-active text-white font-medium"
                 : "text-hueso/60 hover:bg-hueso/[0.06] hover:text-hueso"
             }`}
           >
             {/* Renderizamos directamente el nodo de JSX */}
             <span
               className={`shrink-0 transition-colors ${
-                activo ? "text-dorado-400" : "text-hueso/35 group-hover:text-dorado-400"
+                activo ? "text-white" : "text-hueso/35 group-hover:text-dorado-400"
               }`}
             >
               {item.icon}

@@ -207,8 +207,8 @@ input:focus, select:focus, textarea:focus {
   font-size: 12px;
 }
 .judicial-sidebar-links a:hover { background: rgba(255,255,255,.08); color: #fff; }
-.judicial-sidebar-links a[class*="bg-hueso"] { background: #bdc92b; color: #fff; font-weight: 700; }
-.judicial-sidebar-links a[class*="bg-hueso"] span { color: #fff; }
+.judicial-sidebar-links .judicial-nav-active { background: #bdc92b; color: #fff; font-weight: 700; }
+.judicial-sidebar-links .judicial-nav-active span { color: #fff; }
 .judicial-sidebar-footer { border-top: 1px solid rgba(255,255,255,.16); padding: 13px 10px; }
 .judicial-role-pill { display: flex; align-items: center; gap: 8px; color: #fff; font-size: 12px; }
 .judicial-role-pill span, .judicial-role-pill svg { color: #d1d52a; }

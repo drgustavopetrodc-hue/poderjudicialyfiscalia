@@ -1,6 +1,6 @@
-import { redirect } from "next/navigation";
+import PortalHome from "@/components/PortalHome";
 
 export const dynamic = "force-dynamic";
 export default function HomePage() {
-  redirect("/login");
+  return <PortalHome />;
 }

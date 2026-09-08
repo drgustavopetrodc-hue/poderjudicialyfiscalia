@@ -21,6 +21,9 @@ import NavLinks, { type NavItem } from "./NavLinks";
 
 // Instanciamos los íconos como JSX (<Icono size={15} />) para que sean 100% serializables
 const NAV_POR_ROL: Record<string, NavItem[]> = {
+  INVITADO: [
+    { href: "/consulta", label: "Consulta causas", icon: <Scale size={15} /> },
+  ],
   ADMIN: [
     { href: "/dashboard/admin", label: "Panel general", icon: <LayoutDashboard size={15} /> },
     { href: "/causas", label: "Todas las causas", icon: <Scale size={15} /> },
@@ -82,6 +85,7 @@ const NAV_POR_ROL: Record<string, NavItem[]> = {
 };
 
 const NOMBRE_VISUAL_ROL: Record<string, string> = {
+  INVITADO: "Invitado",
   ADMIN: "Corte Suprema",
   JUEZ: "Juez",
   FISCAL: "Fiscal",

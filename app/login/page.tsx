@@ -10,12 +10,17 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [cargando, setCargando] = useState(false);
 
+  function destino() {
+    if (typeof window === "undefined") return "/dashboard";
+    return new URLSearchParams(window.location.search).get("callbackUrl") || "/dashboard";
+  }
+
   async function ingresarConRut(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
     setCargando(true);
     window.sessionStorage.setItem("sesion-discord-activa", "1");
-    const resultado = await signIn("credentials", { rut, password, callbackUrl: "/dashboard", redirect: false });
+    const resultado = await signIn("credentials", { rut, password, callbackUrl: destino(), redirect: false });
     if (resultado?.error) {
       setCargando(false);
       setError("RUT o contraseña incorrectos, o la cuenta no está activa.");
@@ -53,7 +58,7 @@ export default function LoginPage() {
             <button
               onClick={() => {
                 window.sessionStorage.setItem("sesion-discord-activa", "1");
-                void signIn("discord", { callbackUrl: "/dashboard" });
+                void signIn("discord", { callbackUrl: destino() });
               }}
               className="flex w-full items-center justify-center gap-2 rounded border border-[#5865F2] bg-[#5865F2] px-4 py-3 font-semibold text-white hover:bg-[#4752c4]"
             >

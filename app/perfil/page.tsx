@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import DashboardShell from "@/components/DashboardShell";
 import { ROLES_FUNCIONARIOS, INSTITUCION_POR_ROL, identidadCompleta, generarNifFiscal } from "@/lib/identidad";
 import { Fingerprint, Download, AlertCircle, Gamepad2 } from "lucide-react";
+import bcrypt from "bcryptjs";
 
 export const dynamic = "force-dynamic";
 
@@ -20,8 +21,14 @@ async function guardarPerfil(formData: FormData) {
   const nacionalidad = String(formData.get("nacionalidad") ?? "").trim();
   const institucion = String(formData.get("institucion") ?? "").trim();
   const robloxUsername = String(formData.get("robloxUsername") ?? "").trim();
+  const password = String(formData.get("password") ?? "");
+  const passwordConfirmacion = String(formData.get("passwordConfirmacion") ?? "");
   const rol = (session?.user as any)?.rol as string | undefined;
   const usuarioActual = await prisma.user.findUnique({ where: { id: userId } });
+  if (!usuarioActual) return;
+  if (!usuarioActual.passwordHash && password.length < 8) redirect("/perfil?error=password-corta");
+  if (password && password !== passwordConfirmacion) redirect("/perfil?error=password-diferente");
+  const passwordHash = password ? await bcrypt.hash(password, 12) : usuarioActual.passwordHash;
   const nif = rol === "FISCAL" ? (usuarioActual?.nif || generarNifFiscal(userId)) : usuarioActual?.nif || null;
 
   try {
@@ -34,6 +41,7 @@ async function guardarPerfil(formData: FormData) {
         nacionalidad: nacionalidad || null,
         institucion: institucion || null,
         robloxUsername: robloxUsername || null,
+        passwordHash,
       },
     });
   } catch (error) {
@@ -87,6 +95,8 @@ export default async function PerfilPage({
               Ese RUT ya está registrado por otro usuario. Revísalo e inténtalo de nuevo.
             </div>
           )}
+          {searchParams?.error === "password-corta" && <p className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">La contraseña debe tener al menos 8 caracteres.</p>}
+          {searchParams?.error === "password-diferente" && <p className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">Las contraseñas no coinciden.</p>}
 
           <form action={guardarPerfil} className="grid gap-3">
             <div>
@@ -120,6 +130,11 @@ export default async function PerfilPage({
                   className="w-full border border-grafito/15 rounded-lg px-3 py-2 text-sm"
                 />
               </div>
+            </div>
+            <div className="grid gap-3 rounded-lg border border-blue-100 bg-blue-50/40 p-3">
+              <p className="text-xs text-blue-800">{usuario.passwordHash ? "Puedes cambiar tu contraseña local." : "Crea una contraseña para poder ingresar también con RUT."}</p>
+              <input name="password" type="password" minLength={8} required={!usuario.passwordHash} placeholder="Contraseña (mínimo 8 caracteres)" className="w-full rounded-lg border border-grafito/15 px-3 py-2 text-sm" />
+              <input name="passwordConfirmacion" type="password" minLength={8} required={!usuario.passwordHash} placeholder="Repite la contraseña" className="w-full rounded-lg border border-grafito/15 px-3 py-2 text-sm" />
             </div>
             {rol === "FISCAL" && (
               <div>

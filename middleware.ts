@@ -16,8 +16,9 @@ export default withAuth(
     const { pathname } = req.nextUrl;
     const rol = (req.nextauth.token as any)?.rol ?? "CIUDADANO";
     const perfilCompleto = (req.nextauth.token as any)?.perfilCompleto;
+    const passwordConfigurada = (req.nextauth.token as any)?.passwordConfigurada;
 
-    if (pathname !== "/perfil" && pathname !== "/login" && perfilCompleto === false) {
+    if (pathname !== "/perfil" && pathname !== "/login" && (perfilCompleto === false || passwordConfigurada === false)) {
       return NextResponse.redirect(new URL("/perfil?setup=1", req.url));
     }
 

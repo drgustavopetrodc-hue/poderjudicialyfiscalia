@@ -2,8 +2,28 @@
 
 import { signIn } from "next-auth/react";
 import { Scale, MessageCircle, HelpCircle, ShieldCheck } from "lucide-react";
+import { FormEvent, useState } from "react";
 
 export default function LoginPage() {
+  const [rut, setRut] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [cargando, setCargando] = useState(false);
+
+  async function ingresarConRut(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError("");
+    setCargando(true);
+    window.sessionStorage.setItem("sesion-discord-activa", "1");
+    const resultado = await signIn("credentials", { rut, password, callbackUrl: "/dashboard", redirect: false });
+    if (resultado?.error) {
+      setCargando(false);
+      setError("RUT o contraseña incorrectos, o la cuenta no está activa.");
+      return;
+    }
+    window.location.href = resultado?.url || "/dashboard";
+  }
+
   return (
     <main className="min-h-screen bg-[#eeeeee] text-[#3d3d3d]">
       <header className="h-32 bg-gradient-to-r from-[#1377b8] via-[#2c91cb] to-[#0d6cae] px-6 md:px-[15%] flex items-center text-white">
@@ -23,8 +43,13 @@ export default function LoginPage() {
           </div>
           <div className="border-l-0 md:border-l md:border-[#dddddd] md:pl-10">
             <p className="mb-2 text-sm font-medium">RUT de usuario</p>
-            <div className="mb-5 flex items-center gap-2 rounded border border-[#333] px-3 py-2 text-sm text-[#999]">Acceso mediante Discord</div>
-            <p className="mb-2 text-sm font-medium">Método de autenticación</p>
+            <form onSubmit={ingresarConRut} className="grid gap-3">
+              <input value={rut} onChange={(event) => setRut(event.target.value)} required placeholder="12345678-9" className="rounded border border-[#333] px-3 py-2 text-sm" />
+              <input value={password} onChange={(event) => setPassword(event.target.value)} required type="password" placeholder="Contraseña" className="rounded border border-[#333] px-3 py-2 text-sm" />
+              <button disabled={cargando} className="rounded border border-[#1377b8] bg-[#1377b8] px-4 py-3 font-semibold text-white hover:bg-[#0d6cae] disabled:opacity-60">{cargando ? "Ingresando..." : "Ingresar con RUT y contraseña"}</button>
+            </form>
+            {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
+            <div className="my-4 flex items-center gap-3 text-xs text-[#999]"><span className="h-px flex-1 bg-[#ddd]" />o<span className="h-px flex-1 bg-[#ddd]" /></div>
             <button
               onClick={() => {
                 window.sessionStorage.setItem("sesion-discord-activa", "1");

@@ -29,9 +29,7 @@ import NavLinks, { type NavItem } from "./NavLinks";
 
 // Instanciamos los íconos como JSX (<Icono size={15} />) para que sean 100% serializables
 const NAV_POR_ROL: Record<string, NavItem[]> = {
-  INVITADO: [
-    { href: "/consulta", label: "Consulta causas", icon: <Scale size={15} /> },
-  ],
+  INVITADO: [],
   ADMIN: [
     { href: "/dashboard/admin", label: "Panel general", icon: <LayoutDashboard size={15} /> },
     { href: "/causas", label: "Todas las causas", icon: <Scale size={15} /> },
@@ -59,7 +57,7 @@ const NAV_POR_ROL: Record<string, NavItem[]> = {
     { href: "/portal/transparencia", label: "Transparencia institucional", icon: <Building2 size={15} /> },
     { href: "/portal/consulta-ciudadana", label: "Consulta ciudadana", icon: <UserRound size={15} /> },
     { href: "/portal/salas", label: "Programación de salas", icon: <DoorOpen size={15} /> },
-    { href: "/portal/datos", label: "Mis datos / 2da clave", icon: <Fingerprint size={15} /> },
+    { href: "/perfil", label: "Mis datos / 2da clave", icon: <Fingerprint size={15} /> },
     { href: "/causas", label: "Todas las causas", icon: <Scale size={15} /> },
     { href: "/ingreso-causas", label: "Ing. demandas y escritos", icon: <FilePlus2 size={15} /> },
     { href: "/consulta", label: "Consulta unificada", icon: <Scale size={15} /> },
@@ -70,7 +68,7 @@ const NAV_POR_ROL: Record<string, NavItem[]> = {
     { href: "/denuncias/nueva", label: "Presentar denuncia", icon: <FilePlus2 size={15} /> },
   ],
   FISCAL: [
-    { href: "/dashboard/fiscal", label: "Mi fiscalía", icon: <Users size={15} /> },
+    { href: "/dashboard/fiscal", label: "Mis causas", icon: <Users size={15} /> },
     { href: "/portal/notificaciones", label: "Mis notificaciones", icon: <Bell size={15} /> },
     { href: "/portal/audiencias", label: "Mis audiencias", icon: <CalendarDays size={15} /> },
     { href: "/portal/estado-diario", label: "Mi estado diario", icon: <ClipboardList size={15} /> },
@@ -79,7 +77,7 @@ const NAV_POR_ROL: Record<string, NavItem[]> = {
     { href: "/portal/transparencia", label: "Transparencia institucional", icon: <Building2 size={15} /> },
     { href: "/portal/consulta-ciudadana", label: "Consulta ciudadana", icon: <UserRound size={15} /> },
     { href: "/portal/salas", label: "Programación de salas", icon: <DoorOpen size={15} /> },
-    { href: "/portal/datos", label: "Mis datos / 2da clave", icon: <Fingerprint size={15} /> },
+    { href: "/perfil", label: "Mis datos / 2da clave", icon: <Fingerprint size={15} /> },
     { href: "/causas", label: "Todas las causas", icon: <Scale size={15} /> },
     { href: "/causas/nueva", label: "Registrar causa", icon: <FilePlus2 size={15} /> },
     { href: "/actas/detenido", label: "Adjuntar acta de derechos", icon: <FilePlus2 size={15} /> },
@@ -111,7 +109,7 @@ const NAV_POR_ROL: Record<string, NavItem[]> = {
     { href: "/portal/transparencia", label: "Transparencia institucional", icon: <Building2 size={15} /> },
     { href: "/portal/consulta-ciudadana", label: "Consulta ciudadana", icon: <UserRound size={15} /> },
     { href: "/portal/salas", label: "Programación de salas", icon: <DoorOpen size={15} /> },
-    { href: "/portal/datos", label: "Mis datos / 2da clave", icon: <Fingerprint size={15} /> },
+    { href: "/perfil", label: "Mis datos / 2da clave", icon: <Fingerprint size={15} /> },
     { href: "/ordenes-captura", label: "Órdenes de captura", icon: <Gavel size={15} /> },
     { href: "/consulta", label: "Consulta unificada", icon: <Scale size={15} /> },
     { href: "/portal/consulta-audiencias", label: "Consulta audiencias", icon: <CalendarDays size={15} /> },
@@ -129,7 +127,7 @@ const NAV_POR_ROL: Record<string, NavItem[]> = {
     { href: "/portal/transparencia", label: "Transparencia institucional", icon: <Building2 size={15} /> },
     { href: "/portal/consulta-ciudadana", label: "Consulta ciudadana", icon: <UserRound size={15} /> },
     { href: "/portal/salas", label: "Programación de salas", icon: <DoorOpen size={15} /> },
-    { href: "/portal/datos", label: "Mis datos / 2da clave", icon: <Fingerprint size={15} /> },
+    { href: "/perfil", label: "Mis datos / 2da clave", icon: <Fingerprint size={15} /> },
     { href: "/consulta", label: "Consulta unificada", icon: <Scale size={15} /> },
     { href: "/portal/consulta-audiencias", label: "Consulta audiencias", icon: <CalendarDays size={15} /> },
     { href: "/abogados", label: "Abogados certificados", icon: <Award size={15} /> },

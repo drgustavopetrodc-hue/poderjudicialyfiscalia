@@ -165,61 +165,30 @@ export default async function DashboardShell({
   const nombreRol = esPresidente ? "Presidente Corte Suprema" : NOMBRE_VISUAL_ROL[rol] ?? rol;
 
   return (
-    <div className="min-h-screen bg-hueso flex">
-      <aside className="w-72 bg-marino-950 text-hueso shrink-0 p-6 hidden md:flex flex-col relative overflow-hidden">
-        <div className="sello absolute inset-0 pointer-events-none" />
-        <div className="grid-ornamento absolute inset-0 pointer-events-none opacity-40" />
-
-        <Link href="/dashboard" className="relative flex items-center gap-3 mb-8 px-1 group">
-          <div className="w-9 h-9 rounded-full border border-dorado-400/40 flex items-center justify-center shrink-0 bg-hueso/[0.04] group-hover:border-dorado-400/70 transition-colors">
-            <Scale size={16} className="text-dorado-400" strokeWidth={1.75} />
-          </div>
-          <div>
-            <p className="font-display text-base leading-none">Poder Judicial</p>
-            <p className="font-mono text-dorado-400/70 text-[10px] tracking-[0.22em] uppercase mt-1">Sistema RP</p>
-          </div>
+    <div className="judicial-shell">
+      <aside className="judicial-sidebar">
+        <Link href="/dashboard" className="judicial-brand">
+          <div className="judicial-brand-mark"><Scale size={31} strokeWidth={1.5} /></div>
+          <p>PODER JUDICIAL</p>
+          <span>REPÚBLICA DE CHILE</span>
         </Link>
-
-        <div className="relative">
-          <NavLinks items={items} />
-        </div>
-
-        <div className="relative pt-4 mt-4 border-t border-hueso/10">
-          <div
-            className={`flex items-center gap-2.5 px-3 py-2 rounded-lg mb-1 ${
-              esPresidente ? "bg-dorado-400/10 border border-dorado-400/30" : "bg-hueso/[0.04]"
-            }`}
-          >
-            <div
-              className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 border ${
-                esPresidente ? "bg-dorado-400/20 border-dorado-400/50" : "bg-dorado-400/15 border-dorado-400/30"
-              }`}
-            >
-              {esPresidente ? (
-                <Crown size={13} className="text-dorado-400" />
-              ) : (
-                <span className="font-mono text-dorado-400 text-[10px] font-bold">{nombreRol.charAt(0)}</span>
-              )}
-            </div>
-            <p className="font-mono text-[10px] text-hueso/60 uppercase tracking-widest">{nombreRol}</p>
+        <div className="judicial-sidebar-links"><NavLinks items={items} /></div>
+        {rol !== "INVITADO" && <div className="judicial-sidebar-footer">
+          <div className="judicial-role-pill">
+            {esPresidente ? <Crown size={16} /> : <span>{nombreRol.charAt(0)}</span>}
+            <strong>{nombreRol}</strong>
           </div>
-          <Link
-            href="/api/auth/signout"
-            className="flex items-center gap-2 text-hueso/40 text-xs hover:text-hueso/75 px-3 py-2 rounded-lg hover:bg-hueso/[0.04] transition-colors"
-          >
-            <LogOut size={13} /> Cerrar sesión
-          </Link>
-        </div>
+          <Link href="/api/auth/signout" className="judicial-signout"><LogOut size={14} /> Cerrar sesión</Link>
+        </div>}
       </aside>
 
-      <div className="flex-1 min-w-0">
-        <header className="border-b border-grafito/8 bg-white/85 backdrop-blur-md px-6 md:px-10 py-6 sticky top-0 z-10 shadow-[0_1px_0_rgba(11,21,38,.04)]">
-          <p className="eyebrow text-blue-700/80 mb-1 flex items-center gap-1.5">
-            {esPresidente && <Crown size={11} />} {nombreRol}
-          </p>
-          <h1 className="font-display text-2xl md:text-[28px] text-grafito tracking-tight">{titulo}</h1>
+      <div className="judicial-main">
+        <header className="judicial-topbar">
+          <button className="judicial-menu-button" aria-label="Abrir menú">☰</button>
+          <div className="judicial-breadcrumb"><Link href="/dashboard">⌂</Link><span>/</span><span>{titulo}</span></div>
+          <div className="judicial-user-chip">◉ {nombreRol}</div>
         </header>
-        <main className="p-6 md:p-10 fade-up">{children}</main>
+        <main className="judicial-content">{children}</main>
       </div>
     </div>
   );

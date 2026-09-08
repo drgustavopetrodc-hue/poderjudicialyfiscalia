@@ -49,7 +49,7 @@ async function guardarPerfil(formData: FormData) {
 export default async function PerfilPage({
   searchParams,
 }: {
-  searchParams: { error?: string };
+  searchParams: { error?: string; setup?: string };
 }) {
   const session = await getServerSession(authOptions);
   const userId = (session?.user as any)?.id as string;
@@ -74,6 +74,12 @@ export default async function PerfilPage({
             Estos datos —no tu usuario de Discord— son los que aparecerán en certificados,
             expedientes y cualquier documento oficial que generes.
           </p>
+
+          {searchParams?.setup === "1" && (
+            <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 px-3 py-3 text-sm text-blue-800">
+              Completa tu perfil para activar tu cuenta institucional. El RUT se utilizará en tus documentos oficiales; la autenticación y la seguridad de acceso se gestionan mediante Discord.
+            </div>
+          )}
 
           {searchParams?.error === "rut-duplicado" && (
             <div className="flex items-start gap-2 bg-red-50 border border-red-200/60 text-red-700 rounded-lg px-3 py-2.5 text-sm mb-4">

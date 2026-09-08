@@ -15,6 +15,11 @@ export default withAuth(
   function middleware(req) {
     const { pathname } = req.nextUrl;
     const rol = (req.nextauth.token as any)?.rol ?? "CIUDADANO";
+    const perfilCompleto = (req.nextauth.token as any)?.perfilCompleto;
+
+    if (pathname !== "/perfil" && pathname !== "/login" && perfilCompleto === false) {
+      return NextResponse.redirect(new URL("/perfil?setup=1", req.url));
+    }
 
     const seccion = Object.keys(rutasPorRol).find((ruta) => pathname.startsWith(ruta));
     if (seccion && !rutasPorRol[seccion].includes(rol)) {
@@ -33,5 +38,5 @@ export default withAuth(
 );
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/causas/:path*", "/audiencias/:path*"],
+  matcher: ["/dashboard/:path*", "/causas/:path*", "/audiencias/:path*", "/escritos/:path*", "/actas/:path*", "/ordenes-captura/:path*"],
 };

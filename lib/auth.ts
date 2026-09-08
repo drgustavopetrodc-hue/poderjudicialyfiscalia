@@ -27,6 +27,14 @@ export const authOptions: NextAuthOptions = {
         token.rol = (user as any).rol;
       }
 
+      if (token.id) {
+        const perfil = await prisma.user.findUnique({
+          where: { id: token.id as string },
+          select: { nombreIC: true, rut: true },
+        });
+        token.perfilCompleto = Boolean(perfil?.nombreIC?.trim() && perfil?.rut?.trim());
+      }
+
       // account solo viene presente justo en el login inicial (no en refresh)
       if (account?.provider === "discord" && account.providerAccountId) {
         token.discordId = account.providerAccountId;
@@ -90,6 +98,7 @@ export const authOptions: NextAuthOptions = {
         (session.user as any).id = token.id;
         (session.user as any).rol = token.rol;
         (session.user as any).discordId = token.discordId;
+        (session.user as any).perfilCompleto = token.perfilCompleto;
       }
       return session;
     },

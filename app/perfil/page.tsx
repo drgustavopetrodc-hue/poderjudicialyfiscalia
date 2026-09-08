@@ -179,7 +179,7 @@ export default async function PerfilPage({
           </form>
         </div>
 
-        {esFuncionario && (
+        {(["ADMIN", "JUEZ", "FISCAL"].includes(rol)) && (
           <div className="panel-card p-6">
             <p className="eyebrow mb-1">Credencial oficial</p>
             <h2 className="font-display text-xl text-marino-950 mb-2">Identificación institucional</h2>

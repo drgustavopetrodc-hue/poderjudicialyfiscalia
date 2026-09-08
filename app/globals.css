@@ -157,3 +157,11 @@ input:focus, select:focus, textarea:focus {
   font-weight: 700;
   color: white;
 }
+
+.portal-message {
+  border: 1px solid #b9e0f4;
+  background: #ffffff;
+  padding: .8rem 1rem;
+  color: #4b5563;
+  font-size: .82rem;
+}

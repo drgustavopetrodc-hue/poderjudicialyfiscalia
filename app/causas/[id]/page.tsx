@@ -14,25 +14,6 @@ import { registrarAuditoria } from "@/lib/auditoria";
 
 
 export const dynamic = "force-dynamic";
-async function presentarEscrito(causaId: string, formData: FormData) {
-  "use server";
-  const session = await getServerSession(authOptions);
-  const autorId = (session?.user as any)?.id as string;
-  if (!autorId) return;
-
-  await prisma.escrito.create({
-    data: {
-      causaId,
-      autorId,
-      tipo: String(formData.get("tipo")) as any,
-      titulo: String(formData.get("titulo")),
-      contenido: String(formData.get("contenido")),
-    },
-  });
-  await publicarCausaEnDiscord(causaId, "Nuevo escrito presentado");
-  revalidatePath(`/causas/${causaId}`);
-}
-
 async function asumirDefensa(causaId: string) {
   "use server";
   const session = await getServerSession(authOptions);
@@ -235,7 +216,6 @@ export default async function CausaDetallePage({ params }: { params: { id: strin
       juez: true,
       partes: { include: { user: true } },
       defensas: { where: { activa: true }, include: { abogado: true } },
-      escritos: { include: { autor: true }, orderBy: { presentadoEn: "desc" } },
       audiencias: { orderBy: { fechaHora: "asc" } },
       sentencia: true,
       adjuntosFiscales: { orderBy: { creadoEn: "desc" } },
@@ -477,44 +457,6 @@ export default async function CausaDetallePage({ params }: { params: { id: strin
           <form action={asumirDefensa.bind(null, causa.id)}>
             <button className="button-primary">
               Asumir defensa
-            </button>
-          </form>
-        )}
-      </section>
-
-      {/* Escritos */}
-      <section className="panel-card p-6 mb-6">
-        <h2 className="font-display text-xl mb-3">Escritos presentados</h2>
-        <div className="grid gap-3 mb-5">
-          {causa.escritos.map((e) => (
-            <div key={e.id} className="border-t border-grafito/10 pt-3 first:border-t-0 first:pt-0">
-              <p className="text-xs font-mono text-grafito/40 uppercase">
-                {e.tipo} · {nombreLegal(e.autor)} · {format(e.presentadoEn, "dd/MM/yyyy HH:mm")}
-              </p>
-              <p className="font-semibold">{e.titulo}</p>
-              <p className="text-sm text-grafito/60 whitespace-pre-wrap">{e.contenido}</p>
-            </div>
-          ))}
-          {causa.escritos.length === 0 && <p className="text-grafito/50 text-sm">Sin escritos aún.</p>}
-        </div>
-
-        {session && (
-          <form action={presentarEscrito.bind(null, causa.id)} className="grid gap-3 border-t border-grafito/10 pt-4">
-            <div className="flex gap-3">
-              <select name="tipo" className="border border-grafito/15 rounded-lg px-3 py-2 text-sm">
-                <option value="QUERELLA">Querella</option>
-                <option value="FORMALIZACION">Formalización</option>
-                <option value="ACUSACION">Acusación</option>
-                <option value="CONTESTACION">Contestación</option>
-                <option value="PRUEBA">Prueba</option>
-                <option value="RECURSO">Recurso</option>
-                <option value="OTRO">Otro</option>
-              </select>
-              <input name="titulo" required placeholder="Título del escrito" className="flex-1 border border-grafito/15 rounded-lg px-3 py-2 text-sm" />
-            </div>
-            <textarea name="contenido" required rows={4} placeholder="Contenido..." className="border border-grafito/15 rounded-lg px-3 py-2 text-sm" />
-            <button className="button-primary justify-self-start">
-              Presentar escrito
             </button>
           </form>
         )}

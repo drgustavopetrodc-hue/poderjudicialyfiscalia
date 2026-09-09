@@ -22,8 +22,8 @@ const config: Config = {
         grafito: "#1e293b",
       },
       fontFamily: {
-        display: ["'Fraunces'", "serif"],
-        sans: ["'Inter'", "sans-serif"],
+        display: ["'Lato'", "sans-serif"],
+        sans: ["'Lato'", "sans-serif"],
         mono: ["'JetBrains Mono'", "monospace"],
       },
     },

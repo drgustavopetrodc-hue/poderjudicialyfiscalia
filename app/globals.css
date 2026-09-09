@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&family=JetBrains+Mono:wght@400;500;600&display=swap");
 
 * {
   border-color: rgba(30, 41, 59, 0.08);
@@ -240,7 +240,27 @@ input:focus, select:focus, textarea:focus {
 .judicial-breadcrumb a { color: #5c8f35; font-size: 18px; }
 .judicial-user-chip { margin-left: auto; border-radius: 2px; background: #b8c329; padding: 8px 12px; color: #fff; font-size: 13px; font-weight: 700; }
 .judicial-content { min-height: calc(100vh - 72px); padding: 30px 14px 50px; }
-.judicial-content .panel-card { border-radius: 2px; box-shadow: 0 3px 14px rgba(15,48,73,.1); }
+.judicial-content {
+  background: linear-gradient(135deg, #edf3f5 0%, #f8faf8 55%, #f2f5e8 100%);
+}
+/* La zona de trabajo usa la misma identidad del menú: azul institucional y
+   amarillo/verde como acento, incluidas causas, expedientes y formularios. */
+.judicial-content .panel-card,
+.judicial-content .stat-card {
+  border: 1px solid #c7d7e0;
+  border-top: 4px solid #bdc92b;
+  border-radius: 3px;
+  background: #fff;
+  box-shadow: 0 3px 14px rgba(18,72,109,.13);
+}
+.judicial-content .panel-card:hover,
+.judicial-content .stat-card:hover { border-color: #8baabe; border-top-color: #bdc92b; }
+.judicial-content h2, .judicial-content h3 { color: #12486d; }
+.judicial-content .button-primary { background: #12486d; box-shadow: 0 2px 4px rgba(18,72,109,.24); }
+.judicial-content .button-primary:hover { background: #0b3858; }
+.judicial-content .button-outline { border-color: #bdc92b; color: #526f25; background: #fbfcef; }
+.judicial-content .button-secondary { border-color: #7ea1b6; color: #12486d; background: #edf5f8; }
+.judicial-content .badge { background: #12486d !important; color: #fff !important; }
 
 @media (max-width: 760px) {
   .judicial-sidebar { width: 0; flex-basis: 0; }

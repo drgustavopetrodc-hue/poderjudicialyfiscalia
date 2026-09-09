@@ -9,14 +9,13 @@ import { crearConstructorPdf, fechaCorta, POLICIA_TEXTO } from "@/lib/pdfLayout"
 export const dynamic = "force-dynamic";
 
 const TRIBUNAL_GENERICO = "Tribunal de Garantía y Juicio Oral en lo Penal — Sistema RP";
-
 const CAUSAL_LEGAL_TEXTO: Record<string, string> = {
-  ART_127: "Art. 127 CPP — Orden judicial previa solicitud del fiscal, existiendo indicios de que el imputado ha tenido participación en el hecho investigado.",
-  ART_128: "Art. 128 CPP — Detención por flagrancia, seguida de solicitud de orden para formalizar.",
-  ART_33: "Art. 33 CPP — Citación judicial incumplida, que habilita despachar orden de detención.",
-  ART_129: "Art. 129 CPP — Detención imputado por delito flagrante realizada por cualquier persona / Carabineros o PDI.",
-  REBELDIA: "Rebeldía o incomparecencia injustificada a audiencia (art. 33, inciso final CPP).",
-  OTRO: "Otro",
+  ART_127: "artículo 127 del Código Procesal Penal",
+  ART_128: "artículo 128 del Código Procesal Penal",
+  ART_33: "artículo 33 del Código Procesal Penal",
+  ART_129: "artículo 129 del Código Procesal Penal",
+  REBELDIA: "la incomparecencia injustificada a audiencia",
+  OTRO: "la causal indicada en los antecedentes",
 };
 
 export async function GET(_request: Request, { params }: { params: { id: string } }) {
@@ -31,72 +30,38 @@ export async function GET(_request: Request, { params }: { params: { id: string 
 
   const pdf = await PDFDocument.create();
   const doc = await crearConstructorPdf(pdf);
-  const nombreJuez = orden.causa.juez ? nombreLegal(orden.causa.juez) : nombreLegal(orden.solicitadoPor);
+  const causa = orden.causa;
+  const nombreJuez = causa.juez ? nombreLegal(causa.juez) : nombreLegal(orden.solicitadoPor);
+  const tribunal = causa.tribunal || TRIBUNAL_GENERICO;
+  const individualizacion = `${orden.nombrePersona}, ${orden.runOPasaporte ? `RUN/Pasaporte ${formatearRut(orden.runOPasaporte)}, ` : ""}${orden.nacionalidadPersona ? `de nacionalidad ${orden.nacionalidadPersona}, ` : ""}${orden.fechaNacimiento ? `nacido(a) el ${orden.fechaNacimiento}, ` : ""}${orden.domicilioConocido ? `con domicilio conocido en ${orden.domicilioConocido}` : "demás antecedentes desconocidos"}`;
+  const causal = orden.causalLegal === "OTRO" && orden.causalLegalOtro ? orden.causalLegalOtro : CAUSAL_LEGAL_TEXTO[orden.causalLegal];
 
-  doc.encabezado("ORDEN DE DETENCIÓN Y CAPTURA", "Conforme al Código Procesal Penal de Chile, arts. 9°, 122°, 125°, 127° y ss.");
+  doc.encabezado("ORDEN DE DETENCIÓN Y CAPTURA", `${tribunal} · RIT ${causa.rit}${causa.ruc ? ` · RUC ${causa.ruc}` : ""}`);
+  doc.parrafo(`En ${tribunal}, a ${fechaCorta(orden.emitidaEn)}.`, 10, doc.regular);
 
-  doc.tituloSeccion("I", "Datos del tribunal");
-  doc.filaTabla("Tribunal", orden.causa.tribunal || TRIBUNAL_GENERICO);
-  doc.filaTabla("RIT", orden.causa.rit);
-  doc.filaTabla("RUC", orden.causa.ruc ?? "—");
-  doc.filaTabla("Fecha de la resolución", fechaCorta(orden.emitidaEn));
-  doc.filaTabla("Juez que la dicta", nombreJuez);
+  doc.tituloSeccion("Vistos", "Antecedentes de la causa");
+  doc.parrafo(`1. La causa RIT ${causa.rit}, seguida por el delito de ${causa.delito}, cuya investigación se encuentra a cargo de ${nombreLegal(causa.fiscal)}.`);
+  doc.parrafo(`2. La solicitud de orden de detención y captura respecto de ${individualizacion}.`);
+  doc.parrafo(`3. Los antecedentes expuestos en la solicitud: ${orden.motivo}.`);
 
-  doc.tituloSeccion("II", "Identificación del imputado/a");
-  doc.filaTabla("Nombre completo", orden.nombrePersona);
-  doc.filaTabla("RUN / Pasaporte", orden.runOPasaporte ? formatearRut(orden.runOPasaporte) : "—");
-  doc.filaTabla("Nacionalidad", orden.nacionalidadPersona ?? "—");
-  doc.filaTabla("Fecha de nacimiento", orden.fechaNacimiento ?? "—");
-  doc.filaTabla("Domicilio conocido", orden.domicilioConocido ?? "—");
-  doc.filaTabla("Señas particulares", orden.senasParticulares ?? "No consta");
+  doc.tituloSeccion("Considerando", "Fundamentos de la resolución");
+  doc.parrafo(`Primero: Que los antecedentes acompañados permiten disponer la medida solicitada, conforme a ${causal}.`);
+  doc.parrafo(`Segundo: Que la necesidad de cautela se fundamenta en lo siguiente: ${orden.fundamentoCautela || "la comparecencia de la persona requerida y el adecuado desarrollo de la investigación"}.`);
+  doc.parrafo(`Tercero: Que la persona requerida ha sido individualizada como ${individualizacion}.`);
 
-  doc.tituloSeccion("III", "Antecedentes de la causa");
-  doc.filaTabla("Delito(s) imputado(s)", orden.causa.delito);
-  doc.filaTabla("Fiscal a cargo", nombreLegal(orden.causa.fiscal));
-  doc.subtitulo("Relación de los hechos (síntesis)");
-  doc.parrafo(orden.motivo, 10);
+  doc.tituloSeccion("Por tanto", "Se resuelve");
+  doc.parrafo(`SE ORDENA la detención y captura de ${orden.nombrePersona}, ya individualizado(a), debiendo ser puesto(a) a disposición de este tribunal dentro de las veinticuatro horas siguientes a su detención, o dentro del plazo que corresponda conforme a la normativa aplicable.`, 10, doc.bold);
+  doc.parrafo(`OFÍCIESE a ${POLICIA_TEXTO[orden.policiaInstruida] ?? orden.policiaInstruida} para el cumplimiento de la presente resolución. La orden tendrá vigencia ${orden.vigenciaOrden}.`);
+  doc.parrafo(`REGÍSTRESE en los sistemas institucionales pertinentes. Estado de la orden: ${orden.estado}.${orden.levantadaEn ? ` Consta levantamiento de fecha ${fechaCorta(orden.levantadaEn)}.` : ""}`);
 
-  doc.tituloSeccion("IV", "Fundamento legal de la orden");
-  for (const [codigo, texto] of Object.entries(CAUSAL_LEGAL_TEXTO)) {
-    doc.casilla(
-      orden.causalLegal === codigo,
-      codigo === "OTRO" && orden.causalLegal === "OTRO" && orden.causalLegalOtro ? `Otro: ${orden.causalLegalOtro}` : texto
-    );
-  }
-  doc.subtitulo("Fundamentación de la necesidad de cautela");
-  doc.parrafo(orden.fundamentoCautela || "—", 10);
-
-  doc.tituloSeccion("V", "Resuelvo");
-  doc.parrafo(
-    `Se ordena la detención y captura de ${orden.nombrePersona}, individualizado(a) en el punto II, debiendo ser puesto(a) a disposición de este tribunal dentro de las 24 horas siguientes a su detención (o del plazo ampliado conforme al art. 131 CPP).`,
-    10,
-    doc.italic
-  );
-  doc.subtitulo("Se instruye a");
-  for (const [codigo, texto] of Object.entries(POLICIA_TEXTO)) {
-    doc.casilla(orden.policiaInstruida === codigo, texto);
-  }
-  doc.avanzar(-4);
-  doc.filaTabla("Vigencia de la orden", orden.vigenciaOrden);
-  doc.filaTabla("Registro", "Registro Nacional de Prófugos de la Fiscalía y/o sistema de órdenes pendientes de Carabineros (SIEC) / PDI.");
-  doc.filaTabla("Estado actual", orden.estado);
-  if (orden.levantadaEn) doc.filaTabla("Fecha de levantamiento", fechaCorta(orden.levantadaEn));
-
-  doc.tituloSeccion("VI", "Firma y certificación");
-  doc.espacioDisponible(90);
-  const colAncho = (doc.width - 48 * 2 - 24) / 2;
-  doc.lineaDeFirma(48, colAncho, nombreJuez, "Juez/a");
-  doc.lineaDeFirma(48 + colAncho + 24, colAncho, orden.secretarioNombre, "Ministro de fe / Secretario/a");
-  doc.fijarY(doc.obtenerY() - 44);
-  doc.filaTabla("Fecha de despacho", fechaCorta(orden.emitidaEn));
-
-  doc.piePagina(`ID de orden: ${orden.id}`);
+  doc.avanzar(-18);
+  doc.espacioDisponible(75);
+  doc.bloqueFirmas([
+    { nombre: nombreJuez, etiqueta: "Juez/a" },
+    { nombre: orden.secretarioNombre, etiqueta: "Ministro de fe / Secretario/a" },
+  ]);
+  doc.piePagina(`Resolución RIT ${causa.rit} · ID de orden ${orden.id}`);
 
   const bytes = await pdf.save();
-  return new NextResponse(Buffer.from(bytes), {
-    headers: {
-      "Content-Type": "application/pdf",
-      "Content-Disposition": `attachment; filename="orden-deteccion-${orden.causa.rit}.pdf"`,
-    },
-  });
+  return new NextResponse(Buffer.from(bytes), { headers: { "Content-Type": "application/pdf", "Content-Disposition": `attachment; filename="orden-deteccion-${causa.rit}.pdf"` } });
 }

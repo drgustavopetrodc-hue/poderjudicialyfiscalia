@@ -28,19 +28,18 @@ export default async function ConsultaPage({ searchParams }: { searchParams?: { 
 
   return (
     <DashboardShell rol={rol || "INVITADO"} titulo="Consulta unificada de causas">
-      <div className="mx-auto max-w-lg">
-        <div className="panel-card p-6">
-          <p className="eyebrow mb-2">Consulta de causas</p>
-          <div className="mb-5 flex flex-wrap border-b border-grafito/10">
-            <a href="/consulta?modo=rit" className={`px-4 py-2 text-sm ${modo === "rit" ? "border-b-2 border-[#587f2d] font-semibold text-[#587f2d]" : "text-grafito/50"}`}>Búsqueda por RIT</a>
-            <a href="/consulta?modo=nombre" className={`px-4 py-2 text-sm ${modo === "nombre" ? "border-b-2 border-[#587f2d] font-semibold text-[#587f2d]" : "text-grafito/50"}`}>Búsqueda por Nombre</a>
+      <div className="mx-auto max-w-6xl">
+        <div className="ojv-card">
+          <div className="ojv-tabs">
+            <a href="/consulta?modo=rit" className={`ojv-tab ${modo === "rit" ? "ojv-tab-active" : ""}`}>Búsqueda por RIT</a>
+            <a href="/consulta?modo=nombre" className={`ojv-tab ${modo === "nombre" ? "ojv-tab-active" : ""}`}>Búsqueda por nombre</a>
           </div>
-          <p className="text-sm text-grafito/55 mb-4">Las causas públicas pueden consultarse sin iniciar sesión.</p>
+          <p className="mt-4 text-sm text-grafito/55">Las causas públicas pueden consultarse sin iniciar sesión.</p>
           {notfound && <p className="text-sm text-red-700 mb-3">No se encontró ninguna causa con ese identificador.</p>}
-          <form action={buscarCausa} className="grid gap-3">
-            {modo === "rit" ? <input name="q" defaultValue={q} placeholder="RIT o RUC" className="w-full border border-grafito/15 rounded-lg px-3 py-2" /> : <div className="grid gap-3 sm:grid-cols-3"><input name="nombre" placeholder="Nombre" className="border border-grafito/15 rounded-lg px-3 py-2" /><input name="apellidoPaterno" placeholder="Apellido paterno" className="border border-grafito/15 rounded-lg px-3 py-2" /><input name="apellidoMaterno" placeholder="Apellido materno" className="border border-grafito/15 rounded-lg px-3 py-2" /></div>}
-            <select name="competencia" className="w-full border border-grafito/15 rounded-lg px-3 py-2"><option>Corte Suprema</option><option>Corte de Apelaciones</option><option>Penal</option></select>
-            <button className="button-primary">Buscar</button>
+          <form action={buscarCausa} className="ojv-form">
+            {modo === "rit" ? <div className="grid gap-4 md:grid-cols-3"><label className="ojv-label">Libro/Tipo<input name="q" defaultValue={q} placeholder="RIT o RUC" className="ojv-input" /></label><label className="ojv-label">Rol<input className="ojv-input" /></label><label className="ojv-label">Año<input className="ojv-input" placeholder="2026" /></label></div> : <div className="grid gap-4 md:grid-cols-4"><label className="ojv-label">Nombre<input name="nombre" className="ojv-input" /></label><label className="ojv-label">Apellido paterno<input name="apellidoPaterno" className="ojv-input" /></label><label className="ojv-label">Apellido materno<input name="apellidoMaterno" className="ojv-input" /></label><label className="ojv-label">Año<input className="ojv-input" placeholder="2026" /></label></div>}
+            <div className="mt-4 grid gap-4 md:grid-cols-3"><label className="ojv-label">Competencia<select name="competencia" className="ojv-input"><option>Corte Suprema</option><option>Corte de Apelaciones</option><option>Penal</option></select></label><label className="ojv-label">Corte<select className="ojv-input"><option>Seleccione Corte...</option></select></label><label className="ojv-label">Tribunal<select className="ojv-input"><option>Seleccione Tribunal...</option></select></label></div>
+            <div className="ojv-actions"><button className="ojv-search">Buscar</button><button type="reset" className="ojv-clear">Limpiar</button></div>
           </form>
         </div>
       </div>

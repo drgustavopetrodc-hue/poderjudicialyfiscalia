@@ -166,6 +166,18 @@ input:focus, select:focus, textarea:focus {
   font-size: .82rem;
 }
 
+/* Formularios de consulta inspirados en la Oficina Judicial Virtual */
+.ojv-card { border: 1px solid #d9e0e4; background: #fff; box-shadow: 0 3px 13px rgba(15,48,73,.14); padding: 10px; }
+.ojv-tabs { display: flex; flex-wrap: wrap; border-bottom: 1px solid #dfe5e7; }
+.ojv-tab { padding: 9px 14px; color: #66813d; font-size: 12px; }
+.ojv-tab-active { background: #5b8038; color: #fff; box-shadow: inset 0 0 0 1px #31531a; }
+.ojv-form { padding: 20px 12px 10px; }
+.ojv-label { display: grid; gap: 5px; color: #4a5055; font-size: 11px; font-weight: 700; }
+.ojv-input { width: 100%; min-height: 33px; border: 1px solid #d3d9dc; border-radius: 2px; background: #fafafa; padding: 6px 9px; color: #4b5563; font-size: 12px; font-weight: 400; }
+.ojv-actions { display: flex; justify-content: center; gap: 4px; margin-top: 22px; }
+.ojv-search, .ojv-clear { border-radius: 2px; padding: 7px 13px; color: #fff; font-size: 12px; }
+.ojv-search { background: #12486d; }.ojv-clear { background: #bdc92b; }
+
 /* Oficina Judicial Virtual */
 .judicial-shell {
   display: flex;

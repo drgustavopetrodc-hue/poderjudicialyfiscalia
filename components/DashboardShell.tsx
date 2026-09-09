@@ -136,6 +136,21 @@ const NAV_POR_ROL: Record<string, NavItem[]> = {
   ],
 };
 
+const NAV_OJV: NavItem[] = [
+  { href: "/portal/notificaciones", label: "Mis notificaciones", icon: <Bell size={15} /> },
+  { href: "/portal/audiencias", label: "Mis audiencias", icon: <CalendarDays size={15} /> },
+  { href: "/portal/estado-diario", label: "Mi estado diario", icon: <ClipboardList size={15} /> },
+  { href: "/portal/certificado-desempeno", label: "Mi certificado de desempeño", icon: <FileBarChart size={15} /> },
+  { href: "/portal/remates", label: "Remates", icon: <Hammer size={15} /> },
+  { href: "/ingreso-causas", label: "Ing. demandas y escritos", icon: <FilePlus2 size={15} /> },
+  { href: "/consulta", label: "Consulta unificada", icon: <Scale size={15} /> },
+  { href: "/portal/consulta-audiencias", label: "Consulta audiencias", icon: <CalendarDays size={15} /> },
+  { href: "/portal/transparencia", label: "Transparencia institucional", icon: <Building2 size={15} /> },
+  { href: "/portal/consulta-ciudadana", label: "Consulta ciudadana", icon: <UserRound size={15} /> },
+  { href: "/portal/salas", label: "Programación de salas", icon: <DoorOpen size={15} /> },
+  { href: "/perfil", label: "Mis datos / 2da clave", icon: <Fingerprint size={15} /> },
+];
+
 const NOMBRE_VISUAL_ROL: Record<string, string> = {
   INVITADO: "Invitado",
   ADMIN: "Corte Suprema",
@@ -155,7 +170,17 @@ export default async function DashboardShell({
   titulo: string;
   children: React.ReactNode;
 }) {
-  const items = NAV_POR_ROL[rol] ?? NAV_POR_ROL.CIUDADANO;
+  const misCausas: Record<string, NavItem> = {
+    ADMIN: { href: "/causas", label: "Mis causas", icon: <Scale size={15} /> },
+    JUEZ: { href: "/dashboard/juez", label: "Mis causas", icon: <Gavel size={15} /> },
+    FISCAL: { href: "/dashboard/fiscal", label: "Mis causas", icon: <Users size={15} /> },
+    ABOGADO: { href: "/dashboard/abogado", label: "Mis causas", icon: <ShieldCheck size={15} /> },
+    FUNCIONARIO: { href: "/dashboard/funcionario", label: "Mis causas", icon: <LayoutDashboard size={15} /> },
+    CIUDADANO: { href: "/dashboard/parte", label: "Mis causas", icon: <Scale size={15} /> },
+  };
+  const items = rol === "INVITADO"
+      ? NAV_POR_ROL.INVITADO
+      : [misCausas[rol] ?? misCausas.CIUDADANO, ...NAV_OJV];
 
   // La identidad de Presidente se determina por el usuario real de la sesión
   // (no por el prop "rol", que puede reflejar una vista "ver como X" del admin).

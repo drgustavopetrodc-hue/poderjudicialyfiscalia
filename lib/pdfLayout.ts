@@ -128,6 +128,38 @@ export async function crearConstructorPdf(pdf: PDFDocument) {
     y = height - 74 - 28;
   }
 
+  /** Plantilla de oficio/resolución: identidad, identificador y franja de título. */
+  function encabezadoOficio(marca: string, identificador: string, titulo: string) {
+    page.drawText(marca.toUpperCase(), { x: MARGIN, y: height - 42, size: 12, font: bold, color: COLORES.navy });
+    page.drawText("REPÚBLICA DE CHILE", { x: MARGIN, y: height - 55, size: 6.5, font: regular, color: COLORES.gray });
+    const etiquetaAncho = Math.max(95, regular.widthOfTextAtSize(identificador, 8.5) + 18);
+    page.drawRectangle({ x: width - MARGIN - etiquetaAncho, y: height - 54, width: etiquetaAncho, height: 22, borderColor: COLORES.gray, borderWidth: 1 });
+    page.drawText(identificador, { x: width - MARGIN - etiquetaAncho + 9, y: height - 46, size: 8.5, font: bold, color: COLORES.navy });
+    page.drawLine({ start: { x: MARGIN, y: height - 78 }, end: { x: width - MARGIN, y: height - 78 }, thickness: 1.2, color: COLORES.navy });
+    page.drawRectangle({ x: MARGIN, y: height - 123, width: width - MARGIN * 2, height: 34, color: rgb(0, 0, 0) });
+    const tituloAncho = bold.widthOfTextAtSize(titulo, 13);
+    page.drawText(titulo, { x: (width - tituloAncho) / 2, y: height - 111, size: 13, font: bold, color: COLORES.blanco });
+    y = height - 139;
+  }
+
+  /** Ficha compacta de antecedentes, similar a un oficio y no a una tabla de celdas. */
+  function fichaOficio(campos: { etiqueta: string; valor: string }[]) {
+    const etiquetaAncho = 122;
+    const size = 9;
+    const alto = campos.reduce((total, campo) => total + Math.max(15, wrapTexto(campo.valor || "—", regular, size, width - MARGIN * 2 - etiquetaAncho - 24).length * 13), 0) + 18;
+    espacioDisponible(alto + 8);
+    page.drawRectangle({ x: MARGIN, y: y - alto, width: width - MARGIN * 2, height: alto, color: rgb(0.96, 0.97, 0.98) });
+    page.drawRectangle({ x: MARGIN, y: y - alto, width: 3, height: alto, color: rgb(0, 0, 0) });
+    let yy = y - 15;
+    for (const campo of campos) {
+      page.drawText(campo.etiqueta.toUpperCase(), { x: MARGIN + 14, y: yy, size, font: bold, color: COLORES.navy });
+      const lineas = wrapTexto(campo.valor || "—", regular, size, width - MARGIN * 2 - etiquetaAncho - 24);
+      lineas.forEach((linea, indice) => page.drawText(linea, { x: MARGIN + etiquetaAncho + 14, y: yy - indice * 13, size, font: regular, color: COLORES.navy }));
+      yy -= Math.max(15, lineas.length * 13);
+    }
+    y -= alto + 18;
+  }
+
   /** Bloque de firma: línea, luego el nombre debajo, luego la etiqueta del cargo. */
   function lineaDeFirma(xInicio: number, ancho: number, nombre: string | null, etiqueta: string) {
     const yFirma = y;
@@ -186,6 +218,8 @@ export async function crearConstructorPdf(pdf: PDFDocument) {
     filaTabla,
     casilla,
     encabezado,
+    encabezadoOficio,
+    fichaOficio,
     lineaDeFirma,
     bloqueFirmas,
     piePagina,

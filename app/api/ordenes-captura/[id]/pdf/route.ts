@@ -8,7 +8,7 @@ import { crearConstructorPdf, fechaCorta, POLICIA_TEXTO } from "@/lib/pdfLayout"
 
 export const dynamic = "force-dynamic";
 
-const TRIBUNAL_GENERICO = "Tribunal de Garantía y Juicio Oral en lo Penal — Sistema RP";
+const TRIBUNAL_GENERICO = "Tribunal de Garantía y Juicio Oral en lo Penal de la jurisdicción correspondiente";
 const CAUSAL_LEGAL_TEXTO: Record<string, string> = {
   ART_127: "artículo 127 del Código Procesal Penal",
   ART_128: "artículo 128 del Código Procesal Penal",
@@ -36,8 +36,15 @@ export async function GET(_request: Request, { params }: { params: { id: string 
   const individualizacion = `${orden.nombrePersona}, ${orden.runOPasaporte ? `RUN/Pasaporte ${formatearRut(orden.runOPasaporte)}, ` : ""}${orden.nacionalidadPersona ? `de nacionalidad ${orden.nacionalidadPersona}, ` : ""}${orden.fechaNacimiento ? `nacido(a) el ${orden.fechaNacimiento}, ` : ""}${orden.domicilioConocido ? `con domicilio conocido en ${orden.domicilioConocido}` : "demás antecedentes desconocidos"}`;
   const causal = orden.causalLegal === "OTRO" && orden.causalLegalOtro ? orden.causalLegalOtro : CAUSAL_LEGAL_TEXTO[orden.causalLegal];
 
-  doc.encabezado("ORDEN DE DETENCIÓN Y CAPTURA", `${tribunal} · RIT ${causa.rit}${causa.ruc ? ` · RUC ${causa.ruc}` : ""}`);
-  doc.parrafo(`En ${tribunal}, a ${fechaCorta(orden.emitidaEn)}.`, 10, doc.regular);
+  doc.encabezadoOficio("Poder Judicial", `RIT: ${causa.rit}`, "ORDEN DE DETENCIÓN Y CAPTURA");
+  doc.fichaOficio([
+    { etiqueta: "Fecha de emisión", valor: fechaCorta(orden.emitidaEn) },
+    { etiqueta: "Tribunal", valor: tribunal },
+    { etiqueta: "RUC", valor: causa.ruc ?? "No registrado" },
+    { etiqueta: "Fiscal a cargo", valor: nombreLegal(causa.fiscal) },
+    { etiqueta: "Imputado/a", valor: orden.nombrePersona },
+    { etiqueta: "Delito investigado", valor: causa.delito },
+  ]);
 
   doc.tituloSeccion("Vistos", "Antecedentes de la causa");
   doc.parrafo(`1. La causa RIT ${causa.rit}, seguida por el delito de ${causa.delito}, cuya investigación se encuentra a cargo de ${nombreLegal(causa.fiscal)}.`);

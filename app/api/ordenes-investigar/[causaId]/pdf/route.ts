@@ -8,7 +8,7 @@ import { crearConstructorPdf, fechaCorta, POLICIA_TEXTO } from "@/lib/pdfLayout"
 import { DILIGENCIAS_ORDEN_INVESTIGAR, URGENCIA_TEXTO } from "@/lib/diligencias";
 
 export const dynamic = "force-dynamic";
-const FISCALIA_GENERICA = "Fiscalía Local — Sistema RP";
+const FISCALIA_GENERICA = "Fiscalía Local";
 
 export async function GET(_request: Request, { params }: { params: { causaId: string } }) {
   const session = await getServerSession(authOptions);
@@ -28,8 +28,15 @@ export async function GET(_request: Request, { params }: { params: { causaId: st
   const diligencias = DILIGENCIAS_ORDEN_INVESTIGAR.filter((d) => orden.diligencias.includes(d.codigo)).map((d) => d.texto);
   if (orden.diligenciasOtras) diligencias.push(orden.diligenciasOtras);
 
-  doc.encabezado("ORDEN DE INVESTIGAR", `${fiscalia} · RIT ${causa.rit}${causa.ruc ? ` · RUC ${causa.ruc}` : ""}`);
-  doc.parrafo(`En ${fiscalia}, a ${fechaCorta(orden.emitidaEn)}.`, 10, doc.regular);
+  doc.encabezadoOficio("Fiscalía", `RUC: ${causa.ruc ?? causa.rit}`, "ORDEN DE INVESTIGAR");
+  doc.fichaOficio([
+    { etiqueta: "Fecha de emisión", valor: fechaCorta(orden.emitidaEn) },
+    { etiqueta: "Unidad diligencial", valor: POLICIA_TEXTO[orden.unidadPolicial] ?? orden.unidadPolicial },
+    { etiqueta: "Fiscalía emisora", valor: fiscalia },
+    { etiqueta: "Víctima / denunciante", valor: orden.victimaNombre || "Identidad reservada o no aplicable" },
+    { etiqueta: "Imputados", valor: imputado },
+    { etiqueta: "Delito investigado", valor: causa.delito },
+  ]);
 
   doc.tituloSeccion("Vistos", "Antecedentes");
   doc.parrafo(`1. La investigación RIT ${causa.rit}, seguida por el delito de ${causa.delito}.`);

@@ -171,12 +171,45 @@ export default async function DashboardShell({
   children: React.ReactNode;
 }) {
   const misCausas: Record<string, NavItem> = {
-    ADMIN: { href: "/causas", label: "Mis causas", icon: <Scale size={15} /> },
-    JUEZ: { href: "/dashboard/juez", label: "Mis causas", icon: <Gavel size={15} /> },
-    FISCAL: { href: "/dashboard/fiscal", label: "Mis causas", icon: <Users size={15} /> },
-    ABOGADO: { href: "/dashboard/abogado", label: "Mis causas", icon: <ShieldCheck size={15} /> },
-    FUNCIONARIO: { href: "/dashboard/funcionario", label: "Mis causas", icon: <LayoutDashboard size={15} /> },
-    CIUDADANO: { href: "/dashboard/parte", label: "Mis causas", icon: <Scale size={15} /> },
+    ADMIN: {
+      href: "/causas",
+      label: "Mis causas",
+      icon: <Scale size={15} />,
+      children: [{ href: "/causas", label: "Causas activas", icon: <Scale size={14} /> }],
+    },
+    JUEZ: {
+      href: "/dashboard/juez",
+      label: "Mis causas",
+      icon: <Gavel size={15} />,
+      children: [{ href: "/dashboard/juez", label: "Causas activas", icon: <Gavel size={14} /> }],
+    },
+    FISCAL: {
+      href: "/dashboard/fiscal",
+      label: "Mis causas",
+      icon: <Users size={15} />,
+      children: [
+        { href: "/dashboard/fiscal", label: "Causas activas", icon: <Users size={14} /> },
+        { href: "/causas/nueva", label: "Crear causa", icon: <FilePlus2 size={14} /> },
+      ],
+    },
+    ABOGADO: {
+      href: "/dashboard/abogado",
+      label: "Mis causas",
+      icon: <ShieldCheck size={15} />,
+      children: [{ href: "/dashboard/abogado", label: "Causas activas", icon: <ShieldCheck size={14} /> }],
+    },
+    FUNCIONARIO: {
+      href: "/dashboard/funcionario",
+      label: "Mis causas",
+      icon: <LayoutDashboard size={15} />,
+      children: [{ href: "/dashboard/funcionario", label: "Causas activas", icon: <LayoutDashboard size={14} /> }],
+    },
+    CIUDADANO: {
+      href: "/dashboard/parte",
+      label: "Mis causas",
+      icon: <Scale size={15} />,
+      children: [{ href: "/dashboard/parte", label: "Causas activas", icon: <Scale size={14} /> }],
+    },
   };
   const items = rol === "INVITADO"
       ? NAV_POR_ROL.INVITADO

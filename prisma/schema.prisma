@@ -64,6 +64,14 @@ enum EstadoSolicitud {
   CERRADA
 }
 
+enum EstadoDemanda {
+  INGRESADA
+  EN_REVISION
+  ADMITIDA
+  OBSERVADA
+  RECHAZADA
+}
+
 enum TipoAdjuntoDenuncia {
   IMAGEN
   VIDEO
@@ -177,6 +185,7 @@ model User {
   partesPolicialesRegistrados PartePolicial[] @relation("PartePolicialRegistrador")
   solicitudesCreadas Solicitud[] @relation("SolicitudCreador")
   solicitudesAsignadas Solicitud[] @relation("SolicitudAsignado")
+  demandasPresentadas Demanda[] @relation("DemandaPresentadaPor")
   publicacionesTransparencia PublicacionTransparencia[] @relation("PublicacionesTransparenciaAutor")
 }
 
@@ -512,6 +521,32 @@ model Solicitud {
 
   @@index([categoria, estado])
   @@index([creadorId])
+}
+
+model Demanda {
+  id                    String        @id @default(cuid())
+  tribunal              String
+  materia               String
+  demandante            String
+  demandanteRut         String?
+  demandado             String
+  demandadoRut          String?
+  hechos                String        @db.Text
+  fundamentosDerecho    String        @db.Text
+  peticiones            String        @db.Text
+  documentosDescripcion String?
+  archivoNombre         String?
+  archivoMimeType       String?
+  archivoTamano         Int?
+  archivoDatos          Bytes?
+  estado                EstadoDemanda @default(INGRESADA)
+  creadoEn              DateTime      @default(now())
+  actualizadoEn         DateTime      @updatedAt
+  presentadaPorId       String
+  presentadaPor         User          @relation("DemandaPresentadaPor", fields: [presentadaPorId], references: [id])
+
+  @@index([estado, creadoEn])
+  @@index([presentadaPorId])
 }
 
 model DenunciaAdjunto {

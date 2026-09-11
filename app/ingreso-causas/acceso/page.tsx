@@ -14,7 +14,7 @@ export default function AccesoIngresoCausasPage() {
   const [cargando, setCargando] = useState(false);
 
   useEffect(() => {
-    if (status === "authenticated") router.replace("/escritos");
+    if (status === "authenticated") router.replace("/ingreso-causas");
   }, [router, status]);
 
   if (status === "loading" || status === "authenticated") {
@@ -28,7 +28,7 @@ export default function AccesoIngresoCausasPage() {
     const resultado = await signIn("credentials", {
       rut,
       password,
-      callbackUrl: "/escritos",
+      callbackUrl: "/ingreso-causas",
       redirect: false,
     });
     if (resultado?.error) {
@@ -36,11 +36,11 @@ export default function AccesoIngresoCausasPage() {
       setError("RUT o contraseña incorrectos, o la cuenta no está activa.");
       return;
     }
-    window.location.href = resultado?.url || "/escritos";
+    window.location.href = resultado?.url || "/ingreso-causas";
   }
 
   function ingresarConDiscord() {
-    void signIn("discord", { callbackUrl: "/escritos" });
+    void signIn("discord", { callbackUrl: "/ingreso-causas" });
   }
 
   return (

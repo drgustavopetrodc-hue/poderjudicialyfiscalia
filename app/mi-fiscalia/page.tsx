@@ -1,5 +1,6 @@
-import LoginPage from "@/app/login/page";
+import { redirect } from "next/navigation";
 
 export default function MiFiscaliaPage() {
-  return <LoginPage />;
+  redirect("/mi-fiscalia/denuncias?tab=presentar");
+  return null;
 }

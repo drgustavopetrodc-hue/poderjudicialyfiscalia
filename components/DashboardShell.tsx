@@ -191,25 +191,25 @@ export default async function DashboardShell({
 
   const bloqueMisCausas = {
     ADMIN: [
-      { href: "/causas", label: "Causas activas" },
+      { href: "/causas", label: "Causas a mi cargo" },
     ],
     JUEZ: [
-      { href: "/dashboard/juez", label: "Causas activas" },
+      { href: "/dashboard/juez", label: "Causas a mi cargo" },
     ],
     FISCAL: [
-      { href: "/dashboard/fiscal", label: "Causas activas" },
-      { href: "/causas/nueva", label: "Crear causa" },
+      { href: "/dashboard/fiscal", label: "Causas a mi cargo" },
+      { href: "/causas/nueva", label: "Registrar causa" },
     ],
     ABOGADO: [
-      { href: "/dashboard/abogado", label: "Causas activas" },
+      { href: "/dashboard/abogado", label: "Causas a mi cargo" },
     ],
     FUNCIONARIO: [
-      { href: "/dashboard/funcionario", label: "Causas activas" },
+      { href: "/dashboard/funcionario", label: "Causas a mi cargo" },
     ],
     CIUDADANO: [
-      { href: "/dashboard/parte", label: "Causas activas" },
+      { href: "/dashboard/parte", label: "Causas a mi cargo" },
     ],
-  }[rol] ?? [{ href: "/dashboard/parte", label: "Causas activas" }];
+  }[rol] ?? [{ href: "/dashboard/parte", label: "Causas a mi cargo" }];
 
   return (
     <div className="judicial-shell">
@@ -237,19 +237,17 @@ export default async function DashboardShell({
         </header>
         <main className="judicial-content">
           {rol !== "INVITADO" && (
-            <section className="mb-6 rounded-2xl border border-[#dfe6ed] bg-[#f5f8fb] p-4 shadow-sm">
-              <div className="mb-3 flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#0f5e8d]">Mis causas</p>
-                  <h3 className="mt-1 text-2xl font-black text-[#0d2436]">Causas activas</h3>
-                </div>
-              </div>
-              <div className="flex flex-wrap gap-3">
-                {bloqueMisCausas.map((item) => (
+            <section className="mb-6 overflow-hidden rounded-2xl border border-[#dfe6ed] bg-[#f4f7f9] shadow-sm">
+              <div className="flex w-full border-b border-[#dfe6ed] bg-[#dfe6ed]/40">
+                {bloqueMisCausas.map((item, index) => (
                   <Link
                     key={item.href}
                     href={item.href}
-                    className="rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-[#0d2436] ring-1 ring-[#dfe6ed] transition hover:bg-[#eef6fb]"
+                    className={`flex-1 px-4 py-3 text-center text-sm font-semibold transition ${
+                      index === 0
+                        ? "bg-[#6d8b4d] text-white"
+                        : "bg-transparent text-[#0d2436] hover:bg-[#edf3f7]"
+                    }`}
                   >
                     {item.label}
                   </Link>

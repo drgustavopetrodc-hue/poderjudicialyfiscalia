@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import DashboardShell from "@/components/DashboardShell";
+import Link from "next/link";
 import ConfirmSubmitButton from '@/components/ConfirmSubmitButton';
 import { redirect } from "next/navigation";
 import { publicarCausaEnDiscord } from "@/lib/discordForum";
@@ -150,7 +151,13 @@ export default async function NuevaCausaPage({
 
   return (
     <DashboardShell rol={rol} titulo="Registrar nueva causa">
-      <form id="crearCausaForm" method="post" action={crearCausa} className="max-w-2xl panel-card p-6 grid gap-6">
+      <div className="mx-auto max-w-4xl">
+        <section className="ojv-card">
+          <nav className="ojv-tabs" aria-label="Mis causas">
+            <Link href="/mis-causas" className="ojv-tab">Causas a mi Cargo</Link>
+            <Link href="/causas/nueva" className="ojv-tab ojv-tab-active">Crear causa</Link>
+          </nav>
+          <form id="crearCausaForm" method="post" action={crearCausa} className="max-w-2xl ojv-form grid gap-6">
         {rol === "ADMIN" && (
           <p className="text-xs text-blue-700 bg-blue-50 border border-blue-200/60 rounded-lg px-3 py-2">
             Estás registrando esta causa como Corte Suprema, actuando en calidad de fiscal para fines de prueba.
@@ -316,7 +323,9 @@ export default async function NuevaCausaPage({
 
         <button type="submit" className="hidden" aria-hidden />
         <ConfirmSubmitButton formId="crearCausaForm" label="Registrar causa" message="¿Confirmas crear la causa?" />
-      </form>
+          </form>
+        </section>
+      </div>
     </DashboardShell>
   );
 }

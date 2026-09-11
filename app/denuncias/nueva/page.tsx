@@ -15,11 +15,12 @@ async function crearDenuncia(formData: FormData) {
 
   const victimaNombre = String(formData.get('victimaNombre') ?? '').trim();
   const victimaRut = String(formData.get('victimaRut') ?? '').trim();
+  const delitos = String(formData.get('delitos') ?? '').trim();
   const victimarioNombre = String(formData.get('victimarioNombre') ?? '').trim();
   const victimarioRut = String(formData.get('victimarioRut') ?? '').trim();
   const caracteristicasVictimario = String(formData.get('caracteristicasVictimario') ?? '').trim();
   const lugarHechos = String(formData.get('lugarHechos') ?? '').trim();
-  if (!victimaNombre || !victimaRut || !lugarHechos) return;
+  if (!victimaNombre || !victimaRut || !delitos || !lugarHechos) return;
   const titulo = `Denuncia Fácil: ${victimaNombre}`;
   const descripcion = `Víctima: ${victimaNombre}\nRUT víctima: ${victimaRut}\nVictimario: ${victimarioNombre || 'No conocido'}\nRUT victimario: ${victimarioRut || 'No informado'}\nCaracterísticas visuales: ${caracteristicasVictimario || 'No informadas'}\nLugar de los hechos: ${lugarHechos}`;
 
@@ -30,6 +31,7 @@ async function crearDenuncia(formData: FormData) {
   const created = await prisma.denuncia.create({
     data: {
       titulo,
+      delitos,
       descripcion,
       victimaNombre,
       victimaRut,
@@ -83,6 +85,7 @@ export default async function NuevaDenunciaPage() {
           <form action={crearDenuncia} className="grid gap-3" encType="multipart/form-data">
             <label className="block text-xs text-grafito/55">Nombre de la víctima<input name="victimaNombre" required className="mt-1 w-full border border-grafito/15 rounded-lg px-3 py-2 text-sm" /></label>
             <label className="block text-xs text-grafito/55">RUT de la víctima<input name="victimaRut" required className="mt-1 w-full border border-grafito/15 rounded-lg px-3 py-2 text-sm" /></label>
+            <label className="block text-xs text-grafito/55">Delitos denunciados<textarea name="delitos" required rows={4} placeholder="Indica los delitos que se denuncian" className="mt-1 w-full border border-grafito/15 rounded-lg px-3 py-2 text-sm" /></label>
             <label className="block text-xs text-grafito/55">Nombre del victimario, si se conoce<input name="victimarioNombre" className="mt-1 w-full border border-grafito/15 rounded-lg px-3 py-2 text-sm" /></label>
             <label className="block text-xs text-grafito/55">RUT del victimario, si se conoce<input name="victimarioRut" className="mt-1 w-full border border-grafito/15 rounded-lg px-3 py-2 text-sm" /></label>
             <label className="block text-xs text-grafito/55">Características visuales del victimario<textarea name="caracteristicasVictimario" rows={4} className="mt-1 w-full border border-grafito/15 rounded-lg px-3 py-2 text-sm" /></label>

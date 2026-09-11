@@ -462,6 +462,7 @@ model Sentencia {
 model Denuncia {
   id             String         @id @default(cuid())
   titulo         String
+  delitos        String?        @db.Text
   descripcion    String         @db.Text
   victimaNombre  String?
   victimaRut     String?

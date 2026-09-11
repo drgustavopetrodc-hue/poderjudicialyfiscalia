@@ -56,6 +56,7 @@ export default async function DenunciasPage() {
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1">
                     <p className="font-medium text-marino-950">{d.titulo}</p>
+                    <p className="mt-1 text-sm font-semibold text-[#12486d]">Delitos denunciados: {d.delitos || 'No informados'}</p>
                     <p className="mt-2 whitespace-pre-wrap text-sm text-grafito/70">{d.descripcion}</p>
                     <p className="mt-2 text-xs text-grafito/50">Presentada por: {d.denunciante?.nombreIC || d.denunciante?.name || 'Usuario anónimo'} · {d.creadaEn.toISOString().slice(0,19).replace('T',' ')}</p>
                   </div>

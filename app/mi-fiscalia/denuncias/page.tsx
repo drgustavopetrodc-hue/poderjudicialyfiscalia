@@ -14,12 +14,14 @@ async function crearDenuncia(formData: FormData) {
   if (!userId) redirect("/ovj");
 
   const titulo = String(formData.get("titulo") ?? "").trim();
+  const delitos = String(formData.get("delitos") ?? "").trim();
   const descripcion = String(formData.get("descripcion") ?? "").trim();
-  if (!titulo || !descripcion) return;
+  if (!titulo || !delitos || !descripcion) return;
 
   await prisma.denuncia.create({
     data: {
       titulo,
+      delitos,
       descripcion,
       denuncianteId: userId,
       estado: "RECIBIDA",
@@ -78,6 +80,10 @@ export default async function MiFiscaliaDenunciasPage({
                 <div className="md:col-span-2">
                   <label className="mb-1 block text-sm font-medium text-[#21415e]">Título</label>
                   <input name="titulo" required placeholder="Ej: Robo en comuna..." className="w-full rounded-lg border border-[#dfe7ee] bg-[#f9fbfd] px-3 py-2.5 outline-none focus:border-[#0f5e8d]" />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="mb-1 block text-sm font-medium text-[#21415e]">Delitos denunciados</label>
+                  <textarea name="delitos" required rows={4} placeholder="Indica los delitos que se denuncian..." className="w-full rounded-lg border border-[#dfe7ee] bg-[#f9fbfd] px-3 py-2.5 outline-none focus:border-[#0f5e8d]" />
                 </div>
                 <div className="md:col-span-2">
                   <label className="mb-1 block text-sm font-medium text-[#21415e]">Descripción</label>

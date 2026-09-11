@@ -6,6 +6,6 @@ import { authOptions } from "@/lib/auth";
 // Esta ruta conserva el nombre de la OJV y nunca expone el formulario sin sesión.
 export default async function IngresoCausasPage() {
   const session = await getServerSession(authOptions);
-  if (!session?.user) redirect("/login?callbackUrl=/ingreso-causas");
+  if (!session?.user) redirect("/ingreso-causas/acceso");
   redirect("/escritos");
 }

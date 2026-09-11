@@ -59,7 +59,7 @@ const NAV_POR_ROL: Record<string, NavItem[]> = {
     { href: "/portal/salas", label: "Programación de salas", icon: <DoorOpen size={15} /> },
     { href: "/perfil", label: "Mis datos / 2da clave", icon: <Fingerprint size={15} /> },
     { href: "/causas", label: "Todas las causas", icon: <Scale size={15} /> },
-    { href: "/ingreso-causas", label: "Ing. demandas y escritos", icon: <FilePlus2 size={15} /> },
+    { href: "/ingreso-causas/acceso", label: "Ing. demandas y escritos", icon: <FilePlus2 size={15} /> },
     { href: "/consulta", label: "Consulta unificada", icon: <Scale size={15} /> },
     { href: "/portal/consulta-audiencias", label: "Consulta audiencias", icon: <CalendarDays size={15} /> },
     { href: "/escritos", label: "Escritos", icon: <ScrollText size={15} /> },
@@ -83,7 +83,7 @@ const NAV_POR_ROL: Record<string, NavItem[]> = {
     { href: "/actas/detenido", label: "Adjuntar acta de derechos", icon: <FilePlus2 size={15} /> },
     { href: "/denuncias", label: "Denuncias", icon: <FilePlus2 size={15} /> },
     { href: "/escritos", label: "Escritos", icon: <ScrollText size={15} /> },
-    { href: "/ingreso-causas", label: "Ing. demandas y escritos", icon: <FilePlus2 size={15} /> },
+    { href: "/ingreso-causas/acceso", label: "Ing. demandas y escritos", icon: <FilePlus2 size={15} /> },
     { href: "/consulta", label: "Consulta unificada", icon: <Scale size={15} /> },
     { href: "/portal/consulta-audiencias", label: "Consulta audiencias", icon: <CalendarDays size={15} /> },
     { href: "/abogados", label: "Abogados certificados", icon: <Award size={15} /> },
@@ -143,7 +143,7 @@ const NAV_OJV: NavItem[] = [
   { href: "/portal/estado-diario", label: "Mi estado diario", icon: <ClipboardList size={15} /> },
   { href: "/portal/certificado-desempeno", label: "Mi certificado de desempeño", icon: <FileBarChart size={15} /> },
   { href: "/portal/remates", label: "Remates", icon: <Hammer size={15} /> },
-  { href: "/ingreso-causas", label: "Ing. demandas y escritos", icon: <FilePlus2 size={15} /> },
+  { href: "/ingreso-causas/acceso", label: "Ing. demandas y escritos", icon: <FilePlus2 size={15} /> },
   { href: "/consulta", label: "Consulta unificada", icon: <Scale size={15} /> },
   { href: "/portal/consulta-audiencias", label: "Consulta audiencias", icon: <CalendarDays size={15} /> },
   { href: "/portal/transparencia", label: "Transparencia institucional", icon: <Building2 size={15} /> },
@@ -204,7 +204,7 @@ export default async function DashboardShell({
             {esPresidente ? <Crown size={16} /> : <span>{nombreRol.charAt(0)}</span>}
             <strong>{nombreRol}</strong>
           </div>
-          <Link href="/api/auth/signout" className="judicial-signout"><LogOut size={14} /> Cerrar sesión</Link>
+          <Link href="/api/auth/signout?callbackUrl=%2Fovj" className="judicial-signout"><LogOut size={14} /> Cerrar sesión</Link>
         </div>}
       </aside>
 

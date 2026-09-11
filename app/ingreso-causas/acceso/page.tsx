@@ -1,14 +1,25 @@
 "use client";
 
-import { signIn } from "next-auth/react";
-import { FormEvent, useState } from "react";
+import { signIn, useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { FormEvent, useEffect, useState } from "react";
 import { LockKeyhole, MessageCircle, Scale } from "lucide-react";
 
 export default function AccesoIngresoCausasPage() {
+  const router = useRouter();
+  const { status } = useSession();
   const [rut, setRut] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [cargando, setCargando] = useState(false);
+
+  useEffect(() => {
+    if (status === "authenticated") router.replace("/escritos");
+  }, [router, status]);
+
+  if (status === "loading" || status === "authenticated") {
+    return <main className="flex min-h-screen items-center justify-center bg-[#eef1f3] text-sm text-[#12486d]">Cargando acceso...</main>;
+  }
 
   async function ingresarConRut(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();

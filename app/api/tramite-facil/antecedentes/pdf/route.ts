@@ -15,7 +15,8 @@ export async function GET() {
 
   const usuario = await prisma.user.findUnique({ where: { id: user.id }, select: { id: true, nombreIC: true, name: true, rut: true } });
   if (!usuario) return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 });
-  const causas = await prisma.causa.findMany({ where: { OR: [{ fiscalId: user.id }, { juezId: user.id }, { partes: { some: { userId: user.id } } }] }, select: { rit: true, caratulado: true, delito: true, estado: true }, orderBy: { creadaEn: "desc" } });
+  const nombreConsultante = usuario.nombreIC?.trim() || usuario.name?.trim();
+  const causas = await prisma.causa.findMany({ where: nombreConsultante ? { imputado: { contains: nombreConsultante, mode: "insensitive" } } : { id: "__sin-imputado__" }, select: { rit: true, caratulado: true, imputado: true, delito: true, estado: true }, orderBy: { creadaEn: "desc" } });
 
   const pdf = await PDFDocument.create();
   const doc = await crearConstructorPdf(pdf);
@@ -24,10 +25,10 @@ export async function GET() {
     { etiqueta: "Persona consultante", valor: nombreLegal(usuario) },
     { etiqueta: "RUT", valor: usuario.rut || "No informado" },
     { etiqueta: "Fecha de emisión", valor: fechaCorta(new Date()) },
-    { etiqueta: "Resultado", valor: causas.length ? `Se registran ${causas.length} causa(s) asociada(s)` : "No se registran causas asociadas en el sistema" },
+    { etiqueta: "Resultado", valor: causas.length ? `Se registran ${causas.length} causa(s) como imputado` : "No se registran causas como imputado en el sistema" },
   ]);
   doc.tituloSeccion("I", "Resultado de la consulta");
-  doc.parrafo(causas.length ? "La consulta encontró los siguientes registros judiciales asociados al usuario consultante:" : "Revisados los registros disponibles del sistema, no se encontraron causas asociadas al usuario consultante.");
+  doc.parrafo(causas.length ? "La consulta encontró los siguientes registros judiciales donde la persona consultante figura como imputada:" : "Revisados los registros disponibles del sistema, no se encontraron causas donde la persona consultante figure como imputada.");
   causas.forEach((causa, index) => {
     doc.filaTabla(`${index + 1}. RIT ${causa.rit}`, `${causa.caratulado} · ${causa.delito} · Estado: ${causa.estado}`);
   });

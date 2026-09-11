@@ -217,6 +217,7 @@ model Causa {
   rit           String      @unique // Rol Interno del Tribunal, ej: 001-2026
   ruc           String? // Rol Único de Causa (identificador distinto del RIT)
   caratulado    String // ej: "Fisco vs. Juan Pérez"
+  imputado      String? // Nombre del imputado principal, si está individualizado
   tribunal      String? // ej: "Primer Juzgado de Garantía de Santiago"
   descripcion   String      @db.Text
   estado        EstadoCausa @default(EN_INVESTIGACION)

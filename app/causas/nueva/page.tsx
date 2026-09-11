@@ -68,6 +68,7 @@ async function crearCausa(formData: FormData) {
         ruc: ruc || null,
         tribunal: tribunal || null,
         caratulado,
+        imputado: imputadoIndividualizado ? imputadoNombre || null : null,
         delito,
         descripcion,
         fiscalId,

@@ -34,54 +34,23 @@ function ConsultaAudiencias({ modo }: { modo: string }) {
   </div>;
 }
 
-function ConsultaCiudadana({ rol, vista }: { rol: string; vista: string }) {
+function ConsultaCiudadana({ rol }: { rol: string }) {
   const esFuncionario = rol === "FUNCIONARIO";
-  const activo = (id: string) => `ojv-tab ${vista === id ? "ojv-tab-active" : ""}`;
 
   return (
-    <div className="grid gap-5">
-      <div className="ojv-card">
-        <div className="ojv-tabs">
-          <Link href="?vista=consulta" className={activo("consulta")}>Consulta unificada</Link>
-          <Link href="?vista=causas" className={activo("causas")}>Mis causas</Link>
-        </div>
-        {vista === "causas" ? (
-          <div className="ojv-form">
-            <p className="ojv-label">Mis causas</p>
-            <p className="mt-2 text-sm text-grafito/55">Accede a las causas asociadas a tu usuario.</p>
-            <Link href="/mis-causas" className="ojv-search mt-4 inline-flex">Ver mis causas</Link>
-          </div>
-        ) : (
-          <form action="/consulta" method="get" className="ojv-form">
-            <div className="grid gap-4 md:grid-cols-3">
-              <label className="ojv-label">Libro/Tipo<input name="q" className="ojv-input" placeholder="RIT o RUC" /></label>
-              <label className="ojv-label">Rol<input className="ojv-input" /></label>
-              <label className="ojv-label">Año<input className="ojv-input" placeholder="2026" /></label>
-            </div>
-            <div className="mt-4 grid gap-4 md:grid-cols-3">
-              <label className="ojv-label">Competencia<select className="ojv-input"><option>Penal</option><option>Garantía</option></select></label>
-              <label className="ojv-label">Corte<select className="ojv-input"><option>Todos</option></select></label>
-              <label className="ojv-label">Tribunal<select className="ojv-input"><option>Todos</option></select></label>
-            </div>
-            <div className="ojv-actions"><button className="ojv-search">Buscar</button><Link href="/consulta" className="ojv-clear">Consulta avanzada</Link></div>
-          </form>
-        )}
-      </div>
-
-      <div className="grid gap-5 md:grid-cols-2">
-        <Link href="/abogados" className="ojv-card block p-5 transition hover:border-[#5b8038]">
+    <div className="grid gap-5 md:grid-cols-2">
+      <Link href="/abogados" className="ojv-card block p-5 transition hover:border-[#5b8038]">
           <p className="ojv-label">Servicio de verificación</p>
           <h2 className="mt-2 font-display text-xl text-[#12486d]">Verificar Licenciatura</h2>
           <p className="mt-2 text-sm text-grafito/55">Comprueba si un abogado se encuentra habilitado para ejercer.</p>
-        </Link>
-        {esFuncionario && (
-          <Link href="#ordenes-captura" className="ojv-card block p-5 transition hover:border-[#5b8038]">
+      </Link>
+      {esFuncionario && (
+        <Link href="#ordenes-captura" className="ojv-card block p-5 transition hover:border-[#5b8038]">
             <p className="ojv-label">Servicio institucional</p>
             <h2 className="mt-2 font-display text-xl text-[#12486d]">Consulta Orden de Captura</h2>
             <p className="mt-2 text-sm text-grafito/55">Consulta las órdenes de captura vigentes por nombre o RIT.</p>
-          </Link>
-        )}
-      </div>
+        </Link>
+      )}
     </div>
   );
 }
@@ -112,7 +81,7 @@ export default async function PortalSectionPage({ params, searchParams }: { para
     return (
       <DashboardShell rol={rol} titulo="Consulta ciudadana">
         <div className="mx-auto max-w-6xl">
-          <ConsultaCiudadana rol={rol} vista={searchParams?.vista === "causas" ? "causas" : "consulta"} />
+          <ConsultaCiudadana rol={rol} />
           {puedeConsultarOrdenes && (
             <section id="ordenes-captura" className="ojv-card mt-5">
               <div className="ojv-tabs"><span className="ojv-tab ojv-tab-active">Consulta Orden de Captura</span></div>

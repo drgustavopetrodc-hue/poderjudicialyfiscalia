@@ -44,7 +44,6 @@ export default function PortalHome() {
             <p className="mt-1 text-[7px] tracking-[0.25em] text-white/75">REPÚBLICA DE CHILE</p>
           </div>
         </div>
-        <button onClick={() => setAccesoAbierto(true)} className="text-sm font-semibold hover:text-[#d8df2e]">mi Fiscalía en línea</button>
       </header>
 
       <section className="relative min-h-[calc(100vh-74px)] overflow-hidden bg-[#071d2c] px-5 py-16">

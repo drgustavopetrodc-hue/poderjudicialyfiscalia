@@ -10,7 +10,6 @@ poder-judicial-rp
 │   ├── dashboard
 │   │   └── funcionario
 │   │       └── page.tsx
-│   └── mi-fiscalia-en-linea
 │       └── page.tsx
 ├── components
 │   └── DashboardShell.tsx

@@ -46,10 +46,20 @@ export async function GET(_request: Request, { params }: { params: { id: string 
     { etiqueta: "Delito investigado", valor: causa.delito },
   ]);
 
+  doc.tituloSeccion("Individualización", "Persona requerida");
+  doc.fichaOficio([
+    { etiqueta: "Nombre completo", valor: orden.nombrePersona },
+    { etiqueta: "RUN / Pasaporte", valor: orden.runOPasaporte ? formatearRut(orden.runOPasaporte) : "No informado" },
+    { etiqueta: "Nacionalidad", valor: orden.nacionalidadPersona || "No informada" },
+    { etiqueta: "Fecha de nacimiento", valor: orden.fechaNacimiento || "No informada" },
+    { etiqueta: "Domicilio conocido", valor: orden.domicilioConocido || "No informado" },
+    { etiqueta: "Señas particulares", valor: orden.senasParticulares || "No informadas" },
+  ]);
+
   doc.tituloSeccion("Vistos", "Antecedentes de la causa");
   doc.parrafo(`1. La causa RIT ${causa.rit}, seguida por el delito de ${causa.delito}, cuya investigación se encuentra a cargo de ${nombreLegal(causa.fiscal)}.`);
-  doc.parrafo(`2. La solicitud de orden de detención y captura respecto de ${individualizacion}.`);
-  doc.parrafo(`3. Los antecedentes expuestos en la solicitud: ${orden.motivo}.`);
+  doc.parrafo(`2. La solicitud de orden de detención y captura respecto de la persona individualizada en esta resolución: ${individualizacion}.`);
+  doc.parrafo(`3. Los antecedentes expuestos por quien solicita la medida: ${orden.motivo}.`);
 
   doc.tituloSeccion("Considerando", "Fundamentos de la resolución");
   doc.parrafo(`Primero: Que los antecedentes acompañados permiten disponer la medida solicitada, conforme a ${causal}.`);
@@ -58,8 +68,12 @@ export async function GET(_request: Request, { params }: { params: { id: string 
 
   doc.tituloSeccion("Por tanto", "Se resuelve");
   doc.parrafo(`SE ORDENA la detención y captura de ${orden.nombrePersona}, ya individualizado(a), debiendo ser puesto(a) a disposición de este tribunal dentro de las veinticuatro horas siguientes a su detención, o dentro del plazo que corresponda conforme a la normativa aplicable.`, 10, doc.bold);
-  doc.parrafo(`OFÍCIESE a ${POLICIA_TEXTO[orden.policiaInstruida] ?? orden.policiaInstruida} para el cumplimiento de la presente resolución. La orden tendrá vigencia ${orden.vigenciaOrden}.`);
-  doc.parrafo(`REGÍSTRESE en los sistemas institucionales pertinentes. Estado de la orden: ${orden.estado}.${orden.levantadaEn ? ` Consta levantamiento de fecha ${fechaCorta(orden.levantadaEn)}.` : ""}`);
+  doc.fichaOficio([
+    { etiqueta: "Policía instruida", valor: POLICIA_TEXTO[orden.policiaInstruida] ?? orden.policiaInstruida },
+    { etiqueta: "Vigencia", valor: orden.vigenciaOrden },
+    { etiqueta: "Estado", valor: `${orden.estado}${orden.levantadaEn ? ` · Levantada el ${fechaCorta(orden.levantadaEn)}` : ""}` },
+  ]);
+  doc.parrafo("REGÍSTRESE en los sistemas institucionales pertinentes.");
 
   doc.avanzar(-18);
   doc.espacioDisponible(75);

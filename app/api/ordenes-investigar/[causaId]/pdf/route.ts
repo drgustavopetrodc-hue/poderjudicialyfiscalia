@@ -33,9 +33,13 @@ export async function GET(_request: Request, { params }: { params: { causaId: st
     { etiqueta: "Fecha de emisión", valor: fechaCorta(orden.emitidaEn) },
     { etiqueta: "Unidad diligencial", valor: POLICIA_TEXTO[orden.unidadPolicial] ?? orden.unidadPolicial },
     { etiqueta: "Fiscalía emisora", valor: fiscalia },
-    { etiqueta: "Víctima / denunciante", valor: orden.victimaNombre || "Identidad reservada o no aplicable" },
-    { etiqueta: "Imputados", valor: imputado },
     { etiqueta: "Delito investigado", valor: causa.delito },
+  ]);
+
+  doc.tituloSeccion("Individualización", "Personas relacionadas");
+  doc.fichaOficio([
+    { etiqueta: "Víctima / denunciante", valor: orden.victimaNombre || "Identidad reservada o no aplicable" },
+    { etiqueta: "Imputado/a", valor: imputado },
   ]);
 
   doc.tituloSeccion("Vistos", "Antecedentes");
@@ -49,13 +53,19 @@ export async function GET(_request: Request, { params }: { params: { causaId: st
   doc.parrafo(`Tercero: Que la unidad destinataria será ${POLICIA_TEXTO[orden.unidadPolicial] ?? orden.unidadPolicial}.`);
 
   doc.tituloSeccion("Por tanto", "Se ordena");
+  doc.subtitulo("Diligencias investigativas");
   if (diligencias.length) {
     diligencias.forEach((diligencia, index) => doc.parrafo(`${index + 1}. ${diligencia}`));
   } else {
     doc.parrafo("Practíquense las diligencias investigativas generales de rigor, conforme a los antecedentes de la causa.");
   }
-  doc.parrafo(`La presente orden deberá cumplirse con carácter de ${URGENCIA_TEXTO[orden.urgencia] ?? orden.urgencia}. Remítase informe de resultado ${orden.plazoInforme || "a la brevedad posible"}, mediante ${orden.formaRemision || "oficio"}.`);
-  doc.parrafo(orden.instrucciones || "Sin instrucciones particulares adicionales.");
+  doc.subtitulo("Condiciones de cumplimiento");
+  doc.fichaOficio([
+    { etiqueta: "Urgencia", valor: URGENCIA_TEXTO[orden.urgencia] ?? orden.urgencia },
+    { etiqueta: "Plazo para informar", valor: orden.plazoInforme || "A la brevedad posible" },
+    { etiqueta: "Forma de remisión", valor: orden.formaRemision || "Oficio" },
+    { etiqueta: "Instrucciones", valor: orden.instrucciones || "Sin instrucciones particulares adicionales" },
+  ]);
   doc.parrafo("Toda diligencia que prive o restrinja derechos garantizados requerirá la autorización judicial previa que corresponda.", 8.5, doc.italic);
 
   doc.avanzar(-18);

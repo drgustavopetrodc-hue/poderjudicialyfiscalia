@@ -35,16 +35,19 @@ type SessionUser = { id?: string; rol?: string };
 export async function GET(_request: Request, { params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions);
   const user = session?.user as SessionUser | undefined;
-  if (!user?.id || !user.rol || !["FUNCIONARIO", "ADMIN"].includes(user.rol)) {
+  if (!user?.id || !user.rol || !["FUNCIONARIO", "ADMIN", "FISCAL"].includes(user.rol)) {
     return NextResponse.json({ error: "No autorizado" }, { status: 403 });
   }
 
   const acta = await prisma.actaDerechosDetenido.findUnique({
     where: { id: params.id },
-    include: { funcionario: true },
+    include: { funcionario: true, causa: { select: { fiscalId: true } } },
   });
   if (!acta) return NextResponse.json({ error: "Acta no encontrada" }, { status: 404 });
-  if (user.rol !== "ADMIN" && acta.funcionarioId !== user.id) {
+  const puedeDescargar = user.rol === "ADMIN"
+    || (user.rol === "FUNCIONARIO" && acta.funcionarioId === user.id)
+    || (user.rol === "FISCAL" && acta.causa?.fiscalId === user.id);
+  if (!puedeDescargar) {
     return NextResponse.json({ error: "No autorizado" }, { status: 403 });
   }
 

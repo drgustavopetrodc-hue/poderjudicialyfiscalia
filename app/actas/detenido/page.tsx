@@ -242,10 +242,13 @@ export default async function ActaDetenidoPage({
   const userId = user.id!;
 
   const actas: ActaResumen[] = await (prisma as any).actaDerechosDetenido.findMany({
-    where: rol === "FISCAL" ? { causaId: null } : { funcionarioId: userId },
+    where: rol === "FISCAL"
+      ? { OR: [{ causaId: null }, { causa: { fiscalId: userId } }] }
+      : { funcionarioId: userId },
     orderBy: { creadoEn: "desc" },
     take: 20,
   });
+  const actasDisponibles = actas.filter((acta) => !acta.causaId);
   const causas =
     rol === "FISCAL"
       ? await prisma.causa.findMany({
@@ -426,14 +429,14 @@ export default async function ActaDetenidoPage({
 
         {rol === "FISCAL" && (
           <Seccion title="Adjuntar acta a una causa">
-            {actas.length === 0 ? (
+            {actasDisponibles.length === 0 ? (
               <p className="text-sm text-grafito/55">No hay actas disponibles para adjuntar.</p>
             ) : (
               <form action={adjuntarActa} className="grid gap-4 md:grid-cols-[1fr_1fr_auto] items-end">
                 <label className="text-sm text-grafito/70" htmlFor="actaId">
                   Acta del detenido
                   <select id="actaId" name="actaId" required className="mt-1 w-full rounded-lg border border-grafito/15 px-3 py-2">
-                    {actas.map((acta) => (
+                    {actasDisponibles.map((acta) => (
                       <option key={acta.id} value={acta.id}>
                         {acta.detenidoNombre} · {acta.fechaDiligencia}
                       </option>

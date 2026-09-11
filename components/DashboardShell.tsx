@@ -171,12 +171,12 @@ export default async function DashboardShell({
   children: React.ReactNode;
 }) {
   const misCausas: Record<string, NavItem> = {
-    ADMIN: { href: "/causas", label: "Mis causas", icon: <Scale size={15} /> },
-    JUEZ: { href: "/dashboard/juez", label: "Mis causas", icon: <Gavel size={15} /> },
-    FISCAL: { href: "/dashboard/fiscal", label: "Mis causas", icon: <Users size={15} /> },
-    ABOGADO: { href: "/dashboard/abogado", label: "Mis causas", icon: <ShieldCheck size={15} /> },
-    FUNCIONARIO: { href: "/dashboard/funcionario", label: "Mis causas", icon: <LayoutDashboard size={15} /> },
-    CIUDADANO: { href: "/dashboard/parte", label: "Mis causas", icon: <Scale size={15} /> },
+    ADMIN: { href: "/mis-causas", label: "Mis causas", icon: <Scale size={15} /> },
+    JUEZ: { href: "/mis-causas", label: "Mis causas", icon: <Gavel size={15} /> },
+    FISCAL: { href: "/mis-causas", label: "Mis causas", icon: <Users size={15} /> },
+    ABOGADO: { href: "/mis-causas", label: "Mis causas", icon: <ShieldCheck size={15} /> },
+    FUNCIONARIO: { href: "/mis-causas", label: "Mis causas", icon: <LayoutDashboard size={15} /> },
+    CIUDADANO: { href: "/mis-causas", label: "Mis causas", icon: <Scale size={15} /> },
   };
   const items = rol === "INVITADO"
       ? NAV_POR_ROL.INVITADO
@@ -188,28 +188,6 @@ export default async function DashboardShell({
   const esPresidente = esPresidenteCorteSuprema((session?.user as any)?.discordId);
 
   const nombreRol = esPresidente ? "Presidente Corte Suprema" : NOMBRE_VISUAL_ROL[rol] ?? rol;
-
-  const bloqueMisCausas = {
-    ADMIN: [
-      { href: "/causas", label: "Causas a mi cargo" },
-    ],
-    JUEZ: [
-      { href: "/dashboard/juez", label: "Causas a mi cargo" },
-    ],
-    FISCAL: [
-      { href: "/dashboard/fiscal", label: "Causas a mi cargo" },
-      { href: "/causas/nueva", label: "Registrar causa" },
-    ],
-    ABOGADO: [
-      { href: "/dashboard/abogado", label: "Causas a mi cargo" },
-    ],
-    FUNCIONARIO: [
-      { href: "/dashboard/funcionario", label: "Causas a mi cargo" },
-    ],
-    CIUDADANO: [
-      { href: "/dashboard/parte", label: "Causas a mi cargo" },
-    ],
-  }[rol] ?? [{ href: "/dashboard/parte", label: "Causas a mi cargo" }];
 
   return (
     <div className="judicial-shell">
@@ -236,25 +214,6 @@ export default async function DashboardShell({
           <div className="judicial-user-chip">◉ {nombreRol}</div>
         </header>
         <main className="judicial-content">
-          {rol !== "INVITADO" && (
-            <section className="mb-6 overflow-hidden rounded-2xl border border-[#dfe6ed] bg-[#f4f7f9] shadow-sm">
-              <div className="flex w-full border-b border-[#dfe6ed] bg-[#dfe6ed]/40">
-                {bloqueMisCausas.map((item, index) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={`flex-1 px-4 py-3 text-center text-sm font-semibold transition ${
-                      index === 0
-                        ? "bg-[#6d8b4d] text-white"
-                        : "bg-transparent text-[#0d2436] hover:bg-[#edf3f7]"
-                    }`}
-                  >
-                    {item.label}
-                  </Link>
-                ))}
-              </div>
-            </section>
-          )}
           {children}
         </main>
       </div>

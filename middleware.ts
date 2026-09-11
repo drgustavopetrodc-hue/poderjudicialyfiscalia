@@ -9,6 +9,7 @@ const rutasPorRol: Record<string, string[]> = {
   "/dashboard/abogado": ["ADMIN", "ABOGADO"],
   "/dashboard/funcionario": ["ADMIN", "FUNCIONARIO"],
   "/dashboard/parte": ["ADMIN", "CIUDADANO", "JUEZ", "FISCAL", "ABOGADO", "FUNCIONARIO"],
+  "/mis-causas": ["ADMIN", "CIUDADANO", "JUEZ", "FISCAL", "ABOGADO", "FUNCIONARIO"],
 };
 
 export default withAuth(
@@ -39,5 +40,5 @@ export default withAuth(
 );
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/causas/:path*", "/audiencias/:path*", "/escritos/:path*", "/actas/:path*", "/ordenes-captura/:path*", "/ingreso-causas"],
+  matcher: ["/dashboard/:path*", "/mis-causas/:path*", "/causas/:path*", "/audiencias/:path*", "/escritos/:path*", "/actas/:path*", "/ordenes-captura/:path*", "/ingreso-causas"],
 };

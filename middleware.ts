@@ -33,7 +33,7 @@ export default withAuth(
       authorized: ({ token }) => !!token,
     },
     pages: {
-      signIn: "/login",
+      signIn: "/ovj",
     },
   }
 );

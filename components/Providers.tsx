@@ -11,7 +11,7 @@ function SessionTabGuard() {
 
     const sessionKey = "sesion-discord-activa";
     if (!window.sessionStorage.getItem(sessionKey)) {
-      void signOut({ callbackUrl: "/login" });
+      void signOut({ callbackUrl: "/ovj" });
       return;
     }
 

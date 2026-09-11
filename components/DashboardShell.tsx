@@ -171,45 +171,12 @@ export default async function DashboardShell({
   children: React.ReactNode;
 }) {
   const misCausas: Record<string, NavItem> = {
-    ADMIN: {
-      href: "/causas",
-      label: "Mis causas",
-      icon: <Scale size={15} />,
-      children: [{ href: "/causas", label: "Causas activas", icon: <Scale size={14} /> }],
-    },
-    JUEZ: {
-      href: "/dashboard/juez",
-      label: "Mis causas",
-      icon: <Gavel size={15} />,
-      children: [{ href: "/dashboard/juez", label: "Causas activas", icon: <Gavel size={14} /> }],
-    },
-    FISCAL: {
-      href: "/dashboard/fiscal",
-      label: "Mis causas",
-      icon: <Users size={15} />,
-      children: [
-        { href: "/dashboard/fiscal", label: "Causas activas", icon: <Users size={14} /> },
-        { href: "/causas/nueva", label: "Crear causa", icon: <FilePlus2 size={14} /> },
-      ],
-    },
-    ABOGADO: {
-      href: "/dashboard/abogado",
-      label: "Mis causas",
-      icon: <ShieldCheck size={15} />,
-      children: [{ href: "/dashboard/abogado", label: "Causas activas", icon: <ShieldCheck size={14} /> }],
-    },
-    FUNCIONARIO: {
-      href: "/dashboard/funcionario",
-      label: "Mis causas",
-      icon: <LayoutDashboard size={15} />,
-      children: [{ href: "/dashboard/funcionario", label: "Causas activas", icon: <LayoutDashboard size={14} /> }],
-    },
-    CIUDADANO: {
-      href: "/dashboard/parte",
-      label: "Mis causas",
-      icon: <Scale size={15} />,
-      children: [{ href: "/dashboard/parte", label: "Causas activas", icon: <Scale size={14} /> }],
-    },
+    ADMIN: { href: "/causas", label: "Mis causas", icon: <Scale size={15} /> },
+    JUEZ: { href: "/dashboard/juez", label: "Mis causas", icon: <Gavel size={15} /> },
+    FISCAL: { href: "/dashboard/fiscal", label: "Mis causas", icon: <Users size={15} /> },
+    ABOGADO: { href: "/dashboard/abogado", label: "Mis causas", icon: <ShieldCheck size={15} /> },
+    FUNCIONARIO: { href: "/dashboard/funcionario", label: "Mis causas", icon: <LayoutDashboard size={15} /> },
+    CIUDADANO: { href: "/dashboard/parte", label: "Mis causas", icon: <Scale size={15} /> },
   };
   const items = rol === "INVITADO"
       ? NAV_POR_ROL.INVITADO
@@ -221,6 +188,28 @@ export default async function DashboardShell({
   const esPresidente = esPresidenteCorteSuprema((session?.user as any)?.discordId);
 
   const nombreRol = esPresidente ? "Presidente Corte Suprema" : NOMBRE_VISUAL_ROL[rol] ?? rol;
+
+  const bloqueMisCausas = {
+    ADMIN: [
+      { href: "/causas", label: "Causas activas" },
+    ],
+    JUEZ: [
+      { href: "/dashboard/juez", label: "Causas activas" },
+    ],
+    FISCAL: [
+      { href: "/dashboard/fiscal", label: "Causas activas" },
+      { href: "/causas/nueva", label: "Crear causa" },
+    ],
+    ABOGADO: [
+      { href: "/dashboard/abogado", label: "Causas activas" },
+    ],
+    FUNCIONARIO: [
+      { href: "/dashboard/funcionario", label: "Causas activas" },
+    ],
+    CIUDADANO: [
+      { href: "/dashboard/parte", label: "Causas activas" },
+    ],
+  }[rol] ?? [{ href: "/dashboard/parte", label: "Causas activas" }];
 
   return (
     <div className="judicial-shell">
@@ -246,7 +235,30 @@ export default async function DashboardShell({
           <div className="judicial-breadcrumb"><Link href="/dashboard">⌂</Link><span>/</span><span>{titulo}</span></div>
           <div className="judicial-user-chip">◉ {nombreRol}</div>
         </header>
-        <main className="judicial-content">{children}</main>
+        <main className="judicial-content">
+          {rol !== "INVITADO" && (
+            <section className="mb-6 rounded-2xl border border-[#dfe6ed] bg-[#f5f8fb] p-4 shadow-sm">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#0f5e8d]">Mis causas</p>
+                  <h3 className="mt-1 text-2xl font-black text-[#0d2436]">Causas activas</h3>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                {bloqueMisCausas.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className="rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-[#0d2436] ring-1 ring-[#dfe6ed] transition hover:bg-[#eef6fb]"
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
+          {children}
+        </main>
       </div>
     </div>
   );

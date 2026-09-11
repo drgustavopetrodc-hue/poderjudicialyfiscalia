@@ -209,7 +209,12 @@ export default async function DashboardShell({
 
       <div className="judicial-main">
         <header className="judicial-topbar">
-          <button className="judicial-menu-button" aria-label="Abrir menú">☰</button>
+          <details className="judicial-mobile-menu">
+            <summary className="judicial-menu-button" aria-label="Abrir menú">☰</summary>
+            <div className="judicial-mobile-menu-panel">
+              <NavLinks items={items} />
+            </div>
+          </details>
           <div className="judicial-breadcrumb"><Link href="/dashboard">⌂</Link><span>/</span><span>{titulo}</span></div>
           <div className="judicial-user-chip">◉ {nombreRol}</div>
         </header>

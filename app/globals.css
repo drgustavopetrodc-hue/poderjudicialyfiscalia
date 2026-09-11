@@ -236,6 +236,9 @@ input:focus, select:focus, textarea:focus {
   padding: 0 14px;
 }
 .judicial-menu-button { border-radius: 3px; background: #b8c329; padding: 3px 9px; color: #fff; font-size: 18px; line-height: 1; }
+.judicial-mobile-menu { display: none; position: relative; }
+.judicial-mobile-menu summary { cursor: pointer; list-style: none; }
+.judicial-mobile-menu summary::-webkit-details-marker { display: none; }
 .judicial-breadcrumb { display: flex; align-items: center; gap: 9px; color: #60727d; font-size: 12px; }
 .judicial-breadcrumb a { color: #5c8f35; font-size: 18px; }
 .judicial-user-chip { margin-left: auto; border-radius: 2px; background: #b8c329; padding: 8px 12px; color: #fff; font-size: 13px; font-weight: 700; }
@@ -264,6 +267,34 @@ input:focus, select:focus, textarea:focus {
 
 @media (max-width: 760px) {
   .judicial-sidebar { width: 0; flex-basis: 0; }
-  .judicial-content { padding: 20px 10px; }
+  .judicial-mobile-menu { display: block; flex: 0 0 auto; }
+  .judicial-mobile-menu-panel {
+    position: absolute;
+    z-index: 30;
+    top: 38px;
+    left: -4px;
+    width: min(290px, calc(100vw - 20px));
+    max-height: calc(100vh - 90px);
+    overflow-y: auto;
+    border: 1px solid #c7d7e0;
+    background: #12486d;
+    box-shadow: 0 8px 22px rgba(18,72,109,.25);
+    padding: 10px;
+  }
+  .judicial-mobile-menu-panel nav { gap: 0; }
+  .judicial-mobile-menu-panel a { border-radius: 2px; padding: 9px 8px; font-size: 12px; }
+  .judicial-topbar { height: 60px; gap: 10px; padding: 0 10px; }
+  .judicial-breadcrumb { min-width: 0; gap: 6px; }
+  .judicial-breadcrumb a { flex: 0 0 auto; font-size: 16px; }
+  .judicial-user-chip { max-width: 42%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 7px 8px; font-size: 11px; }
+  .judicial-content { min-height: calc(100vh - 60px); padding: 18px 10px 32px; }
+  .ojv-card { padding: 7px; }
+  .ojv-form { padding: 16px 8px 8px; }
+  .ojv-tabs { overflow-x: auto; flex-wrap: nowrap; }
+  .ojv-tab { flex: 0 0 auto; white-space: nowrap; }
+  .ojv-actions { flex-wrap: wrap; }
+  .ojv-search, .ojv-clear { min-height: 34px; }
+  .judicial-content .panel-card,
+  .judicial-content .stat-card { border-radius: 3px; }
   .judicial-breadcrumb span:last-child { max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 }

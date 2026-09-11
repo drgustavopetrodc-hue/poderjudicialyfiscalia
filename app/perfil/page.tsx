@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import DashboardShell from "@/components/DashboardShell";
-import { ROLES_FUNCIONARIOS, INSTITUCION_POR_ROL, identidadCompleta, generarNifFiscal } from "@/lib/identidad";
+import { ROLES_FUNCIONARIOS, INSTITUCION_POR_ROL, identidadCompleta, generarNifFiscal, normalizarRut } from "@/lib/identidad";
 import { Fingerprint, Download, AlertCircle, Gamepad2 } from "lucide-react";
 import bcrypt from "bcryptjs";
 
@@ -17,7 +17,8 @@ async function guardarPerfil(formData: FormData) {
   if (!userId) return;
 
   const nombreIC = String(formData.get("nombreIC") ?? "").trim();
-  const rut = String(formData.get("rut") ?? "").trim();
+  const rutIngresado = String(formData.get("rut") ?? "").trim();
+  const rut = rutIngresado ? normalizarRut(rutIngresado) : "";
   const nacionalidad = String(formData.get("nacionalidad") ?? "").trim();
   const institucion = String(formData.get("institucion") ?? "").trim();
   const robloxUsername = String(formData.get("robloxUsername") ?? "").trim();
@@ -52,12 +53,13 @@ async function guardarPerfil(formData: FormData) {
 
   revalidatePath("/perfil");
   revalidatePath("/dashboard");
+  redirect("/perfil?guardado=1");
 }
 
 export default async function PerfilPage({
   searchParams,
 }: {
-  searchParams: { error?: string; setup?: string };
+  searchParams: { error?: string; setup?: string; guardado?: string };
 }) {
   const session = await getServerSession(authOptions);
   const userId = (session?.user as any)?.id as string;
@@ -97,6 +99,7 @@ export default async function PerfilPage({
           )}
           {searchParams?.error === "password-corta" && <p className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">La contraseña debe tener al menos 8 caracteres.</p>}
           {searchParams?.error === "password-diferente" && <p className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">Las contraseñas no coinciden.</p>}
+          {searchParams?.guardado === "1" && <p role="status" className="mb-4 rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">Perfil y contraseña guardados correctamente. Ya puedes ingresar con tu RUT y contraseña.</p>}
 
           <form action={guardarPerfil} className="grid gap-3">
             <div>

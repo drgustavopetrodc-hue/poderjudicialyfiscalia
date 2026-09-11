@@ -5,7 +5,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { prisma } from "./prisma";
 import { obtenerRolDesdeDiscord } from "./discordRoles";
-import { esPresidenteCorteSuprema, esFiscalRegional, generarNifFiscal } from "./identidad";
+import { esPresidenteCorteSuprema, esFiscalRegional, generarNifFiscal, normalizarRut } from "./identidad";
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
@@ -22,7 +22,7 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Contraseña", type: "password" },
       },
       async authorize(credentials) {
-        const rut = credentials?.rut?.replace(/\./g, "").trim();
+        const rut = credentials?.rut ? normalizarRut(credentials.rut) : "";
         const password = credentials?.password ?? "";
         if (!rut || !password) return null;
 

@@ -55,6 +55,13 @@ export function formatearRut(rut: string): string {
   return `${conPuntos}-${dv.toUpperCase()}`;
 }
 
+/** Normaliza el RUT para almacenarlo y buscarlo siempre con el mismo formato. */
+export function normalizarRut(rut: string): string {
+  const limpio = rut.replace(/[.\-\s]/g, "").toUpperCase();
+  if (!/^\d{7,8}[0-9K]$/.test(limpio)) return rut.trim().toUpperCase();
+  return `${limpio.slice(0, -1)}-${limpio.slice(-1)}`;
+}
+
 /** Genera un NIF único para fiscales. */
 export function generarNifFiscal(userId: string): string {
   const base = (userId || "FISCAL").replace(/[^a-zA-Z0-9]/g, "").slice(-8).toUpperCase();

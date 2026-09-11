@@ -433,8 +433,11 @@ export async function GET(req: NextRequest, { params }: { params: { userId: stri
     const session = await getServerSession(authOptions);
     const sessionUserId = (session?.user as any)?.id as string | undefined;
     const sessionRol = (session?.user as any)?.rol as string | undefined;
+    const sessionDiscordId = (session?.user as any)?.discordId as string | undefined;
+    const puedeConsultarTodas = esPresidenteCorteSuprema(sessionDiscordId)
+      || (sessionRol === "FISCAL" && esFiscalRegional(sessionDiscordId));
 
-    if (!sessionUserId || (sessionUserId !== params.userId && sessionRol !== "ADMIN")) {
+    if (!sessionUserId || (sessionUserId !== params.userId && sessionRol !== "ADMIN" && !puedeConsultarTodas)) {
       return NextResponse.json({ error: "No autorizado" }, { status: 403 });
     }
 

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { registrarAuditoria } from "@/lib/auditoria";
+import { esFiscalRegional, esPresidenteCorteSuprema } from "@/lib/identidad";
 
 
 export const dynamic = "force-dynamic";
@@ -96,17 +97,24 @@ async function certificarDirectamente(formData: FormData) {
 }
 
 export default async function UsuariosAdminPage() {
+  const session = await getServerSession(authOptions);
+  const sessionUser = session?.user as { id?: string; rol?: string; discordId?: string } | undefined;
+  const puedeVerDirectorio = sessionUser?.rol === "ADMIN"
+    || esPresidenteCorteSuprema(sessionUser?.discordId)
+    || (sessionUser?.rol === "FISCAL" && esFiscalRegional(sessionUser?.discordId));
+  if (!puedeVerDirectorio) redirect("/dashboard");
+
   const usuarios = await prisma.user.findMany({ include: { certificacion: true }, orderBy: { creadoEn: "desc" } });
 
   return (
-    <DashboardShell rol="ADMIN" titulo="Usuarios y roles">
+    <DashboardShell rol={sessionUser?.rol === "ADMIN" ? "ADMIN" : sessionUser?.rol ?? "FISCAL"} titulo="Directorio de identificaciones">
       <div className="mb-6 grid gap-4 sm:grid-cols-3">
         <div className="stat-card"><p className="eyebrow">Usuarios registrados</p><p className="mt-2 font-display text-3xl text-marino-950">{usuarios.length}</p></div>
         <div className="stat-card"><p className="eyebrow">Solicitudes pendientes</p><p className="mt-2 font-display text-3xl text-dorado-500">{usuarios.filter((u) => u.certificacion?.estado === "PENDIENTE").length}</p></div>
         <div className="stat-card"><p className="eyebrow">Certificados activos</p><p className="mt-2 font-display text-3xl text-emerald-700">{usuarios.filter((u) => u.certificacion?.estado === "APROBADA").length}</p></div>
       </div>
       <div className="overflow-hidden rounded-2xl border border-grafito/10 bg-white shadow-[0_15px_45px_rgba(11,21,38,0.06)]">
-        <div className="border-b border-grafito/10 px-5 py-4"><p className="font-display text-xl text-marino-950">Directorio y certificaciones</p><p className="text-sm text-grafito/50">Administra roles y habilita abogados desde una sola vista.</p></div>
+        <div className="border-b border-grafito/10 px-5 py-4"><p className="font-display text-xl text-marino-950">Directorio de identificaciones</p><p className="text-sm text-grafito/50">Consulta y descarga las identificaciones de los usuarios registrados.</p></div>
         <div className="overflow-x-auto"><table className="w-full min-w-[820px] text-sm">
           <thead className="bg-marino-950 text-hueso text-left">
             <tr>
@@ -120,7 +128,15 @@ export default async function UsuariosAdminPage() {
           <tbody>
             {usuarios.map((u) => (
               <tr key={u.id} className="border-t border-grafito/10">
-                <td className="px-4 py-3">{u.name ?? u.email ?? u.id}</td>
+                <td className="px-4 py-3">
+                  <p>{u.name ?? u.email ?? u.id}</p>
+                  <p className="text-xs text-grafito/45">{u.nombreIC ?? "Sin nombre institucional"}</p>
+                  {u.nombreIC && u.rut && !u.credencialRevocadaEn && (
+                    <a href={`/api/carnet/${u.id}`} target="_blank" rel="noreferrer" className="mt-1 inline-flex text-xs font-semibold text-blue-700 underline">
+                      Descargar identificación
+                    </a>
+                  )}
+                </td>
                 <td className="px-4 py-3">
                   <span className="badge bg-hueso border border-grafito/10 text-grafito/70">
                     {u.rol}

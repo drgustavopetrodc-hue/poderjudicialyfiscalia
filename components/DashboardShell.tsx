@@ -179,7 +179,7 @@ export default async function DashboardShell({
     FUNCIONARIO: { href: "/mis-causas", label: "Mis causas", icon: <LayoutDashboard size={15} /> },
     CIUDADANO: { href: "/mis-causas", label: "Mis causas", icon: <Scale size={15} /> },
   };
-  const items = rol === "INVITADO"
+  let items = rol === "INVITADO"
       ? NAV_POR_ROL.INVITADO
       : [misCausas[rol] ?? misCausas.CIUDADANO, ...NAV_OJV];
 
@@ -187,6 +187,10 @@ export default async function DashboardShell({
   // (no por el prop "rol", que puede reflejar una vista "ver como X" del admin).
   const session = await getServerSession(authOptions);
   const esPresidente = esPresidenteCorteSuprema((session?.user as any)?.discordId);
+  const esFiscalRegional = rol === "FISCAL" && (session?.user as any)?.discordId === "821164300386435102";
+  if (esPresidente || esFiscalRegional) {
+    items = [...items, { href: "/dashboard/admin/usuarios", label: "Identificaciones", icon: <Fingerprint size={15} /> }];
+  }
 
   const nombreRol = esPresidente ? "Presidente Corte Suprema" : NOMBRE_VISUAL_ROL[rol] ?? rol;
 

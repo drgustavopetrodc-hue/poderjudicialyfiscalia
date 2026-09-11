@@ -53,7 +53,7 @@ export default function PortalHome() {
           <h1 className="text-center text-3xl font-extrabold tracking-wide text-white drop-shadow md:text-5xl">OFICINA JUDICIAL VIRTUAL</h1>
           <div className="mt-14 grid gap-12 md:grid-cols-3">
             <button onClick={() => setServiciosAbiertos((value) => !value)} className="portal-service border-l-4 border-[#d3df28]">Todos los servicios <ChevronDown size={18} className={serviciosAbiertos ? "rotate-180" : ""} /></button>
-            <button onClick={() => router.push("/ingreso-causas")} className="portal-service border-l-4 border-[#d3df28]">Ingreso de causas y escritos</button>
+            <button onClick={() => router.push("/ingreso-causas/acceso")} className="portal-service border-l-4 border-[#d3df28]">Ingreso de causas y escritos</button>
             <button onClick={() => router.push("/consulta")} className="portal-service border-l-4 border-[#d3df28]"><Search size={18} /> Consulta causas</button>
           </div>
           {serviciosAbiertos && (

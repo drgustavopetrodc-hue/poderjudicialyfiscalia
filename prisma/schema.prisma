@@ -161,6 +161,26 @@ model User {
   actasDerechosInformadas ActaDerechosDetenido[] @relation("ActasDerechosFuncionario")
   auditoriasRealizadas Auditoria[] @relation("AuditoriaActor")
   historialFiscales HistorialAsignacionFiscal[] @relation("HistorialFiscalActor")
+  publicacionesTransparencia PublicacionTransparencia[] @relation("PublicacionesTransparenciaAutor")
+}
+
+// ---------- Publicaciones de transparencia ----------
+model PublicacionTransparencia {
+  id              String   @id @default(cuid())
+  titulo          String
+  autor           String
+  cuerpo          String   @db.Text
+  footer          String?  @db.Text
+  archivoNombre   String?
+  archivoMimeType String?
+  archivoTamano   Int?
+  archivoDatos    Bytes?
+  creadoEn        DateTime @default(now())
+
+  publicadoPorId String
+  publicadoPor   User @relation("PublicacionesTransparenciaAutor", fields: [publicadoPorId], references: [id])
+
+  @@index([creadoEn])
 }
 
 // ---------- Certificación de abogados ----------

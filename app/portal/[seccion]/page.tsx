@@ -4,6 +4,8 @@ import { notFound, redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import DashboardShell from "@/components/DashboardShell";
 import { prisma } from "@/lib/prisma";
+import { revalidatePath } from "next/cache";
+import { esFiscalRegional, esPresidenteCorteSuprema } from "@/lib/identidad";
 
 export const dynamic = "force-dynamic";
 
@@ -21,6 +23,45 @@ const SECCIONES: Record<string, { titulo: string; descripcion: string; vacio: st
 const Campo = ({ label, placeholder }: { label: string; placeholder?: string }) => (
   <label className="ojv-label">{label}<input placeholder={placeholder} className="ojv-input" /></label>
 );
+
+function puedePublicarTransparencia(rol: string | undefined, discordId: string | undefined) {
+  return esPresidenteCorteSuprema(discordId) || (rol === "FISCAL" && esFiscalRegional(discordId));
+}
+
+async function publicarTransparencia(formData: FormData) {
+  "use server";
+  const session = await getServerSession(authOptions);
+  const user = session?.user as { id?: string; rol?: string; discordId?: string } | undefined;
+  if (!user?.id || !puedePublicarTransparencia(user.rol, user.discordId)) return;
+
+  const titulo = String(formData.get("titulo") ?? "").trim();
+  const autor = String(formData.get("autor") ?? "").trim();
+  const cuerpo = String(formData.get("cuerpo") ?? "").trim();
+  const footer = String(formData.get("footer") ?? "").trim();
+  if (!titulo || !autor || !cuerpo || titulo.length > 180 || autor.length > 180 || cuerpo.length > 50000 || footer.length > 1000) return;
+
+  const archivo = formData.get("archivo");
+  let archivoDatos: Buffer | undefined;
+  let archivoNombre: string | undefined;
+  let archivoMimeType: string | undefined;
+  let archivoTamano: number | undefined;
+  if (archivo instanceof File && archivo.size > 0) {
+    if (archivo.size > 10 * 1024 * 1024) return;
+    const extension = archivo.name.toLowerCase().split(".").pop();
+    const extensionesPermitidas = ["pdf", "docx", "png", "jpg", "jpeg", "webp"];
+    const tiposPermitidos = ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "image/png", "image/jpeg", "image/webp"];
+    if (!extension || !extensionesPermitidas.includes(extension) || (archivo.type && !tiposPermitidos.includes(archivo.type))) return;
+    archivoDatos = Buffer.from(await archivo.arrayBuffer());
+    archivoNombre = archivo.name.slice(0, 200);
+    archivoMimeType = archivo.type || (extension === "pdf" ? "application/pdf" : "application/octet-stream");
+    archivoTamano = archivo.size;
+  }
+
+  await prisma.publicacionTransparencia.create({
+    data: { titulo, autor, cuerpo, footer: footer || null, archivoDatos, archivoNombre, archivoMimeType, archivoTamano, publicadoPorId: user.id },
+  });
+  revalidatePath("/portal/transparencia");
+}
 
 function ConsultaAudiencias({ modo }: { modo: string }) {
   const activo = (id: string) => `ojv-tab ${modo === id ? "ojv-tab-active" : ""}`;
@@ -59,6 +100,53 @@ export default async function PortalSectionPage({ params, searchParams }: { para
   const session = await getServerSession(authOptions);
   const rol = (session?.user as any)?.rol as string | undefined;
   if (!rol) redirect("/login");
+
+  if (params.seccion === "transparencia") {
+    const publicaciones = await prisma.publicacionTransparencia.findMany({
+      orderBy: { creadoEn: "desc" },
+      select: { id: true, titulo: true, autor: true, cuerpo: true, footer: true, creadoEn: true, archivoNombre: true },
+    });
+    const user = session?.user as { discordId?: string; rol?: string };
+    const puedePublicar = puedePublicarTransparencia(user.rol, user.discordId);
+    return (
+      <DashboardShell rol={rol} titulo="Transparencia ciudadana">
+        <div className="mx-auto max-w-5xl grid gap-5">
+          {puedePublicar && (
+            <section className="ojv-card">
+              <div className="ojv-tabs"><span className="ojv-tab ojv-tab-active">Nueva publicación</span></div>
+              <form action={publicarTransparencia} className="ojv-form grid gap-4" encType="multipart/form-data">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <label className="ojv-label">Título<input name="titulo" required maxLength={180} className="ojv-input" /></label>
+                  <label className="ojv-label">Autor<input name="autor" required maxLength={180} className="ojv-input" /></label>
+                </div>
+                <label className="ojv-label">Cuerpo<textarea name="cuerpo" required maxLength={50000} rows={8} className="ojv-input" /></label>
+                <label className="ojv-label">Imagen o archivo adjunto (opcional)<input name="archivo" type="file" accept="image/png,image/jpeg,image/webp,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" className="ojv-input" /><span className="font-normal text-[10px] text-grafito/45">Formatos: PNG, JPG, WEBP, PDF o DOCX. Máximo 10 MB.</span></label>
+                <label className="ojv-label">Footer (opcional)<input name="footer" maxLength={1000} className="ojv-input" /></label>
+                <div className="ojv-actions"><button className="ojv-search">Publicar</button></div>
+              </form>
+            </section>
+          )}
+
+          <section className="ojv-card">
+            <div className="ojv-tabs"><span className="ojv-tab ojv-tab-active">Transparencia ciudadana</span></div>
+            <div className="ojv-form grid gap-4">
+              {publicaciones.map((publicacion) => (
+                <article key={publicacion.id} className="border border-[#d3d9dc] bg-[#fafafa] p-4">
+                  <p className="text-[11px] text-[#66813d]">Publicado el {publicacion.creadoEn.toLocaleDateString("es-CL")}</p>
+                  <h2 className="mt-1 font-display text-xl text-[#12486d]">{publicacion.titulo}</h2>
+                  <p className="mt-1 text-xs font-semibold text-grafito/60">Autor: {publicacion.autor}</p>
+                  <p className="mt-4 whitespace-pre-wrap text-sm text-grafito/75">{publicacion.cuerpo}</p>
+                  {publicacion.archivoNombre && <a href={`/api/transparencia/${publicacion.id}/archivo`} className="mt-4 inline-flex text-xs font-semibold text-[#12486d] underline">Descargar {publicacion.archivoNombre}</a>}
+                  {publicacion.footer && <p className="mt-4 border-t border-[#d3d9dc] pt-3 text-xs italic text-grafito/55">{publicacion.footer}</p>}
+                </article>
+              ))}
+              {!publicaciones.length && <p className="text-sm text-grafito/50">No hay publicaciones disponibles.</p>}
+            </div>
+          </section>
+        </div>
+      </DashboardShell>
+    );
+  }
 
   if (params.seccion === "consulta-audiencias") return <DashboardShell rol={rol} titulo="Consulta audiencias"><ConsultaAudiencias modo={["rit", "fecha", "nombre"].includes(searchParams?.modo ?? "") ? searchParams!.modo! : "rit"} /></DashboardShell>;
   if (params.seccion === "consulta-ciudadana") {

@@ -203,6 +203,47 @@ async function actualizarFiscales(causaId: string, formData: FormData) {
   revalidatePath(`/causas/${causaId}`);
 }
 
+async function agregarParte(causaId: string, formData: FormData) {
+  "use server";
+  const sessionUser = (await getServerSession(authOptions))?.user as any;
+  const userId = sessionUser?.id as string | undefined;
+  const rol = sessionUser?.rol as string | undefined;
+  if (!userId || !["FISCAL", "JUEZ", "ADMIN"].includes(rol ?? "")) return;
+
+  const causa = await prisma.causa.findUnique({
+    where: { id: causaId },
+    select: { fiscalId: true, fiscalAuxiliarId: true, juezId: true },
+  });
+  if (!causa) return;
+
+  const puedeAgregar = rol === "ADMIN"
+    || causa.fiscalId === userId
+    || causa.fiscalAuxiliarId === userId
+    || causa.juezId === userId;
+  if (!puedeAgregar) return;
+
+  const parteUserId = String(formData.get("userId") ?? "").trim();
+  const rolParte = String(formData.get("rolParte") ?? "");
+  if (!parteUserId || !["VICTIMA", "IMPUTADO"].includes(rolParte)) return;
+
+  try {
+    await prisma.parteCausa.create({
+      data: { causaId, userId: parteUserId, rol: rolParte as any },
+    });
+  } catch (error: any) {
+    if (error?.code !== "P2002") throw error;
+  }
+
+  await registrarAuditoria({
+    actorId: userId,
+    accion: "AGREGAR_PARTE_CAUSA",
+    entidad: "Causa",
+    entidadId: causaId,
+    detalle: `Usuario: ${parteUserId}; calidad: ${rolParte}`,
+  });
+  revalidatePath(`/causas/${causaId}`);
+}
+
 export default async function CausaDetallePage({ params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions);
   const userId = (session?.user as any)?.id as string;
@@ -225,6 +266,8 @@ export default async function CausaDetallePage({ params }: { params: { id: strin
   });
 
   if (!causa) notFound();
+  const esParteDeLaCausa = causa.partes.some((parte) => parte.userId === userId);
+  if (rol === "CIUDADANO" && !esParteDeLaCausa) redirect("/causas?error=sin-permiso");
   if (rol === "FISCAL" && causa.fiscalId !== userId && causa.fiscalAuxiliarId !== userId) redirect("/causas?error=sin-permiso");
   // Permite seguir abriendo expedientes mientras una instalación existente
   // termina de aplicar la tabla nueva de órdenes de captura.
@@ -250,8 +293,12 @@ export default async function CausaDetallePage({ params }: { params: { id: strin
   const puedeEditarEstado = rol === "ADMIN" || esFiscalDeLaCausa || esJuezDeLaCausa;
   const esFiscalRegionalActual = rol === "FISCAL" && esFiscalRegional((session?.user as any)?.discordId);
   const puedeAdministrarFiscales = rol === "ADMIN" || esFiscalDeLaCausa || esFiscalRegionalActual;
+  const puedeAgregarPartes = rol === "ADMIN" || esFiscalDeLaCausa || esJuezDeLaCausa;
   const fiscalesDisponibles = puedeAdministrarFiscales
     ? await prisma.user.findMany({ where: { rol: "FISCAL", activo: true }, select: { id: true, nombreIC: true, name: true }, orderBy: { nombreIC: "asc" } })
+    : [];
+  const usuariosDisponibles = puedeAgregarPartes
+    ? await prisma.user.findMany({ where: { activo: true }, select: { id: true, nombreIC: true, name: true, rut: true }, orderBy: { nombreIC: "asc" } })
     : [];
   const estadosCausa = [
     ["EN_INVESTIGACION", "En investigación"],
@@ -324,6 +371,47 @@ export default async function CausaDetallePage({ params }: { params: { id: strin
             Descargar Orden de Investigar (PDF)
           </a>
         </div>
+      </section>
+
+      <section className="panel-card p-6 mb-6">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="font-display text-xl">Partes de la causa</h2>
+            <p className="mt-1 text-sm text-grafito/50">Personas incorporadas como víctima o imputado.</p>
+          </div>
+          <span className="rounded-full bg-blue-50 px-3 py-1 font-mono text-xs text-blue-700">{causa.partes.length} partes</span>
+        </div>
+
+        <div className="mt-4 grid gap-2 sm:grid-cols-2">
+          {causa.partes.map((parte) => (
+            <div key={parte.id} className="rounded-lg border border-grafito/10 bg-hueso/40 px-3 py-2">
+              <p className="text-xs font-bold uppercase tracking-wider text-blue-700">{parte.rol === "VICTIMA" ? "Víctima" : parte.rol === "IMPUTADO" ? "Imputado" : parte.rol}</p>
+              <p className="mt-1 text-sm font-medium text-marino-950">{nombreLegal(parte.user)}</p>
+              {parte.user.rut && <p className="text-xs text-grafito/50">RUT: {parte.user.rut}</p>}
+            </div>
+          ))}
+          {!causa.partes.length && <p className="text-sm text-grafito/45 sm:col-span-2">Todavía no hay partes incorporadas.</p>}
+        </div>
+
+        {puedeAgregarPartes && (
+          <div className="mt-5 grid gap-4 border-t border-grafito/10 pt-5 md:grid-cols-2">
+            {(["VICTIMA", "IMPUTADO"] as const).map((rolParte) => (
+              <form key={rolParte} action={agregarParte.bind(null, causa.id)} className="rounded-lg border border-blue-100 bg-blue-50/40 p-4">
+                <input type="hidden" name="rolParte" value={rolParte} />
+                <p className="eyebrow text-blue-700">Añadir {rolParte === "VICTIMA" ? "víctima" : "imputado"}</p>
+                <select name="userId" required className="mt-2 w-full rounded-lg border border-grafito/15 bg-white px-3 py-2 text-sm">
+                  <option value="">Seleccionar usuario registrado</option>
+                  {usuariosDisponibles.map((usuario) => (
+                    <option key={usuario.id} value={usuario.id}>
+                      {usuario.nombreIC || usuario.name || "Usuario sin nombre"}{usuario.rut ? ` · ${usuario.rut}` : ""}
+                    </option>
+                  ))}
+                </select>
+                <button className="button-primary mt-3" type="submit">Incorporar como {rolParte === "VICTIMA" ? "víctima" : "imputado"}</button>
+              </form>
+            ))}
+          </div>
+        )}
       </section>
 
       <section className="panel-card p-6 mb-6">

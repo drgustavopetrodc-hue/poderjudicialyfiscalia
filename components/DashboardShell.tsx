@@ -137,6 +137,7 @@ const NAV_POR_ROL: Record<string, NavItem[]> = {
 };
 
 const NAV_OJV: NavItem[] = [
+  { href: "/tramite-facil", label: "Trámite Fácil", icon: <ClipboardList size={15} /> },
   { href: "/portal/notificaciones", label: "Mis notificaciones", icon: <Bell size={15} /> },
   { href: "/portal/audiencias", label: "Mis audiencias", icon: <CalendarDays size={15} /> },
   { href: "/portal/estado-diario", label: "Mi estado diario", icon: <ClipboardList size={15} /> },

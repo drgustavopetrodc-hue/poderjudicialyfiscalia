@@ -2,6 +2,7 @@ import { PDFDocument, StandardFonts, rgb, PDFFont } from "pdf-lib";
 
 export const COLORES = {
   navy: rgb(0.04, 0.12, 0.23),
+  negro: rgb(0, 0, 0),
   blue: rgb(0.12, 0.32, 0.58),
   gray: rgb(0.35, 0.38, 0.43),
   lightGray: rgb(0.6, 0.63, 0.67),
@@ -66,7 +67,7 @@ export async function crearConstructorPdf(pdf: PDFDocument) {
   function tituloSeccion(numeral: string, texto: string) {
     y -= 6;
     espacioDisponible(28);
-    page.drawText(`${numeral}. ${texto.toUpperCase()}`, { x: MARGIN, y, size: 11.5, font: bold, color: COLORES.blue });
+    page.drawText(`${numeral}. ${texto.toUpperCase()}`, { x: MARGIN, y, size: 11.5, font: bold, color: COLORES.negro });
     y -= 8;
     page.drawLine({ start: { x: MARGIN, y }, end: { x: width - MARGIN, y }, thickness: 0.75, color: COLORES.paleLine });
     y -= 16;

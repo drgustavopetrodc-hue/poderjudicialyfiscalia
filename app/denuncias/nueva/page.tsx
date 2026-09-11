@@ -10,11 +10,18 @@ async function crearDenuncia(formData: FormData) {
   'use server';
   const session = await getServerSession(authOptions);
   const userId = (session?.user as any)?.id as string | undefined;
+  const rol = (session?.user as any)?.rol as string | undefined;
   if (!userId) redirect('/login');
 
-  const titulo = String(formData.get('titulo') ?? '').trim();
-  const descripcion = String(formData.get('descripcion') ?? '').trim();
-  if (!titulo || !descripcion) return;
+  const victimaNombre = String(formData.get('victimaNombre') ?? '').trim();
+  const victimaRut = String(formData.get('victimaRut') ?? '').trim();
+  const victimarioNombre = String(formData.get('victimarioNombre') ?? '').trim();
+  const victimarioRut = String(formData.get('victimarioRut') ?? '').trim();
+  const caracteristicasVictimario = String(formData.get('caracteristicasVictimario') ?? '').trim();
+  const lugarHechos = String(formData.get('lugarHechos') ?? '').trim();
+  if (!victimaNombre || !victimaRut || !lugarHechos) return;
+  const titulo = `Denuncia Fácil: ${victimaNombre}`;
+  const descripcion = `Víctima: ${victimaNombre}\nRUT víctima: ${victimaRut}\nVictimario: ${victimarioNombre || 'No conocido'}\nRUT victimario: ${victimarioRut || 'No informado'}\nCaracterísticas visuales: ${caracteristicasVictimario || 'No informadas'}\nLugar de los hechos: ${lugarHechos}`;
 
   // Crear denuncia y adjuntos si los hay (adjuntos pequeños se guardan en DB como Bytes)
   const archivos = formData.getAll('archivos') as File[];
@@ -24,6 +31,12 @@ async function crearDenuncia(formData: FormData) {
     data: {
       titulo,
       descripcion,
+      victimaNombre,
+      victimaRut,
+      victimarioNombre: victimarioNombre || null,
+      victimarioRut: victimarioRut || null,
+      caracteristicasVictimario: caracteristicasVictimario || null,
+      lugarHechos,
       denuncianteId: userId,
       adjuntos: { create: [] },
     },
@@ -58,22 +71,22 @@ async function crearDenuncia(formData: FormData) {
   redirect('/denuncias?nueva=ok');
 }
 
-export default function NuevaDenunciaPage() {
+export default async function NuevaDenunciaPage() {
+  const session = await getServerSession(authOptions);
+  const rol = (session?.user as any)?.rol as string | undefined;
   return (
-    <DashboardShell rol="CIUDADANO" titulo="Presentar denuncia">
+    <DashboardShell rol={rol || "CIUDADANO"} titulo="Denuncia Fácil">
       <div className="mx-auto max-w-lg">
         <div className="panel-card p-6">
-          <h2 className="font-display text-xl mb-2">Presentar denuncia</h2>
-          <p className="text-sm text-grafito/55 mb-4">Rellena el formulario con los antecedentes que desees denunciar.</p>
+          <h2 className="font-display text-xl mb-2">Denuncia Fácil</h2>
+          <p className="text-sm text-grafito/55 mb-4">Entrega los antecedentes esenciales para que Fiscalía pueda revisar la denuncia.</p>
           <form action={crearDenuncia} className="grid gap-3" encType="multipart/form-data">
-            <div>
-              <label className="block text-xs text-grafito/55 mb-1">Título</label>
-              <input name="titulo" required placeholder="Título breve" className="w-full border border-grafito/15 rounded-lg px-3 py-2 text-sm" />
-            </div>
-            <div>
-              <label className="block text-xs text-grafito/55 mb-1">Descripción</label>
-              <textarea name="descripcion" required rows={6} placeholder="Describe los hechos..." className="w-full border border-grafito/15 rounded-lg px-3 py-2 text-sm" />
-            </div>
+            <label className="block text-xs text-grafito/55">Nombre de la víctima<input name="victimaNombre" required className="mt-1 w-full border border-grafito/15 rounded-lg px-3 py-2 text-sm" /></label>
+            <label className="block text-xs text-grafito/55">RUT de la víctima<input name="victimaRut" required className="mt-1 w-full border border-grafito/15 rounded-lg px-3 py-2 text-sm" /></label>
+            <label className="block text-xs text-grafito/55">Nombre del victimario, si se conoce<input name="victimarioNombre" className="mt-1 w-full border border-grafito/15 rounded-lg px-3 py-2 text-sm" /></label>
+            <label className="block text-xs text-grafito/55">RUT del victimario, si se conoce<input name="victimarioRut" className="mt-1 w-full border border-grafito/15 rounded-lg px-3 py-2 text-sm" /></label>
+            <label className="block text-xs text-grafito/55">Características visuales del victimario<textarea name="caracteristicasVictimario" rows={4} className="mt-1 w-full border border-grafito/15 rounded-lg px-3 py-2 text-sm" /></label>
+            <label className="block text-xs text-grafito/55">Lugar de los hechos<input name="lugarHechos" required className="mt-1 w-full border border-grafito/15 rounded-lg px-3 py-2 text-sm" /></label>
             <div>
               <label className="block text-xs text-grafito/55 mb-1">Adjuntar fotos o videos (cada archivo hasta 5MB)</label>
               <input type="file" name="archivos" multiple accept="image/*,video/*" className="w-full text-sm" />

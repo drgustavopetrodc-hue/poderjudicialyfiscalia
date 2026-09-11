@@ -51,6 +51,19 @@ enum EstadoDenuncia {
   REVISADA
 }
 
+enum CategoriaSolicitud {
+  FISCALIA
+  PODER_JUDICIAL
+  DEFENSORIA_PENAL
+}
+
+enum EstadoSolicitud {
+  ABIERTA
+  EN_REVISION
+  RESUELTA
+  CERRADA
+}
+
 enum TipoAdjuntoDenuncia {
   IMAGEN
   VIDEO
@@ -161,6 +174,9 @@ model User {
   actasDerechosInformadas ActaDerechosDetenido[] @relation("ActasDerechosFuncionario")
   auditoriasRealizadas Auditoria[] @relation("AuditoriaActor")
   historialFiscales HistorialAsignacionFiscal[] @relation("HistorialFiscalActor")
+  partesPolicialesRegistrados PartePolicial[] @relation("PartePolicialRegistrador")
+  solicitudesCreadas Solicitud[] @relation("SolicitudCreador")
+  solicitudesAsignadas Solicitud[] @relation("SolicitudAsignado")
   publicacionesTransparencia PublicacionTransparencia[] @relation("PublicacionesTransparenciaAutor")
 }
 
@@ -446,11 +462,54 @@ model Denuncia {
   id             String         @id @default(cuid())
   titulo         String
   descripcion    String         @db.Text
+  victimaNombre  String?
+  victimaRut     String?
+  victimarioNombre String?
+  victimarioRut  String?
+  caracteristicasVictimario String? @db.Text
+  lugarHechos    String?
   denuncianteId  String
   denunciante    User           @relation(fields: [denuncianteId], references: [id])
   estado         EstadoDenuncia @default(PENDIENTE)
   creadaEn       DateTime       @default(now())
   adjuntos       DenunciaAdjunto[]
+}
+
+// ---------- Trámite Fácil ----------
+model PartePolicial {
+  id                  String   @id @default(cuid())
+  tipoProcedimiento   String
+  fechaProcedimiento  String
+  horaProcedimiento   String?
+  lugar               String
+  unidadPolicial      String
+  funcionarioResponsable String
+  involucrados        String?  @db.Text
+  relato              String   @db.Text
+  observaciones       String?  @db.Text
+  creadoEn            DateTime @default(now())
+  registradorId       String
+  registrador          User @relation("PartePolicialRegistrador", fields: [registradorId], references: [id])
+
+  @@index([fechaProcedimiento])
+}
+
+model Solicitud {
+  id            String            @id @default(cuid())
+  categoria     CategoriaSolicitud
+  asunto        String
+  descripcion   String            @db.Text
+  estado        EstadoSolicitud   @default(ABIERTA)
+  respuesta     String?           @db.Text
+  creadoEn      DateTime          @default(now())
+  actualizadoEn DateTime          @updatedAt
+  creadorId     String
+  creador       User              @relation("SolicitudCreador", fields: [creadorId], references: [id])
+  asignadoId    String?
+  asignado      User?             @relation("SolicitudAsignado", fields: [asignadoId], references: [id])
+
+  @@index([categoria, estado])
+  @@index([creadorId])
 }
 
 model DenunciaAdjunto {

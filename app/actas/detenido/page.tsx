@@ -55,7 +55,10 @@ async function adjuntarActa(formData: FormData) {
     (prisma as any).actaDerechosDetenido.findUnique({ where: { id: actaId }, select: { causaId: true } }),
   ]);
 
-  if (!causa || !acta || (user!.rol !== "ADMIN" && causa.fiscalId !== user!.id) || acta.causaId) {
+  const puedeAdjuntar = user!.rol === "ADMIN"
+    || esFiscalRegional(user!.discordId)
+    || causa?.fiscalId === user!.id;
+  if (!causa || !acta || !puedeAdjuntar || acta.causaId) {
     redirect("/actas/detenido?error=permiso");
   }
 
@@ -76,7 +79,7 @@ async function crearActa(formData: FormData) {
   const session = await getServerSession(authOptions);
   const user = session?.user as SessionUser | undefined;
 
-  if (!user?.id || !["FUNCIONARIO", "ADMIN"].includes(user.rol ?? "")) {
+  if (!user?.id || !["FUNCIONARIO", "FISCAL", "ADMIN"].includes(user.rol ?? "")) {
     redirect("/actas/detenido?error=permiso");
   }
 
@@ -288,7 +291,7 @@ export default async function ActaDetenidoPage({
           </div>
         )}
 
-        {rol !== "FISCAL" && (
+        {(["FUNCIONARIO", "FISCAL", "ADMIN"] as string[]).includes(rol) && (
           <form action={crearActa} className="space-y-5">
             <Seccion title="I. Datos de la diligencia">
               <div className="grid gap-4 md:grid-cols-2">

@@ -141,6 +141,7 @@ export const CODIGO_PENAL: ArticuloPenal[] = [
   { numero: 148, delito: "Obstrucción a la investigación", pena: PENA.N1, titulo: T_XII },
   { numero: 149, delito: "Encubrimiento", pena: PENA.N2, titulo: T_XII },
   { numero: 150, delito: "Fuga de detenidos (facilitación)", pena: PENA.N1, titulo: T_XII },
+  { numero: 150.1, delito: "Apremios ilegítimos u otros tratos crueles, inhumanos o degradantes (Art. 150 D)", pena: PENA.N1, titulo: T_VI },
   { numero: 151, delito: "Favorecimiento culposo de la evasión", pena: PENA.N2, titulo: T_XII },
   { numero: 152, delito: "Quebrantamiento de condena", pena: PENA.N1, titulo: T_XII },
   { numero: 153, delito: "Desacato", pena: PENA.N2, titulo: T_XII },

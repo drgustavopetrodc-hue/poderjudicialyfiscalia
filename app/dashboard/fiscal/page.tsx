@@ -8,6 +8,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { publicarCausaEnDiscord } from "@/lib/discordForum";
 import SubirVideoFiscal from "@/components/SubirVideoFiscal";
+import { esFiscalRegional } from "@/lib/identidad";
 
 export const dynamic = "force-dynamic";
 
@@ -21,11 +22,12 @@ async function validarFiscalDeCausa(causaId: string) {
   const session = await getServerSession(authOptions);
   const userId = (session?.user as any)?.id as string | undefined;
   const rol = (session?.user as any)?.rol;
+  const discordId = (session?.user as any)?.discordId as string | undefined;
   if (!userId || (rol !== "FISCAL" && rol !== "ADMIN")) return null;
   const causa = await prisma.causa.findFirst({
     where: {
       id: causaId,
-      ...(rol === "ADMIN" ? {} : { OR: [{ fiscalId: userId }, { fiscalAuxiliarId: userId }] }),
+      ...(rol === "ADMIN" || (rol === "FISCAL" && esFiscalRegional(discordId)) ? {} : { OR: [{ fiscalId: userId }, { fiscalAuxiliarId: userId }] }),
     },
     select: { id: true },
   });
@@ -72,11 +74,12 @@ export default async function FiscalDashboard() {
   const session = await getServerSession(authOptions);
   const userId = (session?.user as any)?.id as string | undefined;
   const rol = (session?.user as any)?.rol as string | undefined;
+  const esRegional = rol === "FISCAL" && esFiscalRegional((session?.user as any)?.discordId);
   if (!userId || !rol || (rol !== "FISCAL" && rol !== "ADMIN")) redirect("/dashboard?error=sin-permiso");
 
   const [causas, usuarioActual] = await Promise.all([
     prisma.causa.findMany({
-      where: rol === "ADMIN" ? undefined : { OR: [{ fiscalId: userId }, { fiscalAuxiliarId: userId }] },
+      where: rol === "ADMIN" || esRegional ? undefined : { OR: [{ fiscalId: userId }, { fiscalAuxiliarId: userId }] },
       orderBy: { actualizadaEn: "desc" },
       include: {
         juez: true,

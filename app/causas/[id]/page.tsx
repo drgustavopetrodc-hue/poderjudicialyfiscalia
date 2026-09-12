@@ -268,7 +268,8 @@ export default async function CausaDetallePage({ params }: { params: { id: strin
   if (!causa) notFound();
   const esParteDeLaCausa = causa.partes.some((parte) => parte.userId === userId);
   if (rol === "CIUDADANO" && !esParteDeLaCausa) redirect("/causas?error=sin-permiso");
-  if (rol === "FISCAL" && causa.fiscalId !== userId && causa.fiscalAuxiliarId !== userId) redirect("/causas?error=sin-permiso");
+  const esFiscalRegionalActual = rol === "FISCAL" && esFiscalRegional((session?.user as any)?.discordId);
+  if (rol === "FISCAL" && !esFiscalRegionalActual && causa.fiscalId !== userId && causa.fiscalAuxiliarId !== userId) redirect("/causas?error=sin-permiso");
   // Permite seguir abriendo expedientes mientras una instalación existente
   // termina de aplicar la tabla nueva de órdenes de captura.
   let ordenesCaptura: any[] = [];
@@ -291,7 +292,6 @@ export default async function CausaDetallePage({ params }: { params: { id: strin
   const puedeTomarCausa = (rol === "JUEZ" || rol === "ADMIN") && !esJuezDeLaCausa;
   const puedeProgramarAudiencia = actuaComoJuez || esFiscalDeLaCausa;
   const puedeEditarEstado = rol === "ADMIN" || esFiscalDeLaCausa || esJuezDeLaCausa;
-  const esFiscalRegionalActual = rol === "FISCAL" && esFiscalRegional((session?.user as any)?.discordId);
   const puedeAdministrarFiscales = rol === "ADMIN" || esFiscalDeLaCausa || esFiscalRegionalActual;
   const puedeAgregarPartes = rol === "ADMIN" || esFiscalDeLaCausa || esJuezDeLaCausa;
   const fiscalesDisponibles = puedeAdministrarFiscales

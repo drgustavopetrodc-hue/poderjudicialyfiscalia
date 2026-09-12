@@ -5,6 +5,7 @@ import DashboardShell from "@/components/DashboardShell";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { ESTILO_ESTADO_CAUSA, etiquetaEstado } from "@/lib/estilos";
+import { esFiscalRegional } from "@/lib/identidad";
 
 export const dynamic = "force-dynamic";
 
@@ -19,7 +20,7 @@ const ROLES_CON_ACCESO = [
 
 export default async function MisCausasPage() {
   const session = await getServerSession(authOptions);
-  const user = session?.user as { id?: string; rol?: string } | undefined;
+  const user = session?.user as { id?: string; rol?: string; discordId?: string } | undefined;
   const userId = user?.id;
   const rol = user?.rol;
 
@@ -31,7 +32,7 @@ export default async function MisCausasPage() {
     rol === "ADMIN"
       ? undefined
       : rol === "FISCAL"
-        ? { OR: [{ fiscalId: userId }, { fiscalAuxiliarId: userId }] }
+        ? esFiscalRegional(user?.discordId) ? undefined : { OR: [{ fiscalId: userId }, { fiscalAuxiliarId: userId }] }
         : rol === "JUEZ"
           ? { juezId: userId }
           : rol === "ABOGADO"

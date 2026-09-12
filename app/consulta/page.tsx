@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import DashboardShell from '@/components/DashboardShell';
+import { ETIQUETAS_COMPETENCIA, TRIBUNALES_ARICA, type Competencia } from '@/lib/tribunales';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,7 +13,25 @@ async function buscarCausa(formData: FormData) {
   const nombre = ["nombre", "apellidoPaterno", "apellidoMaterno"].map((campo) => String(formData.get(campo) ?? '').trim()).filter(Boolean).join(" ");
   const termino = q || nombre;
   if (!termino) return;
-  const causa = await prisma.causa.findFirst({ where: q ? { OR: [{ rit: q }, { ruc: q }] } : { caratulado: { contains: termino, mode: "insensitive" } }, select: { id: true } });
+  const competencia = String(formData.get("competencia") ?? "").trim();
+  const tribunal = String(formData.get("tribunal") ?? "").trim();
+  const anioTexto = String(formData.get("anio") ?? "").trim();
+  const anio = anioTexto ? Number(anioTexto) : undefined;
+  const filtros: any[] = [];
+
+  if (q) filtros.push({ OR: [{ rit: q }, { ruc: q }] });
+  else filtros.push({
+    OR: [
+      { caratulado: { contains: termino, mode: "insensitive" } },
+      { imputado: { contains: termino, mode: "insensitive" } },
+      { partes: { some: { user: { OR: [{ nombreIC: { contains: termino, mode: "insensitive" } }, { name: { contains: termino, mode: "insensitive" } }, { rut: { contains: termino, mode: "insensitive" } }] } } } },
+    ],
+  });
+  if (competencia) filtros.push({ competencia });
+  if (tribunal) filtros.push({ tribunal });
+  if (Number.isInteger(anio)) filtros.push({ anio });
+
+  const causa = await prisma.causa.findFirst({ where: { AND: filtros }, select: { id: true } });
   if (!causa) {
     redirect(`/consulta?notfound=1&q=${encodeURIComponent(termino)}`);
   }
@@ -37,8 +56,8 @@ export default async function ConsultaPage({ searchParams }: { searchParams?: { 
           <p className="mt-4 text-sm text-grafito/55">Las causas públicas pueden consultarse sin iniciar sesión.</p>
           {notfound && <p className="text-sm text-red-700 mb-3">No se encontró ninguna causa con ese identificador.</p>}
           <form action={buscarCausa} className="ojv-form">
-            {modo === "rit" ? <div className="grid gap-4 md:grid-cols-3"><label className="ojv-label">Libro/Tipo<input name="q" defaultValue={q} placeholder="RIT o RUC" className="ojv-input" /></label><label className="ojv-label">Rol<input className="ojv-input" /></label><label className="ojv-label">Año<input className="ojv-input" placeholder="2026" /></label></div> : <div className="grid gap-4 md:grid-cols-4"><label className="ojv-label">Nombre<input name="nombre" className="ojv-input" /></label><label className="ojv-label">Apellido paterno<input name="apellidoPaterno" className="ojv-input" /></label><label className="ojv-label">Apellido materno<input name="apellidoMaterno" className="ojv-input" /></label><label className="ojv-label">Año<input className="ojv-input" placeholder="2026" /></label></div>}
-            <div className="mt-4 grid gap-4 md:grid-cols-3"><label className="ojv-label">Competencia<select name="competencia" className="ojv-input"><option>Corte Suprema</option><option>Corte de Apelaciones</option><option>Penal</option></select></label><label className="ojv-label">Corte<select className="ojv-input"><option>Seleccione Corte...</option></select></label><label className="ojv-label">Tribunal<select className="ojv-input"><option>Seleccione Tribunal...</option></select></label></div>
+            {modo === "rit" ? <div className="grid gap-4 md:grid-cols-2"><label className="ojv-label">RIT o RUC<input name="q" defaultValue={q} placeholder="Ej. 001-2026" className="ojv-input" /></label><label className="ojv-label">Año<input name="anio" type="number" defaultValue={new Date().getFullYear()} className="ojv-input" /></label></div> : <div className="grid gap-4 md:grid-cols-4"><label className="ojv-label">Nombre<input name="nombre" className="ojv-input" /></label><label className="ojv-label">Apellido paterno<input name="apellidoPaterno" className="ojv-input" /></label><label className="ojv-label">Apellido materno<input name="apellidoMaterno" className="ojv-input" /></label><label className="ojv-label">Año<input name="anio" type="number" defaultValue={new Date().getFullYear()} className="ojv-input" /></label></div>}
+            <div className="mt-4 grid gap-4 md:grid-cols-2"><label className="ojv-label">Competencia<select name="competencia" className="ojv-input"><option value="">Todas las competencias</option>{(Object.keys(ETIQUETAS_COMPETENCIA) as Competencia[]).map((valor) => <option key={valor} value={valor}>{ETIQUETAS_COMPETENCIA[valor]}</option>)}</select></label><label className="ojv-label">Tribunal<select name="tribunal" className="ojv-input"><option value="">Todos los tribunales</option>{(Object.values(TRIBUNALES_ARICA).flat() as string[]).map((tribunalDisponible) => <option key={tribunalDisponible} value={tribunalDisponible}>{tribunalDisponible}</option>)}</select></label></div>
             <div className="ojv-actions"><button className="ojv-search">Buscar</button><button type="reset" className="ojv-clear">Limpiar</button></div>
           </form>
         </div>

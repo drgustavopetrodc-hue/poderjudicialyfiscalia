@@ -7,10 +7,11 @@ import DashboardShell from "@/components/DashboardShell";
 import { ToggleDetailField, ToggleNote } from "./FormToggles";
 import { CausalDetencionField, LesionesField } from "./CamposCondicionales";
 import { registrarAuditoria } from "@/lib/auditoria";
+import { esFiscalRegional } from "@/lib/identidad";
 
 export const dynamic = "force-dynamic";
 
-type SessionUser = { id?: string; rol?: string };
+type SessionUser = { id?: string; rol?: string; discordId?: string };
 
 const DERECHOS: { label: string; articulo: string }[] = [
   { label: "Motivo de la detención y delito imputado", articulo: "Art. 135 CPP" },
@@ -243,7 +244,9 @@ export default async function ActaDetenidoPage({
 
   const actas: ActaResumen[] = await (prisma as any).actaDerechosDetenido.findMany({
     where: rol === "FISCAL"
-      ? { OR: [{ causaId: null }, { causa: { fiscalId: userId } }] }
+      ? esFiscalRegional(user.discordId)
+        ? undefined
+        : { OR: [{ causaId: null }, { causa: { fiscalId: userId } }] }
       : { funcionarioId: userId },
     orderBy: { creadoEn: "desc" },
     take: 20,
@@ -252,7 +255,7 @@ export default async function ActaDetenidoPage({
   const causas =
     rol === "FISCAL"
       ? await prisma.causa.findMany({
-          where: { fiscalId: userId },
+          where: esFiscalRegional(user.discordId) ? undefined : { fiscalId: userId },
           select: { id: true, rit: true, caratulado: true },
           orderBy: { creadaEn: "desc" },
         })

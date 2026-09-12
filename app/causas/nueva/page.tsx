@@ -9,6 +9,7 @@ import { publicarCausaEnDiscord } from "@/lib/discordForum";
 import { codigoPenalPorTitulo, articuloPorNumero } from "@/lib/codigoPenal";
 import { DILIGENCIAS_ORDEN_INVESTIGAR } from "@/lib/diligencias";
 import { AlertCircle } from "lucide-react";
+import { ETIQUETAS_COMPETENCIA, TRIBUNALES_ARICA, TRIBUNALES_VALIDOS, anioActual, type Competencia } from "@/lib/tribunales";
 
 const ROLES_CON_ACCESO = ["FISCAL", "ADMIN"];
 
@@ -22,8 +23,12 @@ async function crearCausa(formData: FormData) {
   const rit = String(formData.get("rit"));
   const ruc = String(formData.get("ruc") ?? "").trim();
   const tribunal = String(formData.get("tribunal") ?? "").trim();
+  const competencia = String(formData.get("competencia") ?? "").trim() as Competencia;
+  const anio = Number(formData.get("anio") ?? anioActual());
   const caratulado = String(formData.get("caratulado"));
   const descripcion = String(formData.get("descripcion"));
+
+  if (!TRIBUNALES_VALIDOS.has(tribunal) || !Object.hasOwn(TRIBUNALES_ARICA, competencia) || !Number.isInteger(anio) || anio < 2000) return;
 
   const numerosSeleccionados = formData
     .getAll("articulos")
@@ -66,7 +71,9 @@ async function crearCausa(formData: FormData) {
       data: {
         rit,
         ruc: ruc || null,
+        competencia,
         tribunal: tribunal || null,
+        anio,
         caratulado,
         imputado: imputadoIndividualizado ? imputadoNombre || null : null,
         delito,
@@ -194,9 +201,25 @@ export default async function NuevaCausaPage({
             <label className="block text-sm text-grafito/60 mb-1">Caratulado</label>
             <input name="caratulado" required placeholder="Fisco vs. Juan Pérez" className="w-full border border-grafito/15 rounded-lg px-3 py-2" defaultValue={denuncia ? `Denuncia: ${denuncia.titulo}` : undefined} />
           </div>
-          <div>
-            <label className="block text-sm text-grafito/60 mb-1">Tribunal (opcional)</label>
-            <input name="tribunal" placeholder="Primer Juzgado de Garantía de Santiago" className="w-full border border-grafito/15 rounded-lg px-3 py-2" defaultValue={undefined} />
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div>
+              <label className="block text-sm text-grafito/60 mb-1">Competencia</label>
+              <select name="competencia" required className="w-full border border-grafito/15 rounded-lg px-3 py-2 bg-white">
+                <option value="">Selecciona una competencia</option>
+                {(Object.keys(ETIQUETAS_COMPETENCIA) as Competencia[]).map((valor) => <option key={valor} value={valor}>{ETIQUETAS_COMPETENCIA[valor]}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm text-grafito/60 mb-1">Tribunal</label>
+              <select name="tribunal" required className="w-full border border-grafito/15 rounded-lg px-3 py-2 bg-white">
+                <option value="">Selecciona un tribunal</option>
+                {(Object.values(TRIBUNALES_ARICA).flat() as string[]).map((tribunalDisponible) => <option key={tribunalDisponible} value={tribunalDisponible}>{tribunalDisponible}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm text-grafito/60 mb-1">Año</label>
+              <input name="anio" type="number" min="2000" required defaultValue={anioActual()} className="w-full border border-grafito/15 rounded-lg px-3 py-2" />
+            </div>
           </div>
         </div>
 

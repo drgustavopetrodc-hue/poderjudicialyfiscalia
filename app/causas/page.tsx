@@ -1,5 +1,5 @@
 import { getServerSession } from "next-auth";
-import { nombreLegal } from "@/lib/identidad";
+import { esFiscalRegional, nombreLegal } from "@/lib/identidad";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
@@ -43,10 +43,11 @@ export default async function CausasPage() {
   const session = await getServerSession(authOptions);
   const rol = (session?.user as any)?.rol as string | undefined;
   const userId = (session?.user as any)?.id as string | undefined;
+  const discordId = (session?.user as any)?.discordId as string | undefined;
   if (!rol || !ROLES_CON_ACCESO.includes(rol)) redirect("/dashboard?error=sin-permiso");
 
   const causas = await prisma.causa.findMany({
-    where: rol === "FISCAL" ? { OR: [{ fiscalId: userId }, { fiscalAuxiliarId: userId }] } : undefined,
+    where: rol === "FISCAL" && !esFiscalRegional(discordId) ? { OR: [{ fiscalId: userId }, { fiscalAuxiliarId: userId }] } : undefined,
     orderBy: { creadaEn: "desc" },
     include: {
       fiscal: true,

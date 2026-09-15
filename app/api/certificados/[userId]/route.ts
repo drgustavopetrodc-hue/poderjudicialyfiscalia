@@ -32,7 +32,7 @@ export async function GET(_req: NextRequest, { params }: { params: { userId: str
 
   const regular = await pdfDoc.embedFont(StandardFonts.Helvetica);
   const bold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
-  const logo = await pdfDoc.embedPng(await readFile(path.join(process.cwd(), "public", "logo poder judicial.png")));
+  const logo = await pdfDoc.embedPng(await readFile(path.join(process.cwd(), "public", "logo-poder-judicial.png")));
   const firma = await pdfDoc.embedPng(await readFile(path.join(process.cwd(), "public", "firma-gabriel-boric.png")));
   const negro = rgb(0.08, 0.08, 0.08);
 

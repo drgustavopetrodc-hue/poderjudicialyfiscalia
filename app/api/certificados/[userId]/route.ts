@@ -1,15 +1,16 @@
 import { prisma } from "@/lib/prisma";
-import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
+import { PDFDocument, StandardFonts, degrees, rgb } from "pdf-lib";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+import QRCode from "qrcode";
 import { NextRequest, NextResponse } from "next/server";
 import { nombreLegal, formatearRut, identidadCompleta } from "@/lib/identidad";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(_req: NextRequest, { params }: { params: { userId: string } }) {
+export async function GET(req: NextRequest, { params }: { params: { userId: string } }) {
   const certificacion = await prisma.certificacionAbogado.findUnique({
     where: { userId: params.userId },
     include: { user: true },
@@ -34,10 +35,32 @@ export async function GET(_req: NextRequest, { params }: { params: { userId: str
   const bold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
   const logo = await pdfDoc.embedPng(await readFile(path.join(process.cwd(), "public", "logo-poder-judicial.png")));
   const firma = await pdfDoc.embedPng(await readFile(path.join(process.cwd(), "public", "firma-gabriel-boric.png")));
+  const qrDataUri = await QRCode.toDataURL(`${new URL(req.url).origin}/api/certificados/${certificacion.userId}`, {
+    errorCorrectionLevel: "M",
+    margin: 1,
+    width: 180,
+    color: { dark: "#0a192f", light: "#ffffff" },
+  });
+  const qr = await pdfDoc.embedPng(Buffer.from(qrDataUri.split(",")[1], "base64"));
   const negro = rgb(0.08, 0.08, 0.08);
+  const marcaAgua = rgb(0.68, 0.68, 0.68);
 
   page.drawRectangle({ x: 0, y: 0, width, height, color: rgb(1, 1, 1) });
-  page.drawImage(logo, { x: 226, y: 883, width: 160, height: 119 });
+  for (let y = -80; y < height + 180; y += 92) {
+    for (let x = -260; x < width + 260; x += 190) {
+      page.drawText("PODER JUDICIAL", {
+        x,
+        y,
+        size: 22,
+        font: bold,
+        color: marcaAgua,
+        rotate: degrees(45),
+        opacity: 0.1,
+      });
+    }
+  }
+  const logoSize = logo.scaleToFit(160, 120);
+  page.drawImage(logo, { x: (width - logoSize.width) / 2, y: 883, width: logoSize.width, height: logoSize.height });
 
   const centerText = (text: string, y: number, font = regular, size = 12, color = negro) => {
     const w = font.widthOfTextAtSize(text, size);
@@ -64,7 +87,8 @@ export async function GET(_req: NextRequest, { params }: { params: { userId: str
   centerText("PRESIDENTE", 434, regular, 12);
   centerText("CORTE SUPREMA", 418, regular, 12);
 
-  page.drawText(`Matrícula: ${certificacion.numeroMatricula}`, { x: 73, y: 222.9, size: 7, font: regular, color: negro });
+  page.drawImage(qr, { x: 73, y: 65, width: 84, height: 84 });
+  page.drawText("Verificación digital", { x: 73, y: 55, size: 7, font: regular, color: negro });
   centerText("Validez un año desde la fecha de expedición.", 187.9, regular, 8, negro);
   centerText("Verifique la validez de este documento en el portal del Poder Judicial.", 175.9, regular, 8, negro);
 

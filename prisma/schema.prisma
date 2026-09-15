@@ -187,6 +187,7 @@ model User {
   solicitudesAsignadas Solicitud[] @relation("SolicitudAsignado")
   demandasPresentadas Demanda[] @relation("DemandaPresentadaPor")
   publicacionesTransparencia PublicacionTransparencia[] @relation("PublicacionesTransparenciaAutor")
+  notificaciones        Notificacion[]
 }
 
 // ---------- Publicaciones de transparencia ----------
@@ -256,6 +257,7 @@ model Causa {
   testimonios Testimonio[]
   actasDerechos ActaDerechosDetenido[]
   historialFiscales HistorialAsignacionFiscal[] @relation("HistorialFiscalCausa")
+  notificaciones Notificacion[]
 }
 
 model HistorialAsignacionFiscal {
@@ -449,6 +451,25 @@ model Audiencia {
   creadorId    String
   creador      User            @relation("AudienciaCreador", fields: [creadorId], references: [id])
   creadaEn     DateTime        @default(now())
+  notificaciones Notificacion[]
+}
+
+model Notificacion {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  causaId     String
+  causa       Causa     @relation(fields: [causaId], references: [id], onDelete: Cascade)
+  audienciaId String?
+  audiencia   Audiencia? @relation(fields: [audienciaId], references: [id], onDelete: Cascade)
+  tipo        String
+  titulo      String
+  mensaje     String    @db.Text
+  leida       Boolean   @default(false)
+  creadaEn    DateTime  @default(now())
+
+  @@unique([userId, audienciaId])
+  @@index([userId, leida, creadaEn])
 }
 
 // ---------- Sentencia ----------

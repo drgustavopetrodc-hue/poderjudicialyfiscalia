@@ -11,6 +11,7 @@ import Link from "next/link";
 import { publicarCausaEnDiscord } from "@/lib/discordForum";
 import { ESTILO_ESTADO_CAUSA, ESTILO_ESTADO_ORDEN, etiquetaEstado } from "@/lib/estilos";
 import { registrarAuditoria } from "@/lib/auditoria";
+import { notificarAudiencia } from "@/lib/notificaciones";
 
 
 export const dynamic = "force-dynamic";
@@ -65,6 +66,12 @@ async function programarAudiencia(causaId: string, formData: FormData) {
       notas: String(formData.get("notas") ?? "") || null,
     },
   });
+  const audiencia = await prisma.audiencia.findFirst({
+    where: { causaId, creadorId, fechaHora },
+    orderBy: { creadaEn: "desc" },
+    select: { id: true, causaId: true, fechaHora: true, sala: true },
+  });
+  if (audiencia) await notificarAudiencia(audiencia);
   await publicarCausaEnDiscord(causaId, "Audiencia programada");
   revalidatePath(`/causas/${causaId}`);
 }

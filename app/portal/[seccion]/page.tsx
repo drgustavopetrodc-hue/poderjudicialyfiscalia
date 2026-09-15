@@ -7,6 +7,15 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { esFiscalRegional, esPresidenteCorteSuprema } from "@/lib/identidad";
 
+type NotificacionVista = {
+  id: string;
+  titulo: string;
+  mensaje: string;
+  leida: boolean;
+  creadaEn: Date;
+  causa: { rit: string };
+};
+
 export const dynamic = "force-dynamic";
 
 const SECCIONES: Record<string, { titulo: string; descripcion: string; vacio: string }> = {
@@ -63,6 +72,16 @@ async function publicarTransparencia(formData: FormData) {
   revalidatePath("/portal/transparencia");
 }
 
+async function marcarNotificacionLeida(formData: FormData) {
+  "use server";
+  const session = await getServerSession(authOptions);
+  const userId = (session?.user as any)?.id as string | undefined;
+  const id = String(formData.get("id") ?? "");
+  if (!userId || !id) return;
+  await (prisma as any).notificacion.updateMany({ where: { id, userId }, data: { leida: true } });
+  revalidatePath("/portal/notificaciones");
+}
+
 function ConsultaAudiencias({ modo }: { modo: string }) {
   const activo = (id: string) => `ojv-tab ${modo === id ? "ojv-tab-active" : ""}`;
   return <div className="ojv-card">
@@ -100,6 +119,40 @@ export default async function PortalSectionPage({ params, searchParams }: { para
   const session = await getServerSession(authOptions);
   const rol = (session?.user as any)?.rol as string | undefined;
   if (!rol) redirect("/login");
+
+  if (params.seccion === "notificaciones") {
+    const userId = (session?.user as any)?.id as string;
+    const notificaciones: NotificacionVista[] = await (prisma as any).notificacion.findMany({
+      where: { userId },
+      orderBy: { creadaEn: "desc" },
+      take: 100,
+      include: { causa: { select: { rit: true, tribunal: true } } },
+    });
+    return (
+      <DashboardShell rol={rol} titulo="Mis notificaciones">
+        <div className="mx-auto max-w-5xl">
+          <section className="ojv-card">
+            <div className="ojv-tabs"><span className="ojv-tab ojv-tab-active">Notificaciones de mis causas</span></div>
+            <div className="grid gap-3">
+              {notificaciones.map((notificacion) => (
+                <article key={notificacion.id} className={`border p-4 ${notificacion.leida ? "border-[#d3d9dc] bg-[#fafafa]" : "border-blue-200 bg-blue-50/50"}`}>
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-wider text-blue-700">{notificacion.titulo}</p>
+                      <p className="mt-2 text-sm text-[#243b53]">{notificacion.mensaje}</p>
+                      <p className="mt-2 text-xs text-grafito/50">RIT {notificacion.causa.rit} · {notificacion.creadaEn.toLocaleString("es-CL")}</p>
+                    </div>
+                    {!notificacion.leida && <form action={marcarNotificacionLeida}><input type="hidden" name="id" value={notificacion.id} /><button className="ojv-clear" type="submit">Marcar como leída</button></form>}
+                  </div>
+                </article>
+              ))}
+              {!notificaciones.length && <p className="text-sm text-grafito/50">No tienes notificaciones nuevas.</p>}
+            </div>
+          </section>
+        </div>
+      </DashboardShell>
+    );
+  }
 
   if (params.seccion === "transparencia") {
     const publicaciones = await prisma.publicacionTransparencia.findMany({

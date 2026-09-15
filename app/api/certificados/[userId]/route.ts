@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
-import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
+import { PDFDocument, StandardFonts, degrees, rgb } from "pdf-lib";
 import { format } from "date-fns";
+import { es } from "date-fns/locale";
 import { NextRequest, NextResponse } from "next/server";
 import { nombreLegal, formatearRut, identidadCompleta } from "@/lib/identidad";
 
@@ -24,79 +25,54 @@ export async function GET(_req: NextRequest, { params }: { params: { userId: str
   }
 
   const pdfDoc = await PDFDocument.create();
-  const page = pdfDoc.addPage([842, 595]); // A4 apaisado
+  const page = pdfDoc.addPage([612, 1008]);
   const { width, height } = page.getSize();
 
-  const serif = await pdfDoc.embedFont(StandardFonts.TimesRomanBold);
-  const serifRegular = await pdfDoc.embedFont(StandardFonts.TimesRoman);
-  const mono = await pdfDoc.embedFont(StandardFonts.Courier);
+  const regular = await pdfDoc.embedFont(StandardFonts.Helvetica);
+  const bold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+  const negro = rgb(0.08, 0.08, 0.08);
+  const marcaAgua = rgb(0.68, 0.68, 0.68);
 
-  const marino = rgb(0.06, 0.09, 0.15);
-  const dorado = rgb(0.72, 0.58, 0.25);
-  const grafito = rgb(0.16, 0.16, 0.16);
+  page.drawRectangle({ x: 0, y: 0, width, height, color: rgb(1, 1, 1) });
+  for (let y = -80; y < height + 180; y += 92) {
+    for (let x = -260; x < width + 260; x += 190) {
+      page.drawText("PODER JUDICIAL", {
+        x,
+        y,
+        size: 22,
+        font: bold,
+        color: marcaAgua,
+        rotate: degrees(45),
+        opacity: 0.12,
+      });
+    }
+  }
 
-  // Fondo y marco ornamental
-  page.drawRectangle({ x: 0, y: 0, width, height, color: rgb(0.96, 0.95, 0.92) });
-  page.drawRectangle({
-    x: 24,
-    y: 24,
-    width: width - 48,
-    height: height - 48,
-    borderColor: dorado,
-    borderWidth: 2,
-  });
-  page.drawRectangle({
-    x: 34,
-    y: 34,
-    width: width - 68,
-    height: height - 68,
-    borderColor: marino,
-    borderWidth: 0.75,
-  });
-
-  const centerText = (text: string, y: number, font = serif, size = 14, color = grafito) => {
+  const centerText = (text: string, y: number, font = regular, size = 12, color = negro) => {
     const w = font.widthOfTextAtSize(text, size);
     page.drawText(text, { x: (width - w) / 2, y, size, font, color });
   };
 
-  centerText("REPÚBLICA DE CHILE", height - 90, mono, 11, dorado);
-  centerText("PODER JUDICIAL", height - 115, serif, 22, marino);
-  centerText("Certificado de Habilitación para el Ejercicio de la Defensa Técnica", height - 145, serifRegular, 13);
+  const fechaEmision = new Date();
+  const fechaTexto = format(fechaEmision, "d 'de' MMMM 'de' yyyy", { locale: es });
+  const nombre = nombreLegal(certificacion.user).toUpperCase();
 
-  centerText("Se certifica que", height - 210, serifRegular, 13);
-  centerText(nombreLegal(certificacion.user), height - 250, serif, 28, marino);
-  centerText(
-    `RUT ${formatearRut(certificacion.user.rut!)} — Nacionalidad ${certificacion.user.nacionalidad ?? "no registrada"}`,
-    height - 275,
-    mono,
-    11,
-    grafito
-  );
+  centerText("CERTIFICADO DE TÍTULO DE ABOGADO", 866, bold, 14);
+  page.drawText("Certifico que en los registros de esta Secretaría consta que en la", { x: 123, y: 760, size: 12, font: regular, color: negro });
+  page.drawText(`audiencia del día ${fechaTexto}, la Corte Suprema`, { x: 123, y: 744, size: 12, font: regular, color: negro });
+  page.drawText("en Pleno invistió con el Título de Abogado a:", { x: 123, y: 728, size: 12, font: regular, color: negro });
+  page.drawText(`Don ${nombre}`, { x: 123, y: 694, size: 12, font: regular, color: negro });
+  page.drawText(`R.U.T. ${formatearRut(certificacion.user.rut!)}`, { x: 123, y: 678, size: 12, font: regular, color: negro });
+  page.drawText(`Santiago de Chile, ${fechaTexto}.`, { x: 123, y: 644, size: 12, font: regular, color: negro });
 
-  centerText(
-    `se encuentra habilitado(a) para ejercer la defensa técnica ante los tribunales,`,
-    height - 315,
-    serifRegular,
-    13
-  );
-  centerText(
-    `bajo el número de matrícula ${certificacion.numeroMatricula}.`,
-    height - 337,
-    serifRegular,
-    13
-  );
+  page.drawLine({ start: { x: 205, y: 470 }, end: { x: 407, y: 470 }, thickness: 0.8, color: negro });
+  centerText("Gabriel Boric Font", 450, regular, 12);
+  centerText("PRESIDENTE", 434, regular, 12);
+  centerText("CORTE SUPREMA", 418, regular, 12);
 
-  const fecha = certificacion.revisadoEn ?? certificacion.solicitadoEn;
-  centerText(`Certificado emitido el ${format(fecha, "dd 'de' MMMM 'de' yyyy")}.`, height - 380, mono, 11, dorado);
-
-  // Línea de firma
-  page.drawLine({
-    start: { x: width / 2 - 100, y: 130 },
-    end: { x: width / 2 + 100, y: 130 },
-    thickness: 1,
-    color: grafito,
-  });
-  centerText("Corte Suprema", 112, serifRegular, 11);
+  page.drawText(`Matrícula: ${certificacion.numeroMatricula}`, { x: 73, y: 222.9, size: 7, font: regular, color: negro });
+  centerText("Validez un año desde la fecha de emisión.", 187.9, regular, 8, negro);
+  centerText("Verifique la validez de este documento en el portal del Poder Judicial.", 175.9, regular, 8, negro);
 
   const pdfBytes = await pdfDoc.save();
 

@@ -3,7 +3,7 @@
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
-import { ChevronDown, LockKeyhole, MessageCircle, Search, X } from "lucide-react";
+import { ChevronDown, LockKeyhole, MessageCircle, Search, SearchCheck, X } from "lucide-react";
 
 export default function PortalHome() {
   const router = useRouter();
@@ -55,6 +55,7 @@ export default function PortalHome() {
             <button onClick={() => setServiciosAbiertos((value) => !value)} className="portal-service border-l-4 border-[#d3df28]">Todos los servicios <ChevronDown size={18} className={serviciosAbiertos ? "rotate-180" : ""} /></button>
             <button onClick={() => router.push("/ingreso-causas/acceso")} className="portal-service border-l-4 border-[#d3df28]">Ingreso de causas y escritos</button>
             <button onClick={() => router.push("/consulta")} className="portal-service border-l-4 border-[#d3df28]"><Search size={18} /> Consulta causas</button>
+            <button onClick={() => router.push("/consulta-ciudadana")} className="portal-service border-l-4 border-[#d3df28]"><SearchCheck size={18} /> Consulta funcionarios y abogados</button>
           </div>
           {serviciosAbiertos && (
             <div className="mx-auto mt-7 grid max-w-2xl gap-3 rounded-xl bg-black/35 p-4 backdrop-blur-sm md:grid-cols-2">

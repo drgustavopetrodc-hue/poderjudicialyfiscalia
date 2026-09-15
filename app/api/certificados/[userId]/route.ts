@@ -56,7 +56,7 @@ export async function GET(_req: NextRequest, { params }: { params: { userId: str
   page.drawText("en Pleno invistió con el Título de Abogado a:", { x: 123, y: 728, size: 12, font: regular, color: negro });
   page.drawText(`Don ${nombre}`, { x: 123, y: 694, size: 12, font: regular, color: negro });
   page.drawText(`R.U.T. ${formatearRut(certificacion.user.rut!)}`, { x: 123, y: 678, size: 12, font: regular, color: negro });
-  page.drawText(`Expedido en Santiago de Chile, ${fechaExpedicionTexto}.`, { x: 123, y: 644, size: 12, font: regular, color: negro });
+  page.drawText(`Expedido en Santiago de Chile, ${fechaEmisionTexto}.`, { x: 123, y: 644, size: 12, font: regular, color: negro });
 
   page.drawImage(firma, { x: 261, y: 475, width: 90, height: 139 });
   page.drawLine({ start: { x: 205, y: 470 }, end: { x: 407, y: 470 }, thickness: 0.8, color: negro });
@@ -65,7 +65,7 @@ export async function GET(_req: NextRequest, { params }: { params: { userId: str
   centerText("CORTE SUPREMA", 418, regular, 12);
 
   page.drawText(`Matrícula: ${certificacion.numeroMatricula}`, { x: 73, y: 222.9, size: 7, font: regular, color: negro });
-  centerText(`Emitido el ${fechaEmisionTexto}. Validez un año desde la fecha de emisión.`, 187.9, regular, 8, negro);
+  centerText("Validez un año desde la fecha de expedición.", 187.9, regular, 8, negro);
   centerText("Verifique la validez de este documento en el portal del Poder Judicial.", 175.9, regular, 8, negro);
 
   const pdfBytes = await pdfDoc.save();

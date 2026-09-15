@@ -1,7 +1,9 @@
 import { prisma } from "@/lib/prisma";
-import { PDFDocument, StandardFonts, degrees, rgb } from "pdf-lib";
+import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 import { NextRequest, NextResponse } from "next/server";
 import { nombreLegal, formatearRut, identidadCompleta } from "@/lib/identidad";
 
@@ -30,23 +32,12 @@ export async function GET(_req: NextRequest, { params }: { params: { userId: str
 
   const regular = await pdfDoc.embedFont(StandardFonts.Helvetica);
   const bold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+  const logo = await pdfDoc.embedPng(await readFile(path.join(process.cwd(), "public", "logo poder judicial.png")));
+  const firma = await pdfDoc.embedPng(await readFile(path.join(process.cwd(), "public", "firma-gabriel-boric.png")));
   const negro = rgb(0.08, 0.08, 0.08);
-  const marcaAgua = rgb(0.68, 0.68, 0.68);
 
   page.drawRectangle({ x: 0, y: 0, width, height, color: rgb(1, 1, 1) });
-  for (let y = -80; y < height + 180; y += 92) {
-    for (let x = -260; x < width + 260; x += 190) {
-      page.drawText("PODER JUDICIAL", {
-        x,
-        y,
-        size: 22,
-        font: bold,
-        color: marcaAgua,
-        rotate: degrees(45),
-        opacity: 0.12,
-      });
-    }
-  }
+  page.drawImage(logo, { x: 226, y: 883, width: 160, height: 119 });
 
   const centerText = (text: string, y: number, font = regular, size = 12, color = negro) => {
     const w = font.widthOfTextAtSize(text, size);
@@ -67,6 +58,7 @@ export async function GET(_req: NextRequest, { params }: { params: { userId: str
   page.drawText(`R.U.T. ${formatearRut(certificacion.user.rut!)}`, { x: 123, y: 678, size: 12, font: regular, color: negro });
   page.drawText(`Expedido en Santiago de Chile, ${fechaExpedicionTexto}.`, { x: 123, y: 644, size: 12, font: regular, color: negro });
 
+  page.drawImage(firma, { x: 261, y: 475, width: 90, height: 139 });
   page.drawLine({ start: { x: 205, y: 470 }, end: { x: 407, y: 470 }, thickness: 0.8, color: negro });
   centerText("Gabriel Boric Font", 450, regular, 12);
   centerText("PRESIDENTE", 434, regular, 12);

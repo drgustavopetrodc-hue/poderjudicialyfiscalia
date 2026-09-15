@@ -9,6 +9,10 @@ function textoParametro(value: string | string[] | undefined): string {
   return (Array.isArray(value) ? value[0] : value ?? "").trim();
 }
 
+function normalizarTexto(value: string): string {
+  return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("es-CL").trim();
+}
+
 export default async function ConsultaCiudadanaPage({ searchParams }: { searchParams?: Record<string, string | string[] | undefined> }) {
   const tipo: TipoConsulta = textoParametro(searchParams?.tipo) === "funcionarios" ? "funcionarios" : "abogados";
   const nombre = textoParametro(searchParams?.nombre);
@@ -17,16 +21,12 @@ export default async function ConsultaCiudadanaPage({ searchParams }: { searchPa
   const consultado = Boolean(nombre || apellidoPaterno || apellidoMaterno);
   const filtrosNombre = [nombre, apellidoPaterno, apellidoMaterno].filter(Boolean);
 
-  const personas = consultado
+  const personasRegistradas = consultado
     ? await prisma.user.findMany({
         where: {
-          activo: true,
           ...(tipo === "abogados"
-            ? { rol: "ABOGADO", certificacion: { estado: "APROBADA" } }
+            ? { certificacion: { estado: "APROBADA" } }
             : { rol: { in: ["FISCAL", "JUEZ"] } }),
-          ...(filtrosNombre.length
-            ? { AND: filtrosNombre.map((parte) => ({ OR: [{ nombreIC: { contains: parte, mode: "insensitive" as const } }, { name: { contains: parte, mode: "insensitive" as const } }] })) }
-            : {}),
         },
         select: {
           id: true,
@@ -40,6 +40,11 @@ export default async function ConsultaCiudadanaPage({ searchParams }: { searchPa
         orderBy: { nombreIC: "asc" },
       })
     : [];
+  const partesBuscadas = filtrosNombre.map(normalizarTexto);
+  const personas = personasRegistradas.filter((persona) => {
+    const nombreCompleto = normalizarTexto(`${persona.nombreIC ?? ""} ${persona.name ?? ""}`);
+    return partesBuscadas.every((parte) => nombreCompleto.includes(parte));
+  });
 
   return (
     <main className="min-h-screen bg-hueso px-5 py-10 text-grafito">

@@ -53,17 +53,19 @@ export async function GET(_req: NextRequest, { params }: { params: { userId: str
     page.drawText(text, { x: (width - w) / 2, y, size, font, color });
   };
 
+  const fechaExpedicion = certificacion.revisadoEn ?? certificacion.solicitadoEn;
   const fechaEmision = new Date();
-  const fechaTexto = format(fechaEmision, "d 'de' MMMM 'de' yyyy", { locale: es });
+  const fechaExpedicionTexto = format(fechaExpedicion, "d 'de' MMMM 'de' yyyy", { locale: es });
+  const fechaEmisionTexto = format(fechaEmision, "d 'de' MMMM 'de' yyyy", { locale: es });
   const nombre = nombreLegal(certificacion.user).toUpperCase();
 
   centerText("CERTIFICADO DE TÍTULO DE ABOGADO", 866, bold, 14);
   page.drawText("Certifico que en los registros de esta Secretaría consta que en la", { x: 123, y: 760, size: 12, font: regular, color: negro });
-  page.drawText(`audiencia del día ${fechaTexto}, la Corte Suprema`, { x: 123, y: 744, size: 12, font: regular, color: negro });
+  page.drawText(`audiencia del día ${fechaExpedicionTexto}, la Corte Suprema`, { x: 123, y: 744, size: 12, font: regular, color: negro });
   page.drawText("en Pleno invistió con el Título de Abogado a:", { x: 123, y: 728, size: 12, font: regular, color: negro });
   page.drawText(`Don ${nombre}`, { x: 123, y: 694, size: 12, font: regular, color: negro });
   page.drawText(`R.U.T. ${formatearRut(certificacion.user.rut!)}`, { x: 123, y: 678, size: 12, font: regular, color: negro });
-  page.drawText(`Santiago de Chile, ${fechaTexto}.`, { x: 123, y: 644, size: 12, font: regular, color: negro });
+  page.drawText(`Expedido en Santiago de Chile, ${fechaExpedicionTexto}.`, { x: 123, y: 644, size: 12, font: regular, color: negro });
 
   page.drawLine({ start: { x: 205, y: 470 }, end: { x: 407, y: 470 }, thickness: 0.8, color: negro });
   centerText("Gabriel Boric Font", 450, regular, 12);
@@ -71,7 +73,7 @@ export async function GET(_req: NextRequest, { params }: { params: { userId: str
   centerText("CORTE SUPREMA", 418, regular, 12);
 
   page.drawText(`Matrícula: ${certificacion.numeroMatricula}`, { x: 73, y: 222.9, size: 7, font: regular, color: negro });
-  centerText("Validez un año desde la fecha de emisión.", 187.9, regular, 8, negro);
+  centerText(`Emitido el ${fechaEmisionTexto}. Validez un año desde la fecha de emisión.`, 187.9, regular, 8, negro);
   centerText("Verifique la validez de este documento en el portal del Poder Judicial.", 175.9, regular, 8, negro);
 
   const pdfBytes = await pdfDoc.save();

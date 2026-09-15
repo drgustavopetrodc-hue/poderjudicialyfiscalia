@@ -35,7 +35,7 @@ export async function GET(req: NextRequest, { params }: { params: { userId: stri
   const bold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
   const logo = await pdfDoc.embedPng(await readFile(path.join(process.cwd(), "public", "logo-poder-judicial.png")));
   const firma = await pdfDoc.embedPng(await readFile(path.join(process.cwd(), "public", "firma-gabriel-boric.png")));
-  const qrDataUri = await QRCode.toDataURL(`${new URL(req.url).origin}/api/certificados/${certificacion.userId}`, {
+  const qrDataUri = await QRCode.toDataURL(`${new URL(req.url).origin}/verificar/certificado/${certificacion.userId}`, {
     errorCorrectionLevel: "M",
     margin: 1,
     width: 180,
@@ -90,7 +90,7 @@ export async function GET(req: NextRequest, { params }: { params: { userId: stri
   page.drawImage(qr, { x: 73, y: 65, width: 84, height: 84 });
   page.drawText("Verificación digital", { x: 73, y: 55, size: 7, font: regular, color: negro });
   centerText("Validez un año desde la fecha de expedición.", 187.9, regular, 8, negro);
-  centerText("Verifique la validez de este documento en el portal del Poder Judicial.", 175.9, regular, 8, negro);
+  centerText("Verifique la validez de este documento en https://poderjudicialyfiscalia.vercel.app", 175.9, regular, 8, negro);
 
   const pdfBytes = await pdfDoc.save();
 

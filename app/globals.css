@@ -225,6 +225,8 @@ input:focus, select:focus, textarea:focus {
 .judicial-role-pill { display: flex; align-items: center; gap: 8px; color: #fff; font-size: 12px; }
 .judicial-role-pill span, .judicial-role-pill svg { color: #d1d52a; }
 .judicial-signout { display: flex; align-items: center; gap: 7px; margin-top: 13px; color: rgba(255,255,255,.7); font-size: 11px; }
+.judicial-fiscal-link { display: flex; align-items: center; gap: 7px; margin-bottom: 13px; border-radius: 4px; background: #EB3C46; padding: 9px 8px; color: #fff; font-size: 11px; font-weight: 700; line-height: 1.35; }
+.judicial-fiscal-link:hover { background: #c92c36; }
 .judicial-main { min-width: 0; flex: 1; }
 .judicial-topbar {
   display: flex;

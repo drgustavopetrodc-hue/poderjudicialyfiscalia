@@ -204,6 +204,7 @@ export default async function DashboardShell({
         </Link>
         <div className="judicial-sidebar-links"><NavLinks items={items} /></div>
         {rol !== "INVITADO" && <div className="judicial-sidebar-footer">
+          {rol === "FISCAL" && <Link href="/mi-fiscalia" className="judicial-fiscal-link"><ClipboardList size={14} /> Ingresar a mi Fiscalía en Línea</Link>}
           <div className="judicial-role-pill">
             {esPresidente ? <Crown size={16} /> : <span>{nombreRol.charAt(0)}</span>}
             <strong>{nombreRol}</strong>

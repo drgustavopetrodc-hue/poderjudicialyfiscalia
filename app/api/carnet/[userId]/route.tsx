@@ -9,6 +9,7 @@ import {
   formatearRut,
   esPresidenteCorteSuprema,
   esFiscalRegional,
+  discordIdIdentidadCanonica,
 } from "@/lib/identidad";
 import { obtenerAvatarRobloxDataUri } from "@/lib/roblox";
 import { firmarCredencial } from "@/lib/credencial";
@@ -437,12 +438,22 @@ export async function GET(req: NextRequest, { params }: { params: { userId: stri
     const puedeConsultarTodas = esPresidenteCorteSuprema(sessionDiscordId)
       || (sessionRol === "FISCAL" && esFiscalRegional(sessionDiscordId));
 
-    if (!sessionUserId || (sessionUserId !== params.userId && sessionRol !== "ADMIN" && !puedeConsultarTodas)) {
+    const usuarioSolicitado = await prisma.user.findUnique({
+      where: { id: params.userId },
+      select: { discordId: true },
+    });
+    const mismaIdentidad = Boolean(
+      discordIdIdentidadCanonica(sessionDiscordId)
+      && discordIdIdentidadCanonica(sessionDiscordId) === discordIdIdentidadCanonica(usuarioSolicitado?.discordId)
+    );
+
+    if (!sessionUserId || (!mismaIdentidad && sessionUserId !== params.userId && sessionRol !== "ADMIN" && !puedeConsultarTodas)) {
       return NextResponse.json({ error: "No autorizado" }, { status: 403 });
     }
 
-    const usuario = await prisma.user.findUnique({
-      where: { id: params.userId },
+    const identidadCanonica = discordIdIdentidadCanonica(usuarioSolicitado?.discordId);
+    const usuario = await prisma.user.findFirst({
+      where: identidadCanonica ? { discordId: identidadCanonica } : { id: params.userId },
       select: {
         id: true,
         nombreIC: true,

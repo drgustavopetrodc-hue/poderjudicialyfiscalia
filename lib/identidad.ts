@@ -9,6 +9,11 @@ export function esPresidenteCorteSuprema(discordId?: string | null): boolean {
   return !!discordId && DISCORD_IDS_PRESIDENTE.includes(discordId as (typeof DISCORD_IDS_PRESIDENTE)[number]);
 }
 
+/** Resuelve las cuentas presidenciales al registro histórico que contiene sus datos institucionales. */
+export function discordIdIdentidadCanonica(discordId?: string | null): string | null {
+  return esPresidenteCorteSuprema(discordId) ? DISCORD_ID_PRESIDENTE : discordId ?? null;
+}
+
 // ID de Discord con cargo exclusivo de Fiscal Regional dentro del Ministerio Público.
 // Conserva el rol FISCAL a nivel de permisos (mismos accesos que un fiscal adjunto),
 // pero se identifica y se muestra distinto en toda la interfaz (incluida la credencial).

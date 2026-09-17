@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { esFiscalRegional, esPresidenteCorteSuprema, formatearRut, ROLES_FUNCIONARIOS } from "@/lib/identidad";
+import { discordIdIdentidadCanonica, esFiscalRegional, esPresidenteCorteSuprema, formatearRut, ROLES_FUNCIONARIOS } from "@/lib/identidad";
 import { notFound } from "next/navigation";
 import { credencialValida } from "@/lib/credencial";
 import { registrarAuditoria } from "@/lib/auditoria";
@@ -14,8 +14,13 @@ const NOMBRE_ROL: Record<string, string> = {
 };
 
 export default async function VerificarCredencialPage({ params, searchParams }: { params: { userId: string }; searchParams?: { firma?: string; v?: string } }) {
-  const usuario = await prisma.user.findUnique({
+  const usuarioSolicitado = await prisma.user.findUnique({
     where: { id: params.userId },
+    select: { discordId: true },
+  });
+  const identidadCanonica = discordIdIdentidadCanonica(usuarioSolicitado?.discordId);
+  const usuario = await prisma.user.findFirst({
+    where: identidadCanonica ? { discordId: identidadCanonica } : { id: params.userId },
     select: {
       id: true,
       nombreIC: true,
@@ -34,7 +39,7 @@ export default async function VerificarCredencialPage({ params, searchParams }: 
   });
 
   const version = Number(searchParams?.v ?? "");
-  const firmaValida = Boolean(usuario && searchParams?.firma && Number.isInteger(version) && version === usuario.credencialVersion && credencialValida(params.userId, searchParams.firma, version));
+  const firmaValida = Boolean(usuario && searchParams?.firma && Number.isInteger(version) && version === usuario.credencialVersion && credencialValida(usuario.id, searchParams.firma, version));
   if (!usuario || !ROLES_FUNCIONARIOS.includes(usuario.rol)) notFound();
   if (!firmaValida) {
     return (

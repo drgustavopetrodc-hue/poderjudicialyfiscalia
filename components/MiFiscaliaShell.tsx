@@ -12,14 +12,14 @@ export default function MiFiscaliaShell({
   rol?: string;
 }) {
   const items = [
-    { href: "/mi-fiscalia/denuncias?tab=presentar", label: "Denuncias" },
+    { href: "/mi-fiscalia/denuncias?tab=presentar", label: "Gestionar Causas" },
   ];
 
   return (
     <div className="min-h-screen bg-[#f4f8fb] text-[#16324a]">
       <aside className="fixed left-0 top-0 h-full w-64 border-r border-[#d7e8f4] bg-[#0F69B4] text-white shadow-xl">
         <div className="flex items-center gap-3 border-b border-white/20 px-5 py-5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-md bg-white text-[#0F69B4]">
+          <div className="flex h-9 w-9 items-center justify-center rounded-sm bg-white text-[#0F69B4]">
             <Scale size={18} />
           </div>
           <div>
@@ -33,7 +33,7 @@ export default function MiFiscaliaShell({
             <Link
               key={item.href}
               href={item.href}
-              className="flex items-center gap-3 rounded-xl bg-white/10 px-3 py-3 text-sm font-medium text-white/90 transition hover:bg-[#EB3C46]"
+              className="flex items-center gap-3 rounded-sm bg-white/10 px-3 py-3 text-sm font-medium text-white/90 transition hover:bg-[#EB3C46]"
             >
               <FileText size={16} className="text-white" />
               {item.label}
@@ -42,7 +42,7 @@ export default function MiFiscaliaShell({
         </nav>
 
         <div className="absolute bottom-0 left-0 right-0 border-t border-white/20 p-4 text-xs text-white/70">
-          <div className="mb-2 flex items-center gap-2 rounded-lg bg-white/10 px-2 py-2">
+          <div className="mb-2 flex items-center gap-2 rounded-sm bg-white/10 px-2 py-2">
             <ShieldAlert size={14} className="text-white" />
             {rol ? rol : "Sin rol"}
           </div>
@@ -59,7 +59,7 @@ export default function MiFiscaliaShell({
               <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-[#0F69B4]">Mi Fiscalía en Línea</p>
               <h1 className="text-2xl font-black text-[#11314d]">{title}</h1>
             </div>
-            <div className="rounded-full bg-[#EB3C46] px-3 py-1 text-xs font-bold uppercase tracking-[0.2em] text-white">
+            <div className="rounded-sm bg-[#EB3C46] px-3 py-1 text-xs font-bold uppercase tracking-[0.2em] text-white">
               Fiscalía
             </div>
           </div>

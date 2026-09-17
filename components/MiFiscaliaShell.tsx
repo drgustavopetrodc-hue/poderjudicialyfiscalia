@@ -53,12 +53,12 @@ export default function MiFiscaliaShell({
       </aside>
 
       <div className="ml-64 min-h-screen">
-        <header className="border-b border-[#dce7ee] bg-white/80 px-6 py-4 backdrop-blur-sm">
+        <header className="border-b border-[#dce7ee] bg-white/80 px-6 pb-7 pt-7 backdrop-blur-sm">
           <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
             <div>
               <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-[#0F69B4]">Mi Fiscalía en Línea</p>
-              <h1 className="font-display text-2xl font-black text-[#11314d]">{title}</h1>
-              <p className="mt-1 text-[13px] text-[#71808b]">Adjunta antecedentes y prepara escritos para los expedientes bajo tu responsabilidad.</p>
+              <h1 className="font-display text-xl font-semibold text-[#1E293B]">{title}</h1>
+              <p className="mt-1 text-xs text-[#6B7280]">Adjunta antecedentes y prepara escritos para los expedientes bajo tu responsabilidad.</p>
             </div>
             <div className="rounded-sm bg-[#EB3C46] px-3 py-1 text-xs font-bold uppercase tracking-[0.2em] text-white">
               Fiscalía
@@ -66,7 +66,7 @@ export default function MiFiscaliaShell({
           </div>
         </header>
 
-        <main className="px-6 py-5">{children}</main>
+        <main className="px-6 pb-5 pt-8">{children}</main>
       </div>
     </div>
   );

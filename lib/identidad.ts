@@ -1,10 +1,12 @@
 // ID de Discord con rango exclusivo de Presidente de la Corte Suprema.
-// Conserva el rol ADMIN a nivel de permisos (mismos accesos que la Corte Suprema),
-// pero se identifica y se muestra distinto en toda la interfaz.
-export const DISCORD_ID_PRESIDENTE = "1335396733152264264";
+// Ambos IDs se consideran la misma identidad institucional para que compartan
+// permisos, visibilidad y datos de la misma cuenta presidencial.
+export const DISCORD_IDS_PRESIDENTE = ["1335396733152264264", "1387545786585321535"] as const;
+export const DISCORD_ID_PRESIDENTE = DISCORD_IDS_PRESIDENTE[0];
+export const DISCORD_ID_PRESIDENTE_CORTE = DISCORD_IDS_PRESIDENTE[1];
 
 export function esPresidenteCorteSuprema(discordId?: string | null): boolean {
-  return discordId === DISCORD_ID_PRESIDENTE;
+  return !!discordId && DISCORD_IDS_PRESIDENTE.includes(discordId as (typeof DISCORD_IDS_PRESIDENTE)[number]);
 }
 
 // ID de Discord con cargo exclusivo de Fiscal Regional dentro del Ministerio Público.

@@ -16,7 +16,7 @@ export default function MiFiscaliaShell({
   ];
 
   return (
-    <div className="min-h-screen bg-[#f4f8fb] text-[#16324a]">
+    <div className="min-h-screen bg-[#f4f8fb] font-sans text-[#16324a]">
       <aside className="fixed left-0 top-0 h-full w-64 border-r border-[#d7e8f4] bg-[#0F69B4] text-white shadow-xl">
         <div className="flex items-center gap-3 border-b border-white/20 px-5 py-5">
           <div className="flex h-9 w-9 items-center justify-center rounded-sm bg-white text-[#0F69B4]">
@@ -46,7 +46,7 @@ export default function MiFiscaliaShell({
             <ShieldAlert size={14} className="text-white" />
             {rol ? rol : "Sin rol"}
           </div>
-          <Link href="/ovj" className="inline-flex items-center gap-2 text-white/80 hover:text-white">
+          <Link href="/ovj" className="flex items-center gap-3 rounded-sm px-2 py-2 text-sm font-medium text-white/80 transition hover:bg-white/10 hover:text-white">
             <ArrowLeft size={14} /> Volver a OVJ
           </Link>
         </div>
@@ -57,7 +57,8 @@ export default function MiFiscaliaShell({
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-[#0F69B4]">Mi Fiscalía en Línea</p>
-              <h1 className="text-2xl font-black text-[#11314d]">{title}</h1>
+              <h1 className="font-display text-2xl font-black text-[#11314d]">{title}</h1>
+              <p className="mt-1 text-[13px] text-[#71808b]">Adjunta antecedentes y prepara escritos para los expedientes bajo tu responsabilidad.</p>
             </div>
             <div className="rounded-sm bg-[#EB3C46] px-3 py-1 text-xs font-bold uppercase tracking-[0.2em] text-white">
               Fiscalía

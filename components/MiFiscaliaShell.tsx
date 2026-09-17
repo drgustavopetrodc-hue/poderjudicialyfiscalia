@@ -33,7 +33,7 @@ export default function MiFiscaliaShell({
             <Link
               key={item.href}
               href={item.href}
-              className="flex items-center gap-3 rounded-sm bg-white/10 px-3 py-3 text-sm font-medium text-white/90 transition hover:bg-[#EB3C46]"
+              className="flex items-center gap-3 rounded-sm bg-white/10 px-3 py-2.5 text-[13px] font-normal text-white/90 transition hover:bg-[#EB3C46]"
             >
               <FileText size={16} className="text-white" />
               {item.label}
@@ -54,7 +54,7 @@ export default function MiFiscaliaShell({
 
       <div className="ml-64 min-h-screen">
         <header className="border-b border-[#dce7ee] bg-white/80 px-6 py-4 backdrop-blur-sm">
-          <div className="flex items-center justify-between gap-4">
+          <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
             <div>
               <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-[#0F69B4]">Mi Fiscalía en Línea</p>
               <h1 className="font-display text-2xl font-black text-[#11314d]">{title}</h1>
@@ -66,7 +66,7 @@ export default function MiFiscaliaShell({
           </div>
         </header>
 
-        <main className="p-6">{children}</main>
+        <main className="px-6 py-5">{children}</main>
       </div>
     </div>
   );

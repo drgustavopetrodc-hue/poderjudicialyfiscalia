@@ -50,7 +50,7 @@ export default function SubirVideoFiscal({ causaId }: { causaId: string }) {
         </div>
       )}
       {error && <p className="text-xs text-red-600">{error}</p>}
-      <p className="text-[11px] text-grafito/40">Formatos: MP4, WebM, MOV · Máximo 200 MB. Se sube directo, sin pasar por el servidor.</p>
+      <p className="text-[11px] text-grafito/40">Formatos: MP4, WebM, MOV · Hasta 5 GB. Se sube directo y por partes, sin pasar por el servidor.</p>
     </div>
   );
 }

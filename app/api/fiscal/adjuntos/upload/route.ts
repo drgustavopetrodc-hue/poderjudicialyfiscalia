@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { esFiscalRegional } from "@/lib/identidad";
 
 export const dynamic = "force-dynamic";
 
@@ -23,6 +24,7 @@ export async function POST(request: Request): Promise<NextResponse> {
         const session = await getServerSession(authOptions);
         const userId = (session?.user as any)?.id as string | undefined;
         const rol = (session?.user as any)?.rol as string | undefined;
+        const esRegional = rol === "FISCAL" && esFiscalRegional((session?.user as any)?.discordId);
         if (!userId || (rol !== "FISCAL" && rol !== "ADMIN")) {
           throw new Error("No autorizado para subir videos.");
         }
@@ -32,14 +34,17 @@ export async function POST(request: Request): Promise<NextResponse> {
         if (!causaId) throw new Error("Falta indicar a qué causa pertenece el video.");
 
         const causa = await prisma.causa.findFirst({
-          where: { id: causaId, ...(rol === "ADMIN" ? {} : { fiscalId: userId }) },
+          where: {
+            id: causaId,
+            ...(rol === "ADMIN" || esRegional ? {} : { OR: [{ fiscalId: userId }, { fiscalAuxiliarId: userId }] }),
+          },
           select: { id: true },
         });
         if (!causa) throw new Error("No tienes acceso a esta causa.");
 
         return {
           allowedContentTypes: ["video/mp4", "video/webm", "video/quicktime"],
-          maximumSizeInBytes: 200 * 1024 * 1024, // 200 MB
+          maximumSizeInBytes: Number(process.env.VIDEO_MAX_SIZE_GB ?? 5) * 1024 * 1024 * 1024,
           addRandomSuffix: true,
           tokenPayload: JSON.stringify({ userId, causaId }),
         };

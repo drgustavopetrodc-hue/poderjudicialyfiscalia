@@ -46,7 +46,10 @@ El bot debe tener permisos de **View Channel**, **Create Posts**, **Send Message
 post de Discord a cada causa.
 
 La fiscalía permite adjuntar imágenes de evidencia y oficios PDF de hasta 10 MB,
-además de registrar testimonios escritos. Estos antecedentes se guardan en Postgres,
+además de videos de hasta 5 GB mediante subida directa y multipart a Vercel Blob.
+Los videos no pasan por la función de Next.js ni se guardan en Postgres: solo se
+registra su URL en el expediente. El límite de video puede cambiarse con
+`VIDEO_MAX_SIZE_GB` en las variables de entorno de Vercel. Estos antecedentes
 aparecen en el expediente y se incluyen en el PDF actualizado.
 
 ## 5. Sincronización automática de roles con Discord

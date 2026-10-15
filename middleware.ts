@@ -34,7 +34,7 @@ export default withAuth(
       authorized: ({ token }) => !!token,
     },
     pages: {
-      signIn: "/ovj",
+      signIn: "/login",
     },
   }
 );

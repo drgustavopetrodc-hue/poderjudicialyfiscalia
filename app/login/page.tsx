@@ -2,14 +2,9 @@
 
 import { signIn } from "next-auth/react";
 import { Scale, MessageCircle, HelpCircle, ShieldCheck } from "lucide-react";
-import { FormEvent, useState, useEffect } from "react";
+import { FormEvent, useState } from "react";
 
 export default function LoginPage() {
-  useEffect(() => {
-    if (window.location.pathname === "/login") {
-      window.location.href = "/ovj";
-    }
-  }, []);
   const [rut, setRut] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");

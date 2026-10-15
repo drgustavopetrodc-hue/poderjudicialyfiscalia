@@ -19,7 +19,7 @@ export default withAuth(
     const perfilCompleto = (req.nextauth.token as any)?.perfilCompleto;
     const passwordConfigurada = (req.nextauth.token as any)?.passwordConfigurada;
 
-    if (pathname !== "/perfil" && pathname !== "/login" && (perfilCompleto === false || passwordConfigurada === false)) {
+    if (pathname !== "/perfil" && pathname !== "/ovj" && (perfilCompleto === false || passwordConfigurada === false)) {
       return NextResponse.redirect(new URL("/perfil?setup=1", req.url));
     }
 
@@ -34,7 +34,7 @@ export default withAuth(
       authorized: ({ token }) => !!token,
     },
     pages: {
-      signIn: "/login",
+      signIn: "/ovj",
     },
   }
 );

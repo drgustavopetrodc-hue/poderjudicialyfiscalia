@@ -47,7 +47,7 @@ export const authOptions: NextAuthOptions = {
   // del usuario sin golpear la base de datos en cada request.
   session: { strategy: "jwt" },
   pages: {
-    signIn: "/login",
+    signIn: "/ovj",
   },
   callbacks: {
     async jwt({ token, user, account }) {

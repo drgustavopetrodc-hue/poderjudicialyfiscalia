@@ -5,16 +5,26 @@ import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 import { ChevronDown, LockKeyhole, MessageCircle, Search, SearchCheck, X } from "lucide-react";
 
-export default function PortalHome() {
+type PortalHomeProps = {
+  callbackUrl?: string;
+  authError?: string;
+};
+
+export default function PortalHome({ callbackUrl: callbackUrlParam, authError }: PortalHomeProps) {
   const router = useRouter();
-  const [serviciosAbiertos, setServiciosAbiertos] = useState(false);
+  const [serviciosAbiertos, setServiciosAbiertos] = useState(Boolean(authError));
   const [accesoAbierto, setAccesoAbierto] = useState(false);
   const [rut, setRut] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [cargando, setCargando] = useState(false);
 
-  const callbackUrl = "/consulta";
+  const callbackUrl = callbackUrlParam || "/consulta";
+  const authErrorMessage = authError === "OAuthCallback"
+    ? "No se pudo completar el acceso con Discord. Inténtalo de nuevo."
+    : authError
+      ? "Hubo un problema al iniciar sesión. Inténtalo de nuevo."
+      : "";
 
   async function ingresarConClave(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -51,6 +61,7 @@ export default function PortalHome() {
         <div className="absolute inset-0 bg-[#061522]/60" />
         <div className="relative mx-auto max-w-5xl">
           <h1 className="text-center text-3xl font-extrabold tracking-wide text-white drop-shadow md:text-5xl">OFICINA JUDICIAL VIRTUAL</h1>
+          {authErrorMessage && <p role="alert" className="mx-auto mt-5 max-w-2xl rounded bg-red-950/70 px-4 py-3 text-center text-sm text-white">{authErrorMessage}</p>}
           <div className="mt-14 grid gap-12 md:grid-cols-3">
             <button onClick={() => setServiciosAbiertos((value) => !value)} className="portal-service border-l-4 border-[#d3df28]">Todos los servicios <ChevronDown size={18} className={serviciosAbiertos ? "rotate-180" : ""} /></button>
             <button onClick={() => router.push("/ingreso-causas/acceso")} className="portal-service border-l-4 border-[#d3df28]">Ingreso de causas y escritos</button>

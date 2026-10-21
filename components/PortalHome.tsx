@@ -19,7 +19,7 @@ export default function PortalHome({ callbackUrl: callbackUrlParam, authError }:
   const [error, setError] = useState("");
   const [cargando, setCargando] = useState(false);
 
-  const callbackUrl = callbackUrlParam || "/consulta";
+  const callbackUrl = callbackUrlParam || "/dashboard";
   const authErrorMessage = authError === "OAuthCallback"
     ? "No se pudo completar el acceso con Discord. Inténtalo de nuevo."
     : authError

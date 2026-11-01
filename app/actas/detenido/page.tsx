@@ -124,7 +124,7 @@ async function crearActa(formData: FormData) {
     redirect("/actas/detenido?error=incompleto");
   }
 
-  // La causal "orden judicial previa" u "otra" exige identificar la orden o el fundamento.
+  
   if ((causalDetencion === "ORDEN_JUDICIAL" || causalDetencion === "OTRA") && !ordenNumero) {
     redirect("/actas/detenido?error=incompleto");
   }

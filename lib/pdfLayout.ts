@@ -11,15 +11,9 @@ export const COLORES = {
 };
 
 export const MARGIN = 48;
-export const PAGE_SIZE: [number, number] = [595.28, 841.89]; // A4 vertical
+export const PAGE_SIZE: [number, number] = [595.28, 841.89]; 
 
-/**
- * Constructor de documentos legales en PDF (órdenes, certificados, etc.).
- * Encapsula la paginación automática y el dibujo de tablas, casillas de
- * verificación y líneas de firma, para que todos los documentos del sistema
- * compartan el mismo diseño y no haya que corregir la alineación en 3 lugares
- * distintos cada vez.
- */
+
 export async function crearConstructorPdf(pdf: PDFDocument) {
   const regular = await pdf.embedFont(StandardFonts.Helvetica);
   const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
@@ -80,7 +74,7 @@ export async function crearConstructorPdf(pdf: PDFDocument) {
     y -= 14;
   }
 
-  /** Tabla de dos columnas (campo / valor). */
+  
   function filaTabla(campo: string, valor: string) {
     const size = 10;
     const colCampo = 165;
@@ -91,21 +85,16 @@ export async function crearConstructorPdf(pdf: PDFDocument) {
       page.drawText(linea, { x: MARGIN + colCampo, y, size, font: regular, color: COLORES.navy });
       y -= size + 6;
     }
-    // La línea va a medio camino del espacio en blanco entre esta fila y la
-    // siguiente, no pegada a la fila siguiente: con size+6=16 de interlineado
-    // y mayúsculas que suben ~7.2pt sobre su línea base, dibujarla a -2 (como
-    // antes) la dejaba dentro de la altura de las mayúsculas de la fila
-    // siguiente, cortándolas por arriba.
+    
+    
+    
+    
+    
     page.drawLine({ start: { x: MARGIN, y: y + 4 }, end: { x: width - MARGIN, y: y + 4 }, thickness: 0.4, color: COLORES.paleLine });
     y -= 8;
   }
 
-  /**
-   * Casilla de verificación (☐/☒). La caja se dibuja centrada respecto a la
-   * altura real del texto (tomando en cuenta la altura de las mayúsculas del
-   * tamaño de fuente usado), no respecto a la línea base — así la "X" queda
-   * visualmente a la misma altura que el texto, no más abajo.
-   */
+  
   function casilla(marcada: boolean, texto: string) {
     const size = 9.5;
     const lineas = wrapTexto(texto, regular, size, width - MARGIN * 2 - 20);
@@ -129,7 +118,7 @@ export async function crearConstructorPdf(pdf: PDFDocument) {
     y = height - 74 - 28;
   }
 
-  /** Plantilla de oficio/resolución: identidad, identificador y franja de título. */
+  
   function encabezadoOficio(marca: string, identificador: string, titulo: string) {
     page.drawText(marca.toUpperCase(), { x: MARGIN, y: height - 42, size: 12, font: bold, color: COLORES.navy });
     page.drawText("REPÚBLICA DE CHILE", { x: MARGIN, y: height - 55, size: 6.5, font: regular, color: COLORES.gray });
@@ -143,7 +132,7 @@ export async function crearConstructorPdf(pdf: PDFDocument) {
     y = height - 139;
   }
 
-  /** Ficha compacta de antecedentes, similar a un oficio y no a una tabla de celdas. */
+  
   function fichaOficio(campos: { etiqueta: string; valor: string }[]) {
     const etiquetaAncho = 122;
     const size = 9;
@@ -161,7 +150,7 @@ export async function crearConstructorPdf(pdf: PDFDocument) {
     y -= alto + 18;
   }
 
-  /** Bloque de firma: línea, luego el nombre debajo, luego la etiqueta del cargo. */
+  
   function lineaDeFirma(xInicio: number, ancho: number, nombre: string | null, etiqueta: string) {
     const yFirma = y;
     page.drawLine({ start: { x: xInicio, y: yFirma }, end: { x: xInicio + ancho, y: yFirma }, thickness: 0.8, color: COLORES.gray });
@@ -171,20 +160,11 @@ export async function crearConstructorPdf(pdf: PDFDocument) {
     page.drawText(etiqueta, { x: xInicio, y: yFirma - (nombre ? 27 : 14), size: 8.5, font: regular, color: COLORES.lightGray });
   }
 
-  /**
-   * Bloque de firmas en grilla de N columnas (por defecto 2). Encapsula el
-   * cálculo de X por columna y el avance de Y por fila para evitar el error
-   * más común al armar esta sección a mano: reutilizar el mismo X para dos
-   * columnas distintas, o decrementar Y por cada firma en vez de por fila
-   * completa (lo que apila todas las firmas en una sola columna).
-   *
-   * Todas las firmas de una misma fila comparten el mismo Y — igual que
-   * `lineaDeFirma` sola —, y solo se avanza Y una vez que la fila se completa.
-   */
+  
   function bloqueFirmas(firmas: { nombre: string | null; etiqueta: string }[], columnas = 2) {
     const gap = 24;
     const anchoColumna = (width - MARGIN * 2 - gap * (columnas - 1)) / columnas;
-    const altoFila = 40; // línea + nombre (si existe) + etiqueta, con margen
+    const altoFila = 40; 
 
     firmas.forEach((firma, i) => {
       const col = i % columnas;

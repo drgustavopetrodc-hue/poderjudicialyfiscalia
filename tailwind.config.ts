@@ -5,7 +5,7 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Paleta institucional: azul marino (autoridad) + dorado (sello/togas) + grafito
+        
         marino: {
           950: "#0b1526",
           900: "#101f38",

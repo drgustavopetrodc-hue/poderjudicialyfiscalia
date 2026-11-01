@@ -7,12 +7,7 @@ import { esFiscalRegional } from "@/lib/identidad";
 
 export const dynamic = "force-dynamic";
 
-/**
- * Este endpoint NO recibe el video en sí (eso evitaría el límite de tamaño de
- * las funciones serverless de Vercel). Solo autoriza la subida: el navegador
- * sube el archivo directo a Vercel Blob, y cuando termina, Vercel llama de
- * vuelta a este mismo endpoint para avisar que ya está listo.
- */
+
 export async function POST(request: Request): Promise<NextResponse> {
   const body = (await request.json()) as HandleUploadBody;
 

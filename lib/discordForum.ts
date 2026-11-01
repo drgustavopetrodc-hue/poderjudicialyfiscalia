@@ -91,10 +91,7 @@ async function discordRequest(path: string, init: RequestInit) {
   });
 }
 
-/**
- * Crea el post del foro si aún no existe y publica el PDF actualizado.
- * Los errores se absorben para no impedir que el sistema judicial guarde la causa.
- */
+
 export async function publicarCausaEnDiscord(causaId: string, evento: string) {
   try {
     const causa = await cargarCausa(causaId);
@@ -124,8 +121,8 @@ export async function publicarCausaEnDiscord(causaId: string, evento: string) {
     form.append("payload_json", JSON.stringify({
       content: `🔄 **${evento}** · Estado: \`${causa.estado.replace(/_/g, " ")}\``,
     }));
-    // Convertimos explícitamente a ArrayBuffer para que TypeScript y el runtime
-    // de Vercel acepten el Blob sin confundir ArrayBufferLike con SharedArrayBuffer.
+    
+    
     const pdfArray = new Uint8Array(pdf.length);
     pdfArray.set(pdf);
     form.append(

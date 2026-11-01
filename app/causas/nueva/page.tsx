@@ -46,12 +46,12 @@ async function crearCausa(formData: FormData) {
 
   const delito = articulosSeleccionados.map((a) => `Art. ${a.numero} — ${a.delito}`).join("; ");
 
-  // ---------- Datos del imputado (permite "sin individualizar") ----------
+  
   const imputadoIndividualizado = formData.get("imputadoIndividualizado") === "on";
   const imputadoNombre = String(formData.get("imputadoNombre") ?? "").trim();
   const imputadoRut = String(formData.get("imputadoRut") ?? "").trim();
 
-  // ---------- Datos para la Orden de Investigar ----------
+  
   const fiscalia = String(formData.get("fiscalia") ?? "").trim();
   const unidadPolicial = String(formData.get("unidadPolicial") ?? "AMBAS");
   const victimaNombre = String(formData.get("victimaNombre") ?? "").trim();
@@ -97,7 +97,7 @@ async function crearCausa(formData: FormData) {
         },
       },
     });
-      // Si venimos de una denuncia, marcarla como RECIBIDA
+      
       const fromDenunciaId = String(formData.get('fromDenunciaId') ?? '').trim();
       if (fromDenunciaId) {
         try {
@@ -129,14 +129,14 @@ export default async function NuevaCausaPage({
     redirect("/dashboard?error=sin-permiso");
   }
 
-  // Si venimos de una denuncia, obtenerla para prefijar campos
+  
   let denuncia: any = null;
   const fromDenunciaId = searchParams?.fromDenunciaId;
   if (fromDenunciaId) {
     denuncia = await prisma.denuncia.findUnique({ where: { id: fromDenunciaId }, include: { denunciante: true } });
   }
 
-  // Detectar artículos sugeridos a partir de la descripción de la denuncia (si existe)
+  
   const descripcionTexto = (denuncia?.descripcion ?? "").toLowerCase();
   const articulosTodos = codigoPenalPorTitulo().flatMap((t) => t.articulos);
   const sugeridosSet = new Set<number>();
@@ -184,7 +184,7 @@ export default async function NuevaCausaPage({
           </div>
         )}
 
-        {/* ---------- Datos generales ---------- */}
+        {}
         <div className="grid gap-3">
           <p className="eyebrow text-blue-700">Datos generales</p>
           <div className="grid sm:grid-cols-2 gap-3">
@@ -223,7 +223,7 @@ export default async function NuevaCausaPage({
           </div>
         </div>
 
-        {/* ---------- Delito ---------- */}
+        {}
         <div>
           <label className="block text-sm text-grafito/60 mb-1">Delito(s) imputado(s) — Código Penal</label>
           <p className="text-[11px] text-grafito/40 mb-2">
@@ -255,7 +255,7 @@ export default async function NuevaCausaPage({
           {fromDenunciaId && <input type="hidden" name="fromDenunciaId" value={fromDenunciaId} />}
         </div>
 
-        {/* ---------- Imputado ---------- */}
+        {}
         <div className="rounded-xl border border-blue-100 bg-blue-50/40 p-4 grid gap-3">
           <p className="eyebrow text-blue-700">Imputado</p>
           <label className="flex items-center gap-2 text-sm text-grafito/70">
@@ -277,7 +277,7 @@ export default async function NuevaCausaPage({
           </div>
         </div>
 
-        {/* ---------- Orden de investigar ---------- */}
+        {}
         <div className="rounded-xl border border-grafito/10 p-4 grid gap-4">
           <div>
             <p className="eyebrow text-blue-700 mb-1">Orden de investigar</p>

@@ -20,7 +20,7 @@ async function resolverCertificacion(formData: FormData) {
     data: { estado: estado as any, observaciones, revisadoEn: new Date() },
   });
 
-  // Si se aprueba, el usuario pasa a tener rol ABOGADO automáticamente
+  
   if (estado === "APROBADA") {
     const cert = await prisma.certificacionAbogado.findUnique({ where: { id } });
     if (cert) await prisma.user.update({ where: { id: cert.userId }, data: { rol: "ABOGADO" } });

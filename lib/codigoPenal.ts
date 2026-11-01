@@ -187,7 +187,7 @@ export function articuloPorNumero(numero: number): ArticuloPenal | undefined {
   return CODIGO_PENAL.find((a) => a.numero === numero);
 }
 
-/** Agrupa el catálogo por título, en el mismo orden en que aparecen en el Código. */
+
 export function codigoPenalPorTitulo(): { titulo: string; articulos: ArticuloPenal[] }[] {
   const titulos: string[] = [];
   const mapa = new Map<string, ArticuloPenal[]>();

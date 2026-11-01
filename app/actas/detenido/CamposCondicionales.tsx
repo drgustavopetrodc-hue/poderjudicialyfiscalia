@@ -9,12 +9,7 @@ export const CAUSALES_DETENCION = [
   { value: "OTRA", label: "Otra" },
 ] as const;
 
-/**
- * Select de causal de detención. Cuando la causal es "Orden judicial previa"
- * u "Otra", exige el N° de orden o el detalle correspondiente — igual que en
- * la práctica, donde una detención por orden judicial sin número de causa
- * asociada no es trazable.
- */
+
 export function CausalDetencionField({
   defaultValue = "FLAGRANCIA",
 }: {
@@ -56,11 +51,7 @@ export function CausalDetencionField({
   );
 }
 
-/**
- * "Sin lesiones aparentes" y "detalle de constatación de lesiones" son
- * mutuamente excluyentes: no tiene sentido dejar ambos campos abiertos
- * a la vez, así que uno oculta al otro.
- */
+
 export function LesionesField() {
   const [sinLesiones, setSinLesiones] = useState(false);
 

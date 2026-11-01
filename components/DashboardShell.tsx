@@ -27,7 +27,7 @@ import {
 } from "lucide-react";
 import NavLinks, { type NavItem } from "./NavLinks";
 
-// Instanciamos los íconos como JSX (<Icono size={15} />) para que sean 100% serializables
+
 const NAV_POR_ROL: Record<string, NavItem[]> = {
   INVITADO: [],
   ADMIN: [
@@ -183,8 +183,8 @@ export default async function DashboardShell({
       ? NAV_POR_ROL.INVITADO
       : [misCausas[rol] ?? misCausas.CIUDADANO, ...NAV_OJV];
 
-  // La identidad de Presidente se determina por el usuario real de la sesión
-  // (no por el prop "rol", que puede reflejar una vista "ver como X" del admin).
+  
+  
   const session = await getServerSession(authOptions);
   const esPresidente = esPresidenteCorteSuprema((session?.user as any)?.discordId);
   const esFiscalRegional = rol === "FISCAL" && (session?.user as any)?.discordId === "821164300386435102";

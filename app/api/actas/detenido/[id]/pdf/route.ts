@@ -104,12 +104,12 @@ export async function GET(_request: Request, { params }: { params: { id: string 
   doc.tituloSeccion("VII", "Observaciones adicionales");
   doc.parrafo(acta.observaciones || "Sin observaciones adicionales.", 10);
 
-  // VIII. Firmas — antes se armaba a mano con lineaDeFirma + filaTabla y la
-  // segunda fila (testigo) quedaba pisada por "Hora de término", porque
-  // lineaDeFirma no avanza `y` por sí sola y filaTabla siempre dibuja en la
-  // columna izquierda. bloqueFirmas resuelve la grilla de firmas por fila,
-  // dejando la columna 2 de la fila del testigo vacía (no requiere firma), y
-  // "Hora de término" se agrega después como campo normal, ya en su propio `y`.
+  
+  
+  
+  
+  
+  
   doc.tituloSeccion("VIII", "Firmas");
   doc.bloqueFirmas([
     { nombre: acta.funcionarioNombre, etiqueta: "Funcionario que informa los derechos" },

@@ -277,8 +277,8 @@ export default async function CausaDetallePage({ params }: { params: { id: strin
   if (rol === "CIUDADANO" && !esParteDeLaCausa) redirect("/causas?error=sin-permiso");
   const esFiscalRegionalActual = rol === "FISCAL" && esFiscalRegional((session?.user as any)?.discordId);
   if (rol === "FISCAL" && !esFiscalRegionalActual && causa.fiscalId !== userId && causa.fiscalAuxiliarId !== userId) redirect("/causas?error=sin-permiso");
-  // Permite seguir abriendo expedientes mientras una instalación existente
-  // termina de aplicar la tabla nueva de órdenes de captura.
+  
+  
   let ordenesCaptura: any[] = [];
   try {
     ordenesCaptura = await prisma.ordenCaptura.findMany({
@@ -292,7 +292,7 @@ export default async function CausaDetallePage({ params }: { params: { id: strin
 
   const esJuezDeLaCausa = causa.juezId === userId;
   const esFiscalDeLaCausa = causa.fiscalId === userId || causa.fiscalAuxiliarId === userId;
-  // Los ADMIN representan a la Corte Suprema: tienen todas las facultades de un juez sobre cualquier causa.
+  
   const actuaComoJuez = esJuezDeLaCausa || rol === "ADMIN";
   const puedeDictarSentencia = actuaComoJuez && causa.estado === "EN_JUICIO" && !causa.sentencia;
   const puedeAsumirDefensa = (rol === "ABOGADO" || rol === "ADMIN") && !causa.defensas.some((d) => d.abogadoId === userId);
@@ -536,7 +536,7 @@ export default async function CausaDetallePage({ params }: { params: { id: strin
         )}
       </section>
 
-      {/* Defensa técnica */}
+      {}
       <section className="panel-card p-6 mb-6">
         <h2 className="font-display text-xl mb-3">Defensa técnica</h2>
         {causa.defensas.length === 0 ? (
@@ -557,7 +557,7 @@ export default async function CausaDetallePage({ params }: { params: { id: strin
         )}
       </section>
 
-      {/* Audiencias */}
+      {}
       <section className="panel-card p-6 mb-6">
         <h2 className="font-display text-xl mb-3">Audiencias</h2>
         {causa.audiencias.length === 0 ? (
@@ -599,7 +599,7 @@ export default async function CausaDetallePage({ params }: { params: { id: strin
         )}
       </section>
 
-      {/* Sentencia */}
+      {}
       <section className="panel-card p-6">
         <h2 className="font-display text-xl mb-3">Sentencia</h2>
         {causa.sentencia ? (

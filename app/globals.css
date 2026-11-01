@@ -18,7 +18,7 @@ body {
   font-feature-settings: "cv11", "ss01";
 }
 
-/* Scrollbar discreto y consistente con la paleta */
+
 ::-webkit-scrollbar { width: 9px; height: 9px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(11, 21, 38, 0.15); border-radius: 999px; }
@@ -26,7 +26,7 @@ body {
 
 ::selection { background: rgba(37, 99, 235, 0.18); }
 
-/* ---------- Texto de apoyo ---------- */
+
 .eyebrow {
   color: rgba(30, 41, 59, 0.45);
   font-family: "JetBrains Mono", monospace;
@@ -37,7 +37,7 @@ body {
   text-transform: uppercase;
 }
 
-/* ---------- Botones ---------- */
+
 .button-primary, .button-secondary, .button-outline, .button-danger {
   display: inline-flex;
   align-items: center;
@@ -66,7 +66,7 @@ body {
 .button-danger { border: 1px solid rgba(185,28,28,.25); color: #b91c1c; background: rgba(254,226,226,.5); }
 .button-danger:hover { background: rgba(254,226,226,.9); }
 
-/* ---------- Tarjetas ---------- */
+
 .stat-card {
   border: 1px solid rgba(30,41,59,.08);
   border-radius: 16px;
@@ -87,7 +87,7 @@ body {
   box-shadow: 0 1px 2px rgba(11,21,38,.04), 0 16px 36px -12px rgba(11,21,38,.12);
 }
 
-/* ---------- Insignias de estado ---------- */
+
 .badge {
   display: inline-flex;
   align-items: center;
@@ -102,7 +102,7 @@ body {
   line-height: 1;
 }
 
-/* ---------- Ornamento institucional ---------- */
+
 .sello {
   background-image: radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.14), transparent 70%);
 }
@@ -114,7 +114,7 @@ body {
   background-size: 44px 44px;
 }
 
-/* ---------- Inputs ---------- */
+
 input, select, textarea {
   font-family: inherit;
 }
@@ -124,7 +124,7 @@ input:focus, select:focus, textarea:focus {
   box-shadow: 0 0 0 3px rgba(59,130,246,.12);
 }
 
-/* ---------- Animación de entrada suave ---------- */
+
 @keyframes fade-up {
   from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }
@@ -166,7 +166,7 @@ input:focus, select:focus, textarea:focus {
   font-size: .82rem;
 }
 
-/* Formularios de consulta inspirados en la Oficina Judicial Virtual */
+
 .ojv-card { border: 1px solid #d9e0e4; background: #fff; box-shadow: 0 3px 13px rgba(15,48,73,.14); padding: 10px; }
 .ojv-tabs { display: flex; flex-wrap: wrap; border-bottom: 1px solid #dfe5e7; }
 .ojv-tab { padding: 9px 14px; color: #66813d; font-size: 12px; }
@@ -178,7 +178,7 @@ input:focus, select:focus, textarea:focus {
 .ojv-search, .ojv-clear { border-radius: 2px; padding: 7px 13px; color: #fff; font-size: 12px; }
 .ojv-search { background: #12486d; }.ojv-clear { background: #bdc92b; }
 
-/* Oficina Judicial Virtual */
+
 .judicial-shell {
   display: flex;
   min-height: 100vh;
@@ -248,8 +248,7 @@ input:focus, select:focus, textarea:focus {
 .judicial-content {
   background: linear-gradient(135deg, #edf3f5 0%, #f8faf8 55%, #f2f5e8 100%);
 }
-/* La zona de trabajo usa la misma identidad del menú: azul institucional y
-   amarillo/verde como acento, incluidas causas, expedientes y formularios. */
+
 .judicial-content .panel-card,
 .judicial-content .stat-card {
   border: 1px solid #c7d7e0;

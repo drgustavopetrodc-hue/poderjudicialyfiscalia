@@ -1,5 +1,5 @@
-// Esquema de base de datos — Sistema Judicial RP
-// Ejecutar: npx prisma db push (tras configurar DATABASE_URL)
+                                                 
+                                                              
 
 generator client {
   provider = "prisma-client-js"
@@ -10,14 +10,14 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ---------- Roles ----------
+                              
 enum Rol {
   ADMIN
   JUEZ
   FISCAL
   ABOGADO
   FUNCIONARIO
-  CIUDADANO // rol por defecto, puede ser parte/imputado en una causa
+  CIUDADANO                                                          
 }
 
 enum EstadoCertificacion {
@@ -98,7 +98,7 @@ enum EstadoAudiencia {
   CANCELADA
 }
 
-// ---------- Auth (NextAuth) ----------
+                                        
 model Account {
   id                String  @id @default(cuid())
   userId            String
@@ -134,29 +134,29 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
-// ---------- Usuario ----------
+                                
 model User {
   id            String    @id @default(cuid())
   name          String?
-  discordId     String?   @unique // ID numérico de Discord (snowflake), usado para sincronizar roles
-  discordTag    String? // ej: usuario#0000 o nuevo @usuario
+  discordId     String?   @unique                                                                    
+  discordTag    String?                                     
   email         String?   @unique
   emailVerified DateTime?
   image         String?
-  passwordHash  String? // Contraseña local cifrada para acceso mediante RUT
+  passwordHash  String?                                                     
   rol           Rol       @default(CIUDADANO)
   activo        Boolean   @default(true)
   creadoEn      DateTime  @default(now())
 
-  // ---------- Identidad "en personaje" (IC) ----------
-  // Datos del personaje de rol, usados en documentos oficiales, certificados
-  // e identificaciones — distintos del nombre de la cuenta de Discord.
+                                                        
+                                                                             
+                                                                       
   nombreIC      String?
   rut           String?   @unique
-  nif           String?   @unique // Número de Identificación Fiscal para funcionarios del Ministerio Público
+  nif           String?   @unique                                                                            
   nacionalidad  String?
-  institucion   String? // ej: "Carabineros de Chile", "Policía de Investigaciones", "Poder Judicial"
-  robloxUsername String? // usado para obtener la foto de la identificación institucional
+  institucion   String?                                                                              
+  robloxUsername String?                                                                 
   credencialVersion Int @default(1)
   credencialRevocadaEn DateTime?
   credencialRevocacionMotivo String?
@@ -190,7 +190,7 @@ model User {
   notificaciones        Notificacion[]
 }
 
-// ---------- Publicaciones de transparencia ----------
+                                                       
 model PublicacionTransparencia {
   id              String   @id @default(cuid())
   titulo          String
@@ -209,7 +209,7 @@ model PublicacionTransparencia {
   @@index([creadoEn])
 }
 
-// ---------- Certificación de abogados ----------
+                                                  
 model CertificacionAbogado {
   id             String              @id @default(cuid())
   userId         String              @unique
@@ -221,15 +221,15 @@ model CertificacionAbogado {
   observaciones  String?             @db.Text
 }
 
-// ---------- Causa (expediente) ----------
+                                           
 model Causa {
   id            String      @id @default(cuid())
-  rit           String      @unique // Rol Interno del Tribunal, ej: 001-2026
-  ruc           String? // Rol Único de Causa (identificador distinto del RIT)
-  caratulado    String // ej: "Fisco vs. Juan Pérez"
-  imputado      String? // Nombre del imputado principal, si está individualizado
-  competencia   String? // Competencia judicial, por ejemplo JUZGADO_DE_GARANTIA
-  tribunal      String? // ej: "Primer Juzgado de Garantía de Santiago"
+  rit           String      @unique                                          
+  ruc           String?                                                       
+  caratulado    String                              
+  imputado      String?                                                          
+  competencia   String?                                                         
+  tribunal      String?                                                
   anio          Int      @default(2026)
   descripcion   String      @db.Text
   estado        EstadoCausa @default(EN_INVESTIGACION)
@@ -288,30 +288,30 @@ model Auditoria {
   @@index([actorId, creadoEn])
 }
 
-// ---------- Orden de investigar (Ministerio Público → policía) ----------
-// A diferencia de la orden de captura, esta NO requiere firma de un juez —
-// es un instrumento administrativo del fiscal dirigido a la PDI/Carabineros
-// (art. 79-91 CPP). Se genera automáticamente al registrar cada causa.
+                                                                           
+                                                                           
+                                                                            
+                                                                       
 model OrdenInvestigar {
   id       String @id @default(cuid())
   causaId  String @unique
   causa    Causa  @relation(fields: [causaId], references: [id], onDelete: Cascade)
 
   fiscalia          String?
-  unidadPolicial    String  @default("AMBAS") // PDI | CARABINEROS | AMBAS
+  unidadPolicial    String  @default("AMBAS")                             
 
-  // El imputado puede no estar identificado al momento de abrir la causa.
+                                                                          
   imputadoIndividualizado Boolean @default(true)
   imputadoNombre    String?
   imputadoRut       String?
 
-  victimaNombre     String? // "N/A" si se reserva identidad / no aplica
+  victimaNombre     String?                                             
 
   diligencias       String[] @default([])
   diligenciasOtras  String?
 
   plazoInforme      String?
-  urgencia          String  @default("ORDINARIA") // ORDINARIA | CON_DETENIDO | SUMA_URGENCIA
+  urgencia          String  @default("ORDINARIA")                                            
   formaRemision     String?
 
   instrucciones             String? @db.Text
@@ -334,23 +334,23 @@ model OrdenCaptura {
   emitidaEn   DateTime            @default(now())
   levantadaEn DateTime?
 
-  // ---------- Datos del imputado/a (sección II de la plantilla) ----------
-  runOPasaporte     String? // RUN o pasaporte de la persona requerida
+                                                                            
+  runOPasaporte     String?                                           
   nacionalidadPersona String?
-  fechaNacimiento   String? // texto libre dd/mm/aaaa (dato "en personaje", no siempre disponible)
+  fechaNacimiento   String?                                                                       
   domicilioConocido String?
   senasParticulares String?
 
-  // ---------- Fundamento legal (sección IV) ----------
-  causalLegal       String  @default("OTRO") // ART_127 | ART_128 | ART_33 | ART_129 | REBELDIA | OTRO
-  causalLegalOtro   String? // detalle si causalLegal = OTRO
+                                                        
+  causalLegal       String  @default("OTRO")                                                          
+  causalLegalOtro   String?                                 
   fundamentoCautela String  @db.Text @default("")
 
-  // ---------- Resuelvo (sección V) ----------
-  policiaInstruida  String  @default("AMBAS") // PDI | CARABINEROS | AMBAS
+                                               
+  policiaInstruida  String  @default("AMBAS")                             
   vigenciaOrden     String  @default("Indefinida")
 
-  // ---------- Firma y certificación (sección VI) ----------
+                                                             
   secretarioNombre  String?
 }
 
@@ -364,8 +364,8 @@ model AdjuntoFiscal {
   nombre      String
   mimeType    String
   tamano      Int              @default(0)
-  datos       Bytes? // usado por imágenes/PDF (archivos pequeños, guardados directo en la BD)
-  url         String? // usado por videos (alojados en Vercel Blob, por su tamaño)
+  datos       Bytes?                                                                          
+  url         String?                                                             
   creadoEn    DateTime         @default(now())
 }
 
@@ -380,7 +380,7 @@ model Testimonio {
   creadoEn    DateTime @default(now())
 }
 
-// Relación entre una causa y las personas involucradas (imputado, víctima, querellante)
+                                                                                        
 enum RolParte {
   IMPUTADO
   VICTIMA
@@ -400,7 +400,7 @@ model ParteCausa {
   @@unique([causaId, userId, rol])
 }
 
-// ---------- Defensa técnica ----------
+                                        
 model Defensa {
   id           String   @id @default(cuid())
   causaId      String
@@ -414,7 +414,7 @@ model Defensa {
   @@unique([causaId, abogadoId, activa])
 }
 
-// ---------- Escritos (documentos presentados) ----------
+                                                          
 enum TipoEscrito {
   QUERELLA
   FORMALIZACION
@@ -434,11 +434,11 @@ model Escrito {
   tipo          TipoEscrito
   titulo        String
   contenido     String      @db.Text
-  archivoUrl    String? // link a Vercel Blob u otro storage
+  archivoUrl    String?                                     
   presentadoEn  DateTime    @default(now())
 }
 
-// ---------- Audiencias ----------
+                                   
 model Audiencia {
   id           String          @id @default(cuid())
   causaId      String
@@ -472,7 +472,7 @@ model Notificacion {
   @@index([userId, leida, creadaEn])
 }
 
-// ---------- Sentencia ----------
+                                  
 enum ResultadoSentencia {
   CONDENATORIA
   ABSOLUTORIA
@@ -490,7 +490,7 @@ model Sentencia {
   dictadaEn    DateTime           @default(now())
 }
 
-// ---------- Denuncias (presentadas por civiles) ----------
+                                                            
 model Denuncia {
   id             String         @id @default(cuid())
   titulo         String
@@ -509,7 +509,7 @@ model Denuncia {
   adjuntos       DenunciaAdjunto[]
 }
 
-// ---------- Trámite Fácil ----------
+                                      
 model PartePolicial {
   id                  String   @id @default(cuid())
   tipoProcedimiento   String
@@ -587,7 +587,7 @@ model DenunciaAdjunto {
   creadoEn     DateTime @default(now())
 }
 
-// ---------- Acta de información de derechos al detenido ----------
+                                                                    
 model ActaDerechosDetenido {
   id                    String   @id @default(cuid())
   causaId               String?

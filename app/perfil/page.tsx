@@ -46,7 +46,7 @@ async function guardarPerfil(formData: FormData) {
       },
     });
   } catch (error) {
-    // Lo más probable: el RUT ya está registrado por otro usuario (es único).
+    
     console.warn("No se pudo guardar el perfil (¿RUT duplicado?):", error);
     redirect("/perfil?error=rut-duplicado");
   }

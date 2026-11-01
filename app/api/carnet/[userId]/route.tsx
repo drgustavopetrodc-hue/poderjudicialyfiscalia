@@ -25,9 +25,9 @@ const NOMBRE_ROL: Record<string, string> = {
   FUNCIONARIO: "Policía Judicial",
 };
 
-// El logo de Fiscalía original es un .svg — Satori (el motor de next/og) no
-// soporta SVG embebido, así que lo pasamos por un conversor a PNG antes de
-// descargarlo. El de Poder Judicial ya es .png, se usa directo.
+
+
+
 const LOGO_PODER_JUDICIAL_URL = "https://upload.wikimedia.org/wikipedia/commons/0/05/Poderjudicial.png";
 const LOGO_FISCALIA_URL =
   "https://wsrv.nl/?url=" +
@@ -36,7 +36,7 @@ const LOGO_FISCALIA_URL =
   ) +
   "&output=png&w=300";
 
-/** Descarga una imagen y la convierte a data URI, para no depender de que Satori cargue URLs externas en vivo. */
+
 async function obtenerImagenComoDataUri(url: string): Promise<string | null> {
   try {
     const res = await fetch(url, { cache: "no-store" });
@@ -53,7 +53,7 @@ async function obtenerImagenComoDataUri(url: string): Promise<string | null> {
 const ANCHO_CREDENCIAL = 380;
 const ALTO_CREDENCIAL = 800;
 
-/** Hash determinístico simple (djb2/fnv-like) para sembrar los patrones de QR y código de barras. */
+
 function semillaDesdeTexto(texto: string): number {
   let h = 2166136261;
   for (let i = 0; i < texto.length; i++) {
@@ -63,7 +63,7 @@ function semillaDesdeTexto(texto: string): number {
   return h >>> 0;
 }
 
-/** PRNG mulberry32: mismo texto de entrada -> siempre el mismo patrón visual para ese usuario. */
+
 function generarRng(semilla: number) {
   let a = semilla;
   return function rng() {
@@ -75,7 +75,7 @@ function generarRng(semilla: number) {
   };
 }
 
-/** Barras de ancho variable (decorativo, no un código real) para simular un código de verificación. */
+
 function generarBarras(semillaTexto: string, cantidad = 26) {
   const rng = generarRng(semillaDesdeTexto(semillaTexto + "-barras"));
   return Array.from({ length: cantidad }, (_, i) => ({
@@ -135,7 +135,7 @@ function Credencial({
         fontFamily: "Arial, sans-serif",
       }}
     >
-      {/* Encabezado */}
+      {}
       <div
         style={{
           display: "flex",
@@ -179,7 +179,7 @@ function Credencial({
           }}
         >
           {logoDataUri ? (
-            // eslint-disable-next-line @next/next/no-img-element
+            
             <img src={logoDataUri} width={40} height={40} style={{ objectFit: "contain" }} />
           ) : (
             <div style={{ display: "flex", fontSize: 15, fontWeight: 800, color: colorPrimario }}>{siglasSello}</div>
@@ -187,12 +187,12 @@ function Credencial({
         </div>
       </div>
 
-      {/* Cuerpo */}
+      {}
       <div style={{ display: "flex", flex: 1, flexDirection: "row" }}>
         <div style={{ display: "flex", width: 6, backgroundColor: colorDetalle }} />
 
         <div style={{ display: "flex", flex: 1, flexDirection: "column", padding: "24px 22px", gap: 20 }}>
-          {/* Foto + nombre/rut */}
+          {}
           <div style={{ display: "flex", flexDirection: "row", gap: 18, alignItems: "flex-start" }}>
             <div
               style={{
@@ -209,7 +209,7 @@ function Credencial({
               }}
             >
               {fotoDataUri ? (
-                // eslint-disable-next-line @next/next/no-img-element
+                
                 <img src={fotoDataUri} width={136} height={136} style={{ objectFit: "cover" }} />
               ) : (
                 <div style={{ display: "flex", fontSize: 52, fontWeight: 800, color: colorPrimario }}>
@@ -248,7 +248,7 @@ function Credencial({
             </div>
           </div>
 
-          {/* Cargo */}
+          {}
           <div
             style={{
               display: "flex",
@@ -347,7 +347,7 @@ function Credencial({
             </div>
           )}
 
-          {/* QR + código de verificación */}
+          {}
           <div
             style={{
               display: "flex",
@@ -369,7 +369,7 @@ function Credencial({
                 borderRadius: 4,
               }}
             >
-              {/* QR real: contiene la URL pública de verificación de la credencial. */}
+              {}
               <img src={qrDataUri} width={81} height={81} style={{ objectFit: "contain" }} />
             </div>
 
@@ -405,7 +405,7 @@ function Credencial({
         </div>
       </div>
 
-      {/* Pie */}
+      {}
       <div
         style={{
           display: "flex",

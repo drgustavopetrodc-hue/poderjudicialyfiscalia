@@ -46,8 +46,8 @@ export default async function EscritosPage() {
 
   const puedePresentar = rol === "FISCAL" || rol === "ABOGADO" || rol === "ADMIN";
 
-  // Causas donde la persona puede presentar un escrito: donde es el fiscal
-  // asignado, o donde tiene una defensa activa.
+  
+  
   const causasDisponibles = puedePresentar
     ? await prisma.causa.findMany({
         where: {

@@ -4,8 +4,8 @@ import { authOptions } from "@/lib/auth";
 import DashboardShell from "@/components/DashboardShell";
 import Link from "next/link";
 
-// La mesa de partes existente contiene el formulario real de demandas y escritos.
-// Esta ruta conserva el nombre de la OJV y nunca expone el formulario sin sesión.
+
+
 export default async function IngresoCausasPage() {
   const session = await getServerSession(authOptions);
   if (!session?.user) redirect("/ingreso-causas/acceso");

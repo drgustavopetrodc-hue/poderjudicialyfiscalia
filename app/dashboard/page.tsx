@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
-// Entrada única: cada persona aterriza en su sección de Mis causas.
+
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
   const rol = (session?.user as any)?.rol as string | undefined;

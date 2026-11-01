@@ -1,7 +1,7 @@
 import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
 
-// Mapa de qué roles pueden entrar a qué sección del dashboard
+
 const rutasPorRol: Record<string, string[]> = {
   "/dashboard/admin": ["ADMIN"],
   "/dashboard/juez": ["ADMIN", "JUEZ"],

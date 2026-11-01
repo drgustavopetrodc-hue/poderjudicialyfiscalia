@@ -10,10 +10,7 @@ export function contextoSesion(session: any): ContextoSesion | null {
   return typeof userId === "string" && typeof rol === "string" ? { userId, rol } : null;
 }
 
-/**
- * La existencia de una causa no implica que cualquier usuario pueda leerla.
- * Este chequeo se reutiliza en páginas, acciones de servidor y endpoints PDF.
- */
+
 export async function puedeAccederCausa(causaId: string, contexto: ContextoSesion) {
   if (esAdministracionSuperior(contexto.rol)) return true;
 

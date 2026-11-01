@@ -18,7 +18,7 @@ async function abrirCausaDesdeDenuncia(denunciaId: string) {
   const denuncia = await prisma.denuncia.findUnique({ where: { id: denunciaId } });
   if (!denuncia) return;
 
-  // Generar un RIT simple y único (para propósitos de prueba)
+  
   const rit = `DEN-${Date.now()}`;
   const caratulado = `Denuncia: ${denuncia.titulo} — ${denuncia.denuncianteId}`;
   const descripcion = `Denuncia original:\n${denuncia.descripcion}`;

@@ -44,8 +44,8 @@ export const authOptions: NextAuthOptions = {
       },
     }),
   ],
-  // Usamos JWT (no "database") para que el middleware pueda leer el rol
-  // del usuario sin golpear la base de datos en cada request.
+  
+  
   session: { strategy: "jwt" },
   pages: {
     signIn: "/ovj",
@@ -66,11 +66,11 @@ export const authOptions: NextAuthOptions = {
         token.passwordConfigurada = Boolean(perfil?.passwordHash);
       }
 
-      // account solo viene presente justo en el login inicial (no en refresh)
+      
       if (account?.provider === "discord" && account.providerAccountId) {
         token.discordId = account.providerAccountId;
-        // Guardamos el discordId en la BD para poder re-sincronizar más adelante
-        // (ej. desde un cron job) sin depender de que el usuario tenga sesión activa.
+        
+        
         await prisma.user.update({
           where: { id: token.id as string },
           data: { discordId: account.providerAccountId },
@@ -80,7 +80,7 @@ export const authOptions: NextAuthOptions = {
         if (dbUser?.discordId) token.discordId = dbUser.discordId;
       }
 
-      // Sincroniza el rol real desde los roles del servidor de Discord.
+      
       if (token.discordId) {
         const rolDesdeDiscord = await obtenerRolDesdeDiscord(token.discordId as string);
         if (rolDesdeDiscord) {
@@ -90,27 +90,27 @@ export const authOptions: NextAuthOptions = {
             data: { rol: rolDesdeDiscord },
           });
         } else if (!user && token?.id) {
-          // No se pudo determinar por Discord (bot no configurado, usuario
-          // salió del server, etc.) — usa el rol que ya tenga guardado en la BD.
+          
+          
           const dbUser = await prisma.user.findUnique({ where: { id: token.id as string } });
           if (dbUser) token.rol = dbUser.rol;
         }
 
-        // El Presidente de la Corte Suprema siempre tiene rango ADMIN,
-        // sin importar lo que diga la sincronización de roles de Discord.
+        
+        
         if (esPresidenteCorteSuprema(token.discordId as string) && token.rol !== "ADMIN") {
           token.rol = "ADMIN";
           await prisma.user.update({ where: { id: token.id as string }, data: { rol: "ADMIN" } });
         }
 
-        // El Fiscal Regional siempre tiene rango FISCAL, sin importar lo que diga
-        // la sincronización de roles de Discord (cargo exclusivo, no un rol nuevo).
+        
+        
         if (esFiscalRegional(token.discordId as string) && token.rol !== "FISCAL") {
           token.rol = "FISCAL";
           await prisma.user.update({ where: { id: token.id as string }, data: { rol: "FISCAL" } });
         }
 
-        // Si el usuario ya es fiscal, genera un NIF único si todavía no lo tiene.
+        
         if (token.rol === "FISCAL" && token.id) {
           const dbUser = await prisma.user.findUnique({ where: { id: token.id as string } });
           if (dbUser && !dbUser.nif) {

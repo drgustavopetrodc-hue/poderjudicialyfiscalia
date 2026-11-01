@@ -88,7 +88,7 @@ async function certificarDirectamente(formData: FormData) {
     });
     await prisma.user.update({ where: { id: userId }, data: { rol: "ABOGADO" } });
   } catch (error) {
-    // Probablemente el número de matrícula ya está en uso por otro abogado.
+    
     console.warn("No se pudo certificar directamente (¿matrícula duplicada?):", error);
     return;
   }

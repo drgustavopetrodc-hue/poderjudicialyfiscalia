@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import React from "react";
 
-// Cambiamos LucideIcon por React.ReactNode para que sea 100% serializable
+
 export type NavItem = {
   href: string;
   label: string;

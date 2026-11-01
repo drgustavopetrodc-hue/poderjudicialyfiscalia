@@ -9,12 +9,7 @@ type UsuarioParaCredencial = {
   rut: string | null;
 };
 
-/**
- * Tarjeta compacta que muestra la credencial institucional del usuario dentro
- * de su propio panel (juez, fiscal, etc.), sin reemplazar el resto del panel.
- * Usa el mismo endpoint /api/carnet/[userId] que ya genera la imagen PNG real
- * — no duplica el diseño en otro lado.
- */
+
 export default function CredencialPreview({ usuario }: { usuario: UsuarioParaCredencial }) {
   if (!ROLES_FUNCIONARIOS.includes(usuario.rol)) return null;
 
@@ -25,7 +20,7 @@ export default function CredencialPreview({ usuario }: { usuario: UsuarioParaCre
     <div className="panel-card p-5 mb-7 flex flex-wrap items-center gap-5">
       {completo ? (
         <>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
+          {}
           <img
             src={urlCarnet}
             alt="Credencial institucional"

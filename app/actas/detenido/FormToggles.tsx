@@ -2,11 +2,7 @@
 
 import { useState } from "react";
 
-/**
- * Checkbox que revela un campo de texto obligatorio/opcional solo cuando
- * se marca. Evita mostrar campos de detalle vacíos e irrelevantes
- * (ej. "hora de aviso al familiar" cuando no hubo aviso).
- */
+
 export function ToggleDetailField({
   checkboxName,
   checkboxLabel,
@@ -64,10 +60,7 @@ export function ToggleDetailField({
   );
 }
 
-/**
- * Checkbox que solo revela una nota informativa (sin campo de texto).
- * Usado para "es menor de edad" -> recuerda aplicar la Ley 20.084 (RPA).
- */
+
 export function ToggleNote({
   checkboxName,
   checkboxLabel,

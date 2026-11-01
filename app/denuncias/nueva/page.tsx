@@ -24,9 +24,9 @@ async function crearDenuncia(formData: FormData) {
   const titulo = `Denuncia Fácil: ${victimaNombre}`;
   const descripcion = `Víctima: ${victimaNombre}\nRUT víctima: ${victimaRut}\nVictimario: ${victimarioNombre || 'No conocido'}\nRUT victimario: ${victimarioRut || 'No informado'}\nCaracterísticas visuales: ${caracteristicasVictimario || 'No informadas'}\nLugar de los hechos: ${lugarHechos}`;
 
-  // Crear denuncia y adjuntos si los hay (adjuntos pequeños se guardan en DB como Bytes)
+  
   const archivos = formData.getAll('archivos') as File[];
-  const MAX_BYTES = 5 * 1024 * 1024; // 5 MB
+  const MAX_BYTES = 5 * 1024 * 1024; 
 
   const created = await prisma.denuncia.create({
     data: {
@@ -44,7 +44,7 @@ async function crearDenuncia(formData: FormData) {
     },
   });
 
-  // Procesar archivos en serie (para evitar picos de memoria)
+  
   for (const f of archivos) {
     if (!(f instanceof File)) continue;
     try {
